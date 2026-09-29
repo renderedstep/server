@@ -11,13 +11,18 @@
 # A SHAPE IS READ OFF THE OFFERED SENTENCE, because the request carries labels
 # and sentences and never a token (the engine's `volition` request). The
 # sentences are `Playthrough::Volition#choices`' own, so each opening names
-# one shape.
+# one shape. What somebody says is read off its option the same way
+# (`volition::speech_options`), where a set asked it (`ROOMS=speech`).
 module Eval
   module VolitionProbe
     module Baseline
       SHAPES = [
         [ /\AStay where you are/, "wait" ], [ /\AStay in .* when the player leaves/, "stop_following" ],
         [ /\AWalk out of/, "move" ], [ /\APick up/, "take" ], [ /\AGive/, "give" ], [ /\AAccompany/, "follow" ]
+      ].freeze
+      SPEECH_SHAPES = [
+        [ /\ASay nothing\./, "silent" ], [ /\AGreet/, "greet" ], [ /\AWarn/, "warn" ], [ /\AAsk/, "ask" ],
+        [ /\ADemand/, "demand" ], [ /\ATell .* to leave/, "dismiss" ]
       ].freeze
 
       # THE PRESSURE AN ANSWER MUST REACH TO BE ACTED ON, which is the engine's
@@ -29,6 +34,8 @@ module Eval
       module_function
 
       def shape_of(sentence) = SHAPES.find { |pattern, _| pattern.match?(sentence.to_s) }&.last || "unknown"
+
+      def speech_shape_of(option) = SPEECH_SHAPES.find { |pattern, _| pattern.match?(option.to_s) }&.last || "unknown"
 
       def summary(set)
         dir = VolitionProbe::ROOT.join(set)
@@ -50,6 +57,8 @@ module Eval
           "failed" => kept["receipts"].reject { |r| r["status"] == 200 }.map { |r| r.slice("call", "room", "status", "error_body") },
           "people" => people,
           "shapes_chosen" => answers.map { |a| a["shape"] }.tally.sort.to_h,
+          "speech_answers" => answers.count { |a| a["speech_shape"] },
+          "speech_chosen" => answers.filter_map { |a| a["speech_shape"] }.tally.sort.to_h,
           "serves" => answers.map { |a| a["serves"] }.tally.sort.to_h,
           "serves_by_shape" => answers.group_by { |a| a["shape"] }.sort.to_h.transform_values { |g| g.map { |a| a["serves"] }.tally.sort.to_h },
           "mean_agreement" => mean(people.map { |p| p["agreement"].to_f }),
@@ -62,16 +71,20 @@ module Eval
 
       def person_summary(request, key, person, receipts, threshold)
         criteria = request["questions"]["#{key}:act"]["criteria"]
+        options = request["questions"].dig("#{key}:speech", "criteria")
         reps = receipts.sort_by { |r| r["rep"] }.map do |r|
           act = r.dig("answers", "#{key}:act", "choice")
+          said = options && r.dig("answers", "#{key}:speech", "choice")
           { "rep" => r["rep"], "act" => act, "sentence" => criteria[act], "shape" => shape_of(criteria[act]),
             "serves" => r.dig("answers", "#{key}:serves", "choice"),
-            "pressure" => r.dig("answers", "#{key}:pressure", "noul") }
+            "pressure" => r.dig("answers", "#{key}:pressure", "noul"),
+            "speech" => said, "speech_option" => said && options[said],
+            "speech_shape" => said && speech_shape_of(options[said]) }.compact
         end
         pressures = reps.map { |rep| rep["pressure"].to_f }
         modal = reps.map { |rep| rep["act"] }.tally.max_by { |_, count| count }
         { "person" => key, "name" => person["name"], "pursuits" => "#{person["desire_pursuit"]}/#{person["need_pursuit"]}",
-          "offered" => criteria.size, "reps" => reps, "modal_act" => modal&.first, "modal_sentence" => criteria[modal&.first],
+          "offered" => criteria.size, "speech_offered" => options&.size, "reps" => reps, "modal_act" => modal&.first, "modal_sentence" => criteria[modal&.first],
           "agreement" => modal && modal.last.fdiv(reps.size),
           "pressure_mean" => mean(pressures), "pressure_min" => pressures.min, "pressure_max" => pressures.max,
           "pressure_sd" => sd(pressures), "crossed" => pressures.count { |p| p >= threshold } }
@@ -86,10 +99,15 @@ module Eval
           lines << "#{p["room"]} #{p["person"]} #{p["name"]} (#{p["pursuits"]}, #{p["offered"]} acts offered)"
           lines << "  acts:     #{p["reps"].map { |r| r["act"] }.join(" ")}  agreement #{pct(p["agreement"])} -> #{p["modal_sentence"]}"
           lines << "  serves:   #{p["reps"].map { |r| r["serves"] }.join(" ")}"
+          if p["speech_offered"]
+            lines << "  speech:   #{p["reps"].map { |r| r["speech"] }.join(" ")} (#{p["speech_offered"]} options) -> " \
+                     "#{p["reps"].map { |r| r["speech_option"] }.tally.map { |o, n| "#{o} x#{n}" }.join("; ")}"
+          end
           lines << format("  pressure: %s  mean %.3f sd %.3f, crossed %d/%d",
                           p["reps"].map { |r| r["pressure"] }.join(" "), p["pressure_mean"], p["pressure_sd"], p["crossed"], p["reps"].size)
         end
         lines << "shapes chosen: #{s["shapes_chosen"]}"
+        lines << "said, of #{s["speech_answers"]} asked: #{s["speech_chosen"]}" if s["speech_answers"].positive?
         lines << "serves: #{s["serves"]}"
         s["serves_by_shape"].each { |shape, tally| lines << "  #{shape}: #{tally}" }
         lines << "mean repetition agreement on the act: #{pct(s["mean_agreement"])}"

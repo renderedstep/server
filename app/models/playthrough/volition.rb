@@ -150,7 +150,10 @@ class Playthrough::Volition
   #
   # THE DIE DECIDES, in this Ruby reference loop. A turn the game plays asks
   # System One first where it is on and lets the die decide whatever it did not
-  # (the Rust engine's `volition`, with `decided_by` saying which); this loop,
+  # (the Rust engine's `volition`): the act, where the answer reads the person
+  # pressured enough, and what somebody the speech die let speak up says, with
+  # `decided_by` saying which decided and `system_one_error` why the die did
+  # when the call failed. This loop,
   # which the test suite plays, has no System One reader, so every row it
   # writes is `DECIDED_BY_DIE`. `line:` is the line the player typed, which
   # only that request reads.

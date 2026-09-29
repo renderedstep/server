@@ -22,6 +22,12 @@ require "test_helper"
 # hostile person is a foe and a foe gets no volition at all.
 class Playthrough::Volition::BaselineRoomsTest < ActiveSupport::TestCase
   FIXTURE = Rails.root.join("test/fixtures/files/volition_baseline_requests.json")
+  # THE SAME ROOMS WITH EVERYBODY ASKED WHAT THEY SAY AS WELL, as though the
+  # speech die had let each of them speak: the request an arrival sends for
+  # the people reacting to it. `rake eval:volition_baseline ROOMS=speech`
+  # sends this one. Somebody with nothing to say (nobody to say it to) is
+  # asked no speech question.
+  SPEECH_FIXTURE = Rails.root.join("test/fixtures/files/volition_speech_baseline_requests.json")
   SHEET = %w[conscious_desire unconscious_desire recognized_need unrecognized_need desire_pursuit need_pursuit].freeze
 
   WORLDS = {
@@ -83,7 +89,7 @@ class Playthrough::Volition::BaselineRoomsTest < ActiveSupport::TestCase
     YAML.load_file(Rails.root.join("db/seeds/worlds", WORLDS.fetch(world)[:file]))["characters"].index_by { |sheet| sheet["fullname"] }
   end
 
-  def stage(entry)
+  def stage(entry, speaking: false)
     world = WORLDS.fetch(entry[:world])
     sheets = self.class.sheets(entry[:world])
     story = create(:story)
@@ -114,12 +120,13 @@ class Playthrough::Volition::BaselineRoomsTest < ActiveSupport::TestCase
       token = shape == :move ? "move:#{rooms.fetch(where).id}" : shape.to_s
       Playthrough::Volition.new(game, who, location: from).apply!(token)
     end
-    Playthrough::Requests.build(:volition, playthrough: game.id, characters: people.values.map(&:id),
+    ids = people.values.map(&:id)
+    Playthrough::Requests.build(:volition, playthrough: game.id, characters: ids, speakers: speaking ? ids : [],
                                            location: room.id, line: entry[:line])
   end
 
-  def requests
-    ROOMS.map { |entry| { "room" => entry[:key] }.merge(stage(entry)) }
+  def requests(speaking: false)
+    ROOMS.map { |entry| { "room" => entry[:key] }.merge(stage(entry, speaking: speaking)) }
   end
 
   test "the twelve staged requests are byte for byte the pinned ones" do
@@ -127,6 +134,25 @@ class Playthrough::Volition::BaselineRoomsTest < ActiveSupport::TestCase
     File.write(FIXTURE, built) if ENV["REWRITE"] == "1"
 
     assert_equal FIXTURE.read, built
+  end
+
+  test "the twelve staged requests with the speech question are byte for byte the pinned ones" do
+    built = "#{JSON.pretty_generate(requests(speaking: true))}\n"
+    File.write(SPEECH_FIXTURE, built) if ENV["REWRITE"] == "1"
+
+    assert_equal SPEECH_FIXTURE.read, built
+  end
+
+  test "the speech rooms ask exactly the act rooms' questions, and a speech question beside them" do
+    acts = JSON.parse(FIXTURE.read).index_by { |request| request["room"] }
+    JSON.parse(SPEECH_FIXTURE.read).each do |request|
+      asked = request["questions"].reject { |key, _| key.end_with?(":speech") }
+
+      assert_equal acts.fetch(request["room"]), request.merge("questions" => asked), request["room"]
+      request["questions"].select { |key, _| key.end_with?(":speech") }.each_value do |question|
+        assert_equal "Say nothing.", question["criteria"]["speech_1"], request["room"]
+      end
+    end
   end
 
   test "every staged room offers every person more than one act" do
