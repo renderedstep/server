@@ -600,7 +600,15 @@ class WorldSeed::Exporter
       # which is what every row already written is and what an absent key loads
       # back as -- the same "omitted rather than written out" rule
       # `locations.danger` and the flags above it follow.
-      document["bulk"] = item.bulk unless item.bulk == Item::HANDY
+      document["bulk"] = item.bulk unless item.bulk == Item::HANDY || item.fixture?
+      # FIXED IN PLACE, AND WHAT LIES ON WHAT. `holds` says a row is a fixture
+      # (its bulk is then implied), `within` names the fixture a thing lies on
+      # or in by name -- its room is the same -- and `kit_key` says a kit wrote
+      # it, which keeps it out of the writer's caps and matches it in its room
+      # when the file is loaded again. Each omitted when absent.
+      document["holds"] = item.holds if item.fixture?
+      document["within"] = item.within.name if item.within
+      document["kit_key"] = item.kit_key if item.kit_key.present?
       # AND WHETHER IT BREAKS, omitted when it is `Item::STURDY` on the same rule.
       document["fragility"] = item.fragility unless item.fragility == Item::STURDY
       document["use_kind"] = item.use_kind unless item.use_kind == "ordinary"
@@ -692,6 +700,8 @@ class WorldSeed::Exporter
       "default" => outcome.is_default?,
       "when" => outcome.condition,
       "minutes" => outcome.minutes,
+      "beat" => outcome.step_position,
+      "alive" => outcome.character&.fullname,
       "ramification" => ramification_document(outcome)
     }.compact
   end

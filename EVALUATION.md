@@ -1212,7 +1212,16 @@ bin/rails runner 'Eval::Prompt::Result.load(Eval.root.join("my-set")) \
 
 ### Current kept sets and historical comparisons
 
-**`realization-2026-09-28` is the current realization baseline.** The exits
+**`realization-2026-10-02` is the current realization baseline.** Rooms are
+furnished from their kits (`Item::Kit`) before the writer is asked anything,
+and the detail prompt says what is there; each corpus case names the kind and
+density its room would have been dealt. Against a before side bought at the
+tree that added only those words, `things_furnished` rose to ten a room and the
+writer's own things fell to about 0.4, both REAL, and every check read NOISE
+(`db/eval/realization-2026-10-02/README.md`). `realization-2026-09-28` is
+history from then on.
+
+**`realization-2026-09-28` was the realization baseline before it.** The exits
 call gained `kind` and `density` and the place call `place_kind`
 (`Location::Kind`); no prompt message changed, and against a before side
 bought the same day every figure read NOISE
@@ -1233,6 +1242,14 @@ moved with the world -- see `db/eval/classifier-2026-09-26/README.md`, which
 also has why the classifier readings were scored twice. Every set's README has
 its verdict against the set it replaced; the receipts, the credit readings and
 the scripts are under `doc/evidence/seed-world-arcs-rebuy/`.
+
+`inscription-2026-10-02` and `prompt-ending-after-2026-10-02` replace
+`inscription-2026-09-26` and `prompt-ending-2026-09-10` in turn. The Lunar
+Cartographer's world file gained the `while_alive` ending rule, which moves
+the inscription corpus digest while its requests stay byte-identical; and
+the ending corpus gained a sixth case, somebody dead in the room, for the
+ending's `Dead here:` line. Each set's README has its verdict and the credit
+readings; the line's pair is under *The ending's own corpus* below.
 
 `prompt-2026-09-10`, `classifier-throw-after-20260926` and
 `prompt-ending-2026-09-10` were the before sides until then.
@@ -1433,6 +1450,28 @@ after side's `item_not_held` is what the check read before this fix — history,
 like the 2026-09-08 pair's 0.200. The verdict it feeds was already NOISE, so
 nothing is re-bought for it. Every corpus that carries its passages re-scored
 unchanged.
+
+### The sixth case, and the pair of 2026-10-02
+
+The ending is told who lies dead in its room (`Dead here: <name> (<nickname>).
+They cannot speak or act.`), on the ending's pass alone, because a game of The
+Lunar Cartographer closed on a dead man "standing motionless over the rope":
+the room's own description still had him standing. No case had anybody dead,
+so the line rendered nowhere and the bench was blind to it. The corpus gained
+`ending-take-the-writ-over-the-dead` in The Unrecorded Hour (Halkett Rowe dead
+in Ward Office 12; the bench does not play The Lunar Cartographer, see
+`Eval::Prompt::STORIES`), and both sides were bought on the six cases:
+
+```bash
+rake eval:prompt_compare BEFORE=prompt-ending-before-2026-10-02 AFTER=prompt-ending-after-2026-10-02
+```
+
+**NOISE on every figure.** The five Iron Gate cases sent byte-identical
+requests both sides, so their spread is the run-to-run spread. No check reads a
+dead person written as standing in a single turn, so the line's own case was
+read by hand: without the line none of the four endings mentions Rowe, with it
+two of four name him and none has him standing. `prompt-ending-after-2026-10-02`
+is the ending's current baseline; its README has the readings.
 
 ### Serial, for now
 
@@ -2299,9 +2338,9 @@ DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake ruby_llm:load_mo
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake eval:estimate
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 EVAL_LIVE=1 \
   EVAL_BUDGET_FILE=tmp/arrival/budget.json SET=my-arrival bundle exec rake eval:arrival
-bundle exec rake eval:arrival_score SET=arrival-first-visit-2026-09-28
-bundle exec rake eval:arrival_board SET=arrival-first-visit-2026-09-28
-bundle exec rake eval:arrival_compare BEFORE=arrival-first-visit-2026-09-28 AFTER=my-arrival
+bundle exec rake eval:arrival_score SET=arrival-body-after-2026-10-02
+bundle exec rake eval:arrival_board SET=arrival-body-after-2026-10-02
+bundle exec rake eval:arrival_compare BEFORE=arrival-body-after-2026-10-02 AFTER=my-arrival
 bundle exec rake eval:arrival_digest
 ```
 
@@ -2330,11 +2369,19 @@ fixture readings, when present, contribute to spend and not to baseline scores.
 thing" -- the stock opener the discovery line invited while it read "what
 catches them first on the way in". Arrival sets keep their rows, so it re-scores
 every kept set offline. `arrival-branches`, bought before the line lost its
-"first", reads 22 of 36; `arrival-first-visit-2026-09-28`, the baseline since,
+"first", reads 22 of 36; `arrival-first-visit-2026-09-28`, the baseline until 2026-10-02,
 reads 14 of 36, a real difference with every other reading noise. It counts one
 phrase and says nothing about how varied the openings are. That set's one
 superseded row is a call the receipt halted because it could not read RubyLLM
 2's usage fields; its charge is on the ledger.
+
+**Who killed a body** is the `killed_resident` case: Maren Vosk, killed by the
+player's blow an hour before the party walks in, so the arrival's dead line
+carries "killed by Iri Calder about 1 hour ago". `arrival-body-before-2026-10-02`
+and `arrival-body-after-2026-10-02` are the same corpus either side of that
+clause, every figure noise; no reading on either side names a killer or
+invents another cause, so the clause measured harmless rather than helpful
+here. The after set is `Eval::Arrival::BASELINE`.
 
 **The room reacting to the arrival** is its own corpus on the same bench,
 `CORPUS=reactions` on `eval:arrival` and `eval:arrival_digest`
@@ -2364,9 +2411,18 @@ bin/rails eval:estimate
 bin/rails eval:prompt CORPUS=branches MODELS=mistralai/mistral-medium-3.1 SET=my-branches
 bin/rails eval:prompt_score SET=my-branches
 bin/rails eval:prompt_board SETS=my-branches
-bin/rails eval:prompt_compare BEFORE=prompt-branches-2026-09-10 AFTER=my-branches
-bin/rails eval:prompt_digest CORPUS=branches SET=prompt-branches-2026-09-10
+bin/rails eval:prompt_compare BEFORE=prompt-branches-body-after-2026-10-02 AFTER=my-branches
+bin/rails eval:prompt_digest CORPUS=branches SET=prompt-branches-body-after-2026-10-02
 ```
+
+The `dead_body_later` case is a body inspected once the fight that killed it
+has closed and slid into the recap, where only the body's own dead line still
+says who killed it. `prompt-branches-body-before-2026-10-02` and
+`prompt-branches-body-after-2026-10-02` are the same corpus either side of that
+line, every check noise. Read by hand, two of the four before readings of that
+case invent a cause ("whatever dragged him", "the iron gate's teeth"); after,
+two name the player's blow and none invents another. The after set is
+`Eval::Prompt::Branches::BASELINE`.
 
 The lowest case ID in each shape designates the assembled request. Its system
 message, user message and null streaming schema form a versioned

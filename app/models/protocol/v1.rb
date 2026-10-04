@@ -82,7 +82,11 @@ module Protocol::V1
       people: glance.people.map do |person|
         { name: person.name, condition: person.condition, foe: person.foe, provoked: person.provoked }
       end,
-      lying_here: glance.lying_here.map { |item| { name: item.name } },
+      fixtures: glance.fixtures.map do |fixture|
+        { name: fixture.name, holds: fixture.holds, state: fixture.state, searched: fixture.searched, on: fixture.on }
+      end,
+      lying_here: glance.lying_here.map { |item| { name: item.name, on: item.on } },
+      counts: { visible: glance.counts.visible, unsearched: glance.counts.unsearched },
       carrying: glance.carrying.map { |item| { name: item.name } },
       condition: glance.condition,
       sheet: glance.sheet,
@@ -110,11 +114,15 @@ module Protocol::V1
   def standing(standing)
     saved = standing.saved_turn
     {
-      over: standing.over, ended: standing.ended, busy: standing.busy,
+      over: standing.over, ended: standing.ended, finished: story_finished(standing.finished), busy: standing.busy,
       running_turn: standing.running_turn && id(standing.running_turn),
       saved_turn: saved && { turn: id(saved), line: saved.command, request_token: saved.request_token,
                             action: standing.saved_action.to_s }
     }
+  end
+
+  def story_finished(finished)
+    finished && { quest: finished.quest, goals: finished.goals, last_goal: finished.last_goal, reason: finished.reason }
   end
 
   def turn(command) = { id: id(command), line: command.command, request_token: command.request_token }

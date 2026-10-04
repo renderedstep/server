@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_102823) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_023507) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -118,6 +118,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_102823) do
     t.integer "x"
     t.integer "y"
     t.string "fragility", default: "sturdy", null: false
+    t.string "tier", default: "portable", null: false
+    t.string "holds"
+    t.integer "within_id"
+    t.string "how"
+    t.string "kit_key"
     t.index ["character_id"], name: "index_items_on_character_id"
     t.index ["location_id", "character_id"], name: "index_items_on_location_id_and_character_id"
     t.index ["location_id"], name: "index_items_on_location_id"
@@ -125,6 +130,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_102823) do
     t.index ["playthrough_id", "template_id"], name: "index_items_on_playthrough_id_and_template_id"
     t.index ["playthrough_id"], name: "index_items_on_playthrough_id"
     t.index ["template_id"], name: "index_items_on_template_id"
+    t.index ["within_id"], name: "index_items_on_within_id"
   end
 
   create_table "lab_exits_judgements", force: :cascade do |t|
@@ -529,6 +535,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_102823) do
   end
 
   create_table "quest_outcomes", force: :cascade do |t|
+    t.integer "character_id"
     t.string "condition"
     t.datetime "created_at", null: false
     t.boolean "is_default", default: false, null: false
@@ -537,8 +544,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_102823) do
     t.integer "quest_id", null: false
     t.integer "ramification_minutes"
     t.text "ramification_summary"
+    t.integer "step_position"
     t.text "summary", null: false
     t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_quest_outcomes_on_character_id"
     t.index ["quest_id", "name"], name: "index_quest_outcomes_on_quest_id_and_name", unique: true
     t.index ["quest_id"], name: "index_quest_outcomes_on_quest_id"
   end

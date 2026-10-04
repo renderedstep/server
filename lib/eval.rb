@@ -87,6 +87,8 @@ module Eval
     db/eval/inscription-2026-09-26/inscription.json
     db/eval/inscription-2026-09-26/receipts.json
     db/eval/inscription-2026-09-26/README.md
+    db/eval/inscription-2026-10-02/inscription.json
+    db/eval/inscription-2026-10-02/README.md
     lib/eval/arrival.rb
     lib/eval/arrival/bench.rb
     lib/eval/arrival/budget.rb
@@ -106,6 +108,8 @@ module Eval
     test/lib/eval/arrival/stage_test.rb
     db/eval/arrival-branches/arrival.json
     db/eval/arrival-first-visit-2026-09-28/arrival.json
+    db/eval/arrival-body-before-2026-10-02/arrival.json
+    db/eval/arrival-body-after-2026-10-02/arrival.json
     db/eval/arrival-reactions-2026-09-28/arrival.json
     db/eval/arrival-reactions-2026-09-28/README.md
     db/eval/adversarial-20260909/arrival-before.json
@@ -149,6 +153,9 @@ module Eval
     db/eval/classifier-2026-09-10/offline.json
     db/eval/prompt-ending-2026-09-10/prompt.json
     db/eval/prompt-ending-2026-09-10/receipts.json
+    db/eval/prompt-ending-before-2026-10-02/prompt.json
+    db/eval/prompt-ending-after-2026-10-02/prompt.json
+    db/eval/prompt-ending-after-2026-10-02/README.md
     lib/eval/prompt/ending_version.rb
     lib/eval/prompt/request_version.rb
     lib/eval/realization/request_version.rb
@@ -178,6 +185,10 @@ module Eval
     db/eval/dialogue-bystander-2026-09-28/dialogue.json
     db/eval/dialogue-bystander-2026-09-28/halted-budget.json
     db/eval/dialogue-bystander-2026-09-28/README.md
+    db/eval/dialogue-bystander-2026-10-02/dialogue.json
+    db/eval/dialogue-bystander-2026-10-02/trial.json
+    db/eval/dialogue-bystander-2026-10-02/aborted-budget.json
+    db/eval/dialogue-bystander-2026-10-02/README.md
     db/eval/dialogue-2026-09-10/dialogue.json
     db/eval/physical-dialogue-20260910/dialogue.json
     db/eval/physical-dialogue-20260910/before-board.json
@@ -234,6 +245,10 @@ module Eval
     test/fixtures/files/prompt_branches_corpus.yml
     db/eval/prompt-branches-2026-09-10/prompt.json
     db/eval/prompt-branches-2026-09-10/receipts.json
+    db/eval/prompt-branches-body-before-2026-10-02/prompt.json
+    db/eval/prompt-branches-body-before-2026-10-02/receipts.json
+    db/eval/prompt-branches-body-after-2026-10-02/prompt.json
+    db/eval/prompt-branches-body-after-2026-10-02/receipts.json
     lib/eval/realization.rb
     lib/eval/realization/admissions.rb
     lib/eval/realization/branches.rb
@@ -490,6 +505,11 @@ module Eval
     db/eval/realization-2026-09-28/requests.json
     db/eval/realization-2026-09-28/receipts.json
     db/eval/realization-2026-09-28/README.md
+    db/eval/realization-2026-10-02/realization.json
+    db/eval/realization-2026-10-02/readings.json.gz
+    db/eval/realization-2026-10-02/requests.json
+    db/eval/realization-2026-10-02/receipts.json
+    db/eval/realization-2026-10-02/README.md
     db/eval/desires-dialogue-20260919/README.md
     db/eval/desires-dialogue-20260919/after-board.json
     db/eval/desires-dialogue-20260919/before-board.json
