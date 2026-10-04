@@ -10,6 +10,9 @@
 # for byte against the app's own request, exactly as the single fixture above
 # is pinned. Only the staged state differs room to room; the questions, and
 # the pressure question's criteria, are the app's constants in every one.
+# `ROOMS=speech` sends `volition_speech_baseline_requests.json` instead: the
+# same rooms, with everybody who has something to say also asked what they
+# say (the `:speech` question), which is the request an arrival sends.
 #
 # The request is `test/fixtures/files/volition_system_one_request.json` -- the
 # staged Counting Room with Odile Vance in it. `Playthrough::Volition::RequestTest`
@@ -27,49 +30,80 @@
 # game uses deliberately logs only the status line. OpenRouter's credit reading
 # is taken before and after, and the account may be shared, so the receipts'
 # own `usage.cost` is the per-call figure and the credit delta is the bracket.
+#
+# TWO TRANSPORTS, AS THE GAME HAS: TypeSafe direct when `TYPESAFE_API_KEY` is
+# present (`SystemOneAgent`'s own precedence), otherwise OpenRouter Decisions.
+# Both send the same body and pin the same Jev release under its own name.
+# TypeSafe reports tokens and not a price, so its receipt's `cost` is the
+# input tokens at its published rate (`TYPESAFE_USD_PER_INPUT_TOKEN`; output
+# is not charged), and there is no credit reading to bracket it with.
 module Eval
   module VolitionProbe
     FIXTURE = Rails.root.join("test/fixtures/files/volition_system_one_request.json")
     ROOMS = Rails.root.join("test/fixtures/files/volition_baseline_requests.json")
+    SPEECH_ROOMS = Rails.root.join("test/fixtures/files/volition_speech_baseline_requests.json")
     CREDITS = URI("https://openrouter.ai/api/v1/credits").freeze
     ROOT = Rails.root.join("db/eval")
 
+    # docs.typesafe.ai/models: jev-1.13.0 at $0.042 per million input tokens.
+    TYPESAFE_USD_PER_INPUT_TOKEN = 0.042 / 1_000_000
+
+    # Where a run's calls go: its endpoint, the model name the body pins
+    # there, its key, and whether it has a credit reading.
+    Transport = Data.define(:name, :endpoint, :model, :key) do
+      def typesafe? = name == "typesafe_direct"
+    end
+
     module_function
+
+    def transport
+      if (key = ENV[SystemOneAgent::TYPESAFE_API_KEY_VARIABLE].presence)
+        Transport.new(name: "typesafe_direct", endpoint: SystemOneAgent::TYPESAFE_ENDPOINT,
+                      model: SystemOneAgent::TYPESAFE_MODEL, key: key)
+      elsif (key = ENV["OPENROUTER_API_KEY"].presence)
+        Transport.new(name: "openrouter_decisions", endpoint: SystemOneAgent::OPENROUTER_ENDPOINT,
+                      model: SystemOneAgent::OPENROUTER_MODEL, key: key)
+      else
+        abort "neither TYPESAFE_API_KEY nor OPENROUTER_API_KEY is set"
+      end
+    end
 
     def run!(set:, calls:, cap:)
       request = JSON.parse(FIXTURE.read)
-      body = { model: SystemOneAgent::OPENROUTER_MODEL, state: request["state"], questions: request["questions"] }
-      send_all!(set: set, cap: cap, calls: Array.new(calls) { |index| [ { "call" => index + 1 }, body ] },
+      via = transport
+      body = { model: via.model, state: request["state"], questions: request["questions"] }
+      send_all!(set: set, cap: cap, via: via, calls: Array.new(calls) { |index| [ { "call" => index + 1 }, body ] },
                 kept: { "request_sha256" => Digest::SHA256.hexdigest(body.to_json) })
     end
 
     # EVERY ROOM, REPS TIMES, rooms in the file's order within each repetition
     # so a run stopped by the ceiling has spent evenly across the rooms.
-    def run_rooms!(set:, reps:, cap:)
-      rooms = JSON.parse(ROOMS.read)
+    def run_rooms!(set:, reps:, cap:, rooms: ROOMS)
+      file = rooms
+      rooms = JSON.parse(file.read)
+      via = transport
       calls = (1..reps).flat_map do |rep|
         rooms.map do |room|
           [ { "room" => room["room"], "rep" => rep },
-            { model: SystemOneAgent::OPENROUTER_MODEL, state: room["state"], questions: room["questions"] } ]
+            { model: via.model, state: room["state"], questions: room["questions"] } ]
         end
       end
       calls.each_with_index { |(label, _), index| label["call"] = index + 1 }
-      dir = send_all!(set: set, cap: cap, calls: calls,
-                      kept: { "requests_file" => ROOMS.relative_path_from(Rails.root).to_s,
-                              "requests_sha256" => Digest::SHA256.file(ROOMS).hexdigest, "reps" => reps })
+      dir = send_all!(set: set, cap: cap, via: via, calls: calls,
+                      kept: { "requests_file" => file.relative_path_from(Rails.root).to_s,
+                              "requests_sha256" => Digest::SHA256.file(file).hexdigest, "reps" => reps })
       # The set carries the bytes it was measured on, so its summary never
       # reads a fixture that may have moved since.
-      FileUtils.cp(ROOMS, dir.join("requests.json"))
+      FileUtils.cp(file, dir.join("requests.json"))
       dir
     end
 
-    def send_all!(set:, cap:, calls:, kept:)
+    def send_all!(set:, cap:, calls:, kept:, via: transport)
       dir = ROOT.join(set)
       abort "#{dir} exists; a kept set is never written over" if dir.exist?
-      key = ENV["OPENROUTER_API_KEY"].presence or abort "OPENROUTER_API_KEY is not set"
 
       receipts = []
-      before = credits(key)
+      before = credits(via)
       spent = 0.0
 
       calls.each do |label, body|
@@ -79,7 +113,7 @@ module Eval
           break
         end
 
-        receipt = label.merge(post(key, body))
+        receipt = label.merge(post(via, body))
         receipts << receipt
         spent += receipt["cost"].to_f
         puts "call #{label["call"]} #{label["room"]}: #{receipt["status"]} cost=#{receipt["cost"].inspect} spent=#{spent.round(6)}"
@@ -92,9 +126,9 @@ module Eval
 
       dir.mkpath
       File.write(dir.join("receipts.json"), "#{JSON.pretty_generate(
-        "model" => SystemOneAgent::OPENROUTER_MODEL, "endpoint" => SystemOneAgent::OPENROUTER_ENDPOINT.to_s,
+        "model" => via.model, "endpoint" => via.endpoint.to_s, "transport" => via.name,
         **kept, "cap_usd" => cap,
-        "credits_before" => before, "credits_after" => credits(key), "receipts" => receipts
+        "credits_before" => before, "credits_after" => credits(via), "receipts" => receipts
       )}\n")
       dir
     end
@@ -110,10 +144,10 @@ module Eval
         "credit_delta" => kept.dig("credits_after", "total_usage").to_f - kept.dig("credits_before", "total_usage").to_f }
     end
 
-    def post(key, body)
-      endpoint = SystemOneAgent::OPENROUTER_ENDPOINT
+    def post(via, body)
+      endpoint = via.endpoint
       http_request = Net::HTTP::Post.new(endpoint)
-      http_request["Authorization"] = "Bearer #{key}"
+      http_request["Authorization"] = "Bearer #{via.key}"
       http_request["Content-Type"] = "application/json"
       http_request.body = body.to_json
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -123,13 +157,24 @@ module Eval
       return { "status" => response.code.to_i, "seconds" => seconds, "error_body" => response.body } unless response.is_a?(Net::HTTPSuccess)
 
       payload = JSON.parse(response.body)
-      { "status" => 200, "seconds" => seconds, "id" => payload["id"], "provider" => payload["provider"],
-        "usage" => payload["usage"], "cost" => payload.dig("usage", "cost"), "answers" => payload["answers"] }
+      { "status" => 200, "seconds" => seconds, "id" => payload["id"], "provider" => payload["provider"] || payload["model"],
+        "usage" => payload["usage"], "cost" => cost_of(via, payload["usage"]), "answers" => payload["answers"] }
     end
 
-    def credits(key)
+    # What one answered call cost: OpenRouter's own `usage.cost`, or the input
+    # tokens TypeSafe reports at its published rate.
+    def cost_of(via, usage)
+      return usage&.dig("cost") unless via.typesafe?
+
+      tokens = usage&.dig("input_tokens")
+      tokens.is_a?(Integer) ? tokens * TYPESAFE_USD_PER_INPUT_TOKEN : nil
+    end
+
+    def credits(via)
+      return nil if via.typesafe?
+
       request = Net::HTTP::Get.new(CREDITS)
-      request["Authorization"] = "Bearer #{key}"
+      request["Authorization"] = "Bearer #{via.key}"
       response = Net::HTTP.start(CREDITS.hostname, CREDITS.port, use_ssl: true) { |h| h.request(request) }
       JSON.parse(response.body)["data"]
     end

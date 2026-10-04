@@ -42,7 +42,7 @@ calling one:
 | Portion | What it records |
 | --- | --- |
 | `classifier_request` | the whole System One request for a typed line, every instruction and criterion as sent, in the rooms the line-reading portions stand in -- including the position `test/fixtures/files/scored_classifier_request.json` was sent for. The engine's own |
-| `volition_request` | the typed volition request: the room written in `test/fixtures/files/volition_system_one_request.json`, reproduced exactly, and rooms of sweep scripts. The engine's own |
+| `volition_request` | the typed volition request: the room written in `test/fixtures/files/volition_system_one_request.json`, reproduced exactly, and rooms of sweep scripts, some with `speakers` also asked what they say (the `:speech` question). The engine's own |
 | `moment` | the narration context (with and without the floor plan and the arc, with a thing just taken or dropped, with each of the story's endings) and every other person's character context. The engine's own |
 | `ledger` | what one person saw happen in one game, for everybody in games inside and past both of its bounds. The engine's own |
 | `memory` | which earlier exchanges come back into a prompt, each one's resolution and recollection, and the moment's conclusions and recollections built on them. The engine's own |

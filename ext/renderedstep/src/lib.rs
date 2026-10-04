@@ -431,8 +431,12 @@ fn built(kind: &str, records: &Records, args: &Value) -> Result<Value, String> {
                         .ok_or("a character is an id")
                 })
                 .collect::<Result<Vec<_>, _>>()?;
+            let speakers: Vec<i64> = args["speakers"]
+                .as_array()
+                .map(|speakers| speakers.iter().filter_map(Value::as_i64).collect())
+                .unwrap_or_default();
             let location = row("locations", "location")?;
-            volition::request(&game, &characters, location, text("line"))
+            volition::request_asking(&game, &characters, &speakers, location, text("line"))
         }
         "speech_choices" => {
             let game = game()?;

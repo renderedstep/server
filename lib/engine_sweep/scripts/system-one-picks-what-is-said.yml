@@ -1,0 +1,73 @@
+# THE DIE SAYS WHO SPEAKS UP, AND SYSTEM ONE SAYS WHAT.
+#
+# With System One on, the speech die still decides WHETHER somebody speaks up
+# unasked -- its silent weight, the cooldown and one speaker a turn stay the
+# engine's -- and the typed judgment then chooses WHICH of the things on
+# offer they say, or that they say nothing after all. Everybody else in the
+# room is asked their act as the typed volition request always asked it, and
+# the act replaces the die's only where the answer reads them pressured
+# enough (`volition::PRESSURE_THRESHOLD`). Whatever the call cannot answer is
+# the die's own pick, and the row says so (`decided_by`, `system_one_error`).
+#
+# WHAT EACH STEP IS FOR:
+#
+#   1  The same line as `somebody-speaks-up-unasked`, where the die lets
+#      Tamsin speak and would have her ask for the ticket. Only she is asked
+#      what she says (one `:speech` question, "Say nothing." first); the
+#      answer is the greeting, and that is what this line's paragraph is
+#      told. Rowe, who did not speak, is asked his act, and the answer, read
+#      pressured, keeps him where he is. Two volitions, one of them applied.
+#   2  System One is down for the whole line. The die lets Rowe speak, and
+#      what he says is the die's; Tamsin, quiet since she spoke, acts as the
+#      die throws. The turn is not lost, and nothing else changes.
+#
+# The records file pins the requests (the `:speech` question's bytes) and the
+# rows (who decided each, and why the die did when the call failed).
+story: Two Clerks at One Counter
+steps:
+- id: tamsin-greets-as-system-one-chose
+  type: /take brass tally
+  why: the die let Tamsin speak, and the typed answer, not the die, chose the greeting
+  browser:
+    token: take
+    replies:
+    - purpose: system_one
+      content:
+        person_1:speech: speech_2
+    - purpose: narration
+      content: You lift the brass tally off the counter, and Tamsin says good morning.
+      prompt_includes:
+      - 'What else happened here, recorded by the game: Tamsin Gale spoke up unasked and greeted Ansel Mott.'
+      prompt_excludes:
+      - Tamsin Gale spoke up unasked and asked
+      - Rowe Harker spoke up unasked
+    - purpose: system_one
+      content:
+        person_1:act: act_1
+        person_1:pressure: 0.9
+  expect:
+    changed: true
+    carrying: [brass tally, pawn ticket]
+    present: [Rowe Harker, Tamsin Gale]
+    volitions: 2
+    acts: 1
+- id: the-die-decides-when-system-one-is-down
+  type: /examine pawn ticket
+  why: a typed call that fails leaves every choice on the line to the die, and the line is still played
+  browser:
+    token: look
+    replies:
+    - purpose: system_one
+      unavailable: true
+    - purpose: narration
+      content: The ticket is creased where you have been holding it.
+      prompt_includes:
+      - Rowe Harker spoke up unasked
+      prompt_excludes:
+      - Tamsin Gale spoke up unasked
+    - purpose: system_one
+      unavailable: true
+  expect:
+    carrying: [brass tally, pawn ticket]
+    present: [Rowe Harker, Tamsin Gale]
+    volitions: 2
