@@ -143,6 +143,246 @@ test/models/playthrough/adversarial_flow_test.rb:
     by:
     - sweep failed-rendering-still-completes-a-turn#a-charged-crossing-outlives-its-renderer
     - sweep failed-rendering-still-completes-a-turn#redelivered-arrival-does-not-pay-again
+test/models/playthrough/arc_outcome_test.rb:
+  an arc with one ending reaches it:
+    pins: a finished arc with a single default outcome reaches it
+    by:
+    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+  a second ending whose rule does not hold changes nothing:
+    pins: a conditional outcome whose condition fails leaves the default as the ending
+    by:
+    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+  an ending nothing selects is never reached, whatever order it is written in:
+    pins: a non-default outcome with no condition is never selected
+    open: 'no walked world has a condition-less non-default outcome; port: Rust test
+      inserting one (lower id than the default) into the-iron-gate-descends and walking
+      to the end, asserting ending rescued (Turn::conclude filters on non-empty condition)'
+  a game that ran past the budget reaches the ending that says so:
+    pins: 'slower_than: story_now > start + minutes selects that outcome'
+    open: 'no world uses slower_than; port: a world under lib/engine_sweep/worlds/
+      (or Rust test adding a quest_outcomes row) whose arc ends after a fight buys
+      minutes past the budget (Turn::satisfies slower_than)'
+  a game that finished on the stroke of the budget was not slower than it:
+    pins: 'slower_than is strict: finishing exactly at the budget falls through to
+      the default'
+    open: same gap as above; the boundary case (story_now == start + minutes) needs
+      its own assertion
+  taking the beats out of the arc's order reaches the ending that says so:
+    pins: 'out_of_order: beats reached in a non-ascending position order select that
+      outcome'
+    by:
+    - sweep an-arc-that-ends-the-other-way#the-last-beat-is-the-first-one
+  taking them in order falls through to the default:
+    pins: beats reached in order do not satisfy out_of_order, so the default is reached
+    by:
+    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+  a beat reached while they were still alive reaches the ending that says so:
+    pins: 'while_alive: the named character alive when the named beat landed selects
+      that outcome'
+    by:
+    - sweep an-ending-taken-under-his-hands#the-tally-off-his-body
+  a beat reached after they died falls through to the default:
+    pins: a killing blow before the beat makes while_alive fail
+    by:
+    - sweep an-ending-the-ringer-did-not-stand-for#the-tally-last
+  a fight that opened on the minute the beat was reached came after it:
+    pins: a killing blow stamped at the same minute as the beat counts as after it
+      (died >= reached)
+    by:
+    - sweep an-ending-taken-under-his-hands#the-tally-off-his-body
+  a blow that did not kill them is not a death:
+    pins: only a blow with hp_after 0 marks the character's death
+    by:
+    - sweep an-ending-taken-under-his-hands#the-tally-off-his-body
+    partial: 'non-killing blows land on the Ringer, but at the beat''s own minute,
+      so counting them as deaths would not change the outcome; port: Rust test with
+      a non-killing playthrough_blows row on Marek Sollen stamped before beat 3 (Turn::alive_at_beat
+      hp_after filter)'
+  a toll that killed them is a death too:
+    pins: a killing playthrough_tolls row on the character also counts as their death
+    open: 'no walk tolls an NPC to death; port: Rust test inserting a killing toll
+      for Marek Sollen before beat 3 and asserting the-bearing-holds (Turn::alive_at_beat
+      tolls arm)'
+  a body at zero with no record of dying does not count as alive:
+    pins: dead vitals with no killing blow/toll makes while_alive fail
+    open: 'port: Rust test setting the Ringer''s playthrough_vitals to 0 hp with no
+      blow row, then walking to the end (Turn::alive_at_beat vitals fallback)'
+  somebody who is dead in another game is alive in this one:
+    pins: another playthrough's killing blow does not count against this game's while_alive
+    open: 'port: a two-player Lunar Cartographer walk (player: second) where game
+      1 kills the Ringer and game 2 takes book then tally while he stands, expecting
+      taken-under-his-hands; Turn::alive_at_beat reads game().own'
+  the first rule the world wrote wins:
+    pins: when two conditional outcomes both hold, the lowest-id one is reached
+    open: 'no world has two conditional outcomes; port: Rust test adding a slower_than
+      row (lower id) beside too-late on the-iron-gate-descends and walking an-arc-that-ends-the-other-way
+      past the budget (Turn::conclude find over id-ordered rows)'
+  the turn that concluded says what it concluded:
+    pins: the concluding turn exposes the ending, outcome and closing scene for the
+      ending narration
+    by:
+    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+  a turn that concluded nothing says nothing:
+    pins: a turn that ends nothing claims no conclusion
+    by:
+    - sweep a-room-written-while-the-arc-waits#the-brother-the-arc-waited-for
+  a later turn of a finished game claims no ending to narrate:
+    pins: a turn after the ending does not conclude again
+    by:
+    - sweep an-ending-with-words#and-the-words-outlive-the-turn
+    partial: 'the line after the ending is refused and the ending/ending_words stay;
+      it is not a browser step, so no ''no ending call'' assertion; port: make it
+      a browser step with no replies'
+  finishing the arc writes a quest event carrying the playthrough:
+    pins: finishing writes one unscheduled quest WorldEvent with the playthrough,
+      the outcome name and arc title
+    open: 'world_events row: source quest, playthrough_id set, scheduled_for null,
+      summary "<title> was finished (<name>): ..."'
+  one quest event per game, whichever way the game went:
+    pins: repeated arc runs after finishing add no quest event
+    open: records hold exactly one quest event per playthrough across two games; re-running
+      the arc on a finished game is unreachable in Rust (lines refused), so the quest_event_recorded
+      guard on that path is unexercised
+  an ending with a ramification puts one scheduled row on the stream:
+    pins: an outcome with a ramification writes one quest row scheduled at ending
+      + minutes with the ramification summary
+    by:
+    - sweep an-arc-that-ends-the-other-way#the-last-beat-is-the-first-one
+    partial: 'asserts scheduled 1 / fired 0 only, not scheduled_for, occurred_at or
+      summary; port: add records/an-arc-that-ends-the-other-way.json ({"steps": []})
+      and `parity --write`'
+  a ramification carries no playthrough:
+    pins: the scheduled ramification row has no playthrough_id
+    by:
+    - sweep an-arc-that-ends-the-other-way#the-last-beat-is-the-first-one
+    partial: scheduled counts world rows plus this game's, so a playthrough-scoped
+      row would still pass; same records port pins playthrough_id null
+  an ending with no ramification schedules nothing:
+    pins: an outcome without a ramification writes no scheduled row
+    by:
+    - golden an-ending-with-words#the-cell-and-the-end-of-the-story
+  a failure schedules nothing, because it reached no ending:
+    pins: a failed arc writes only the failure event, never the ramification
+    open: no failure is asserted anywhere (see arc_test failure gaps); the records
+      port on a-fight-that-kills-the-player would pin it only if that world's default
+      outcome has a ramification, so a Rust test on the-iron-gate-descends (default
+      given a ramification, player killed) is the precise port
+test/models/playthrough/arc_test.rb:
+  a reach_location beat is reached by standing in the room:
+    pins: a bound reach_location step is reached exactly when the game's current location
+      is the target room
+    by:
+    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+    - sweep an-ending-taken-under-his-hands#the-one-fixed-point
+  an unbound step is never reached, whatever the world happens to contain:
+    pins: a step with no target row is never reached even when the party stands in
+      a room carrying its target_name
+    by:
+    - golden a-deadline-places-what-the-arc-waits-for#into-the-cold-store
+    partial: 'golden records beats 2/3 unbound and never reached, but the player never
+      stands in a room named like the unbound target; port: Rust test that clears
+      quest_steps.target_id on iron-gate beat 3 and walks into the dry cell (Turn::beat_reached
+      returns false on no target_id)'
+  a place with an inside is reached by walking into its entry room:
+    pins: a reach_location step naming a laid-out place is reached by standing in
+      its entry room
+    by:
+    - sweep two-players-of-one-arc#in-through-the-way-in
+    - sweep an-ending-with-words#in-through-the-low-door
+  a speak_to beat is reached by the interaction the turn wrote:
+    pins: a speak_to step is reached when the current scene carries an interaction
+      with the target
+    by:
+    - sweep a-room-written-while-the-arc-waits#the-brother-the-arc-waited-for
+  speaking to somebody else does not reach the beat:
+    pins: an interaction with a different character does not reach a speak_to step
+    open: 'no walk talks to someone other than a bound speak_to target; port: Rust
+      test on a-yard-before-the-winter (speak_to Warden Hesk) or a-bell-nobody-has-rung
+      inserting an interaction with another character and asserting no playthrough_beats
+      row (Turn::beat_reached speak_to arm)'
+  a hold_item beat is reached by this game's own copy being in the party's hands:
+    pins: a hold_item step is reached when the game's copy of the target item is carried
+    by:
+    - sweep the-iron-gate-descends#take-the-proof-he-passed-this-way
+    - sweep two-players-of-one-arc#the-first-game-takes-the-ring
+  the world's own row lying in a room does not reach a hold_item beat:
+    pins: the target item lying in a room (not held) does not reach a hold_item step
+    by:
+    - sweep the-iron-gate-descends#the-gate-as-the-world-was-generated
+    partial: ring lying here with quest beat 1 bound; pins lying != holding, but not
+      the world-row vs game-copy layer distinction specifically
+  a time_passed beat is reached off this game's own clock:
+    pins: a time_passed step is reached once the game's story_now passes start_time
+      + minutes
+    open: 'no world has a time_passed step; port: Rust test (or world under lib/engine_sweep/worlds/)
+      with a time_passed step and a fight/travel that buys the minutes (Turn::beat_reached
+      time_passed arm)'
+  one player's beat is invisible to another player of the same world:
+    pins: a beat reached by one playthrough is not reached for another playthrough
+      of the same story
+    by:
+    - sweep two-players-of-one-arc#the-second-game-has-not
+  a beat is written once, however many turns stand in the room:
+    pins: repeated turns while a trigger stays true write one playthrough_beats row
+    open: records pin exactly one beat row (the bell, reach_location) from into-the-tower
+      through back-in-to-the-body, 25 turns in the room
+  reached_at is story time and not the wall clock:
+    pins: a beat's reached_at is the game's story_now
+    open: beat rows carry reached_at 08:01 / 08:11 / 08:12 story clock (and 23:00
+      = story start in the Lunar walk), not the load time
+  reaching the last beat ends the playthrough with the stored sentence:
+    pins: the last beat writes the outcome, ends the game and writes an engine-authored
+      conclude scene with the outcome sentence
+    by:
+    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+  an arc with beats left does not end anything:
+    pins: reaching some but not all beats writes no ending and keeps the game open
+    by:
+    - sweep an-arc-that-ends-the-other-way#the-cell-with-nothing-to-show-for-it
+  an arc with no ending to reach closes nothing:
+    pins: a finished main arc with no quest_outcomes rows does not end the game
+    open: 'every walked world''s arc has outcomes; port: Rust test deleting quest_outcomes
+      on the-iron-gate-descends and walking an-ending-with-words'' lines, asserting
+      no playthrough_endings row and ended_at null (Turn::conclude `let Some(reached)
+      else return`)'
+  a game that ends short of the arc writes a failed-quest event:
+    pins: an ended game with its arc unfinished writes one quest WorldEvent carrying
+      the playthrough and the step it stopped at
+    open: 'Turn::record_failure runs (a-fight-that-kills-the-player dies in The Salt
+      Assizes, which has an arc) but nothing asserts the row; port: add tmp/engine/parity/records/a-fight-that-kills-the-player.json
+      ({"steps": []}) and `parity --write` so the ''left unfinished'' world_events
+      row is pinned'
+  the failure is written once:
+    pins: repeated arc runs on an ended game write the failure event once
+    open: 'same port as above: the refused lines after death in a-fight-that-kills-the-player
+      would pin one row (Turn::quest_event_recorded guard)'
+  a game that FINISHED the arc and then ended writes no failure:
+    pins: a game that reached an ending writes no failed-quest event afterwards
+    by:
+    - sweep an-ending-with-words#and-the-words-outlive-the-turn
+    partial: the line after the ending is refused with changed false, and records
+      hold one success event per game; Rust never re-runs run_arc on a finished game,
+      so record_failure's ending guard is unexercised
+  dying on the very turn the last beat would have landed is a failure:
+    pins: when the game is over on the turn the last beat would land, no beat or ending
+      is written and a failure event is
+    open: 'no walk dies on its last beat; port: Rust test on the-iron-gate-descends
+      setting the player to 1 hp with a killing hazard on the dry cell (or its doorway),
+      walking to it and asserting no beat 3, no playthrough_endings, one ''left unfinished''
+      event (Turn::run_arc over() check before beats)'
+  the next open step is one line and never the conclusion:
+    pins: Arc#next_step (surviving reader) is the lowest unreached step; uses Arc#run!
+      only to write the first beat
+    stays: reads the next open step off a beat row (`Playthrough::Arc#next_step`,
+      the glance's reader)
+  a doomed arc tells the narrator nothing:
+    pins: Arc#next_step is nil for a doomed main arc
+    stays: not-loop
+  a story with no arc writes nothing and answers nothing:
+    pins: with no quest, run! writes nothing and next_step/ending are nil
+    open: 'The Furnished Rooms has no quests: records hold zero beats/endings/quest
+      events on every step and the golden dumps quest {} and ending none (Turn::run_arc
+      early return)'
 test/models/playthrough/cast_test.rb:
   the room's cast is the world's, plus the party:
     pins: cast_in includes the world's residents and the protagonist
@@ -1901,12 +2141,12 @@ test/models/playthrough/riposte_test.rb:
       with a fragile player
   a playthrough with no protagonist has nobody to strike:
     pins: no protagonist, no blows
-    obsolete: ruby-only plumbing guard; Rust equivalent is the player() None early
-      return in Mechanics::riposte, unreachable from a walk
+    by:
+    - rust tests/no_player.rs::a_foe_has_nobody_to_strike_in_a_game_with_no_player_or_no_room
   nowhere answers nothing:
     pins: a nil location yields no blows
-    obsolete: ruby-only plumbing guard; Rust equivalent is the location None early
-      return in Mechanics::riposte
+    by:
+    - rust tests/no_player.rs::a_foe_has_nobody_to_strike_in_a_game_with_no_player_or_no_room
   the blow belongs to the room it was thrown in and not to where the party ended up:
     pins: walking out of a fight draws a blow filed in the room left, and the fight
       there closes
@@ -1967,8 +2207,10 @@ test/models/playthrough/turn_check_test.rb:
     obsolete: ruby-only plumbing (nil argument); Rust check takes a &Row
   an ability outside the three raises:
     pins: an unknown ability raises ArgumentError
-    obsolete: ruby-only plumbing; in Rust an unknown ability is refused by the reader
-      (a-check-against-an-ability#and-not-by-a-fragment, 'not one of the three abilities')
+    by:
+    - sweep a-check-against-an-ability#and-not-by-a-fragment
+    partial: the engine refuses an unknown ability in its reader ("not one of the
+      three abilities") rather than raising from the check
 test/models/playthrough/turn_concurrency_test.rb:
   overlapping processes preserve both commands and do not hold SQLite's writer across rendering:
     pins: two worker processes on one game play one at a time in order, and the writer
@@ -4066,12 +4308,124 @@ test/models/story_test.rb:
     stays: does not play the Ruby loop
   what a party is carrying is not the starting inventory either:
     stays: does not play the Ruby loop
+test/models/world_mechanic/physical_shuffle_test.rb:
+  moving a keyed doorway preserves both games' openings and each directed hazard:
+    pins: a moved keyed doorway keeps its id, barrier, key, every game's passages
+      and per-direction hazard, and a toll on a moved doorway is detached
+    by:
+    - sweep a-moving-door-keeps-its-lock#the-original-opening-follows-the-door
+    - sweep a-moving-door-keeps-its-lock#the-return-direction-keeps-the-opening-too
+    - sweep a-moving-door-keeps-its-lock#the-moved-door-is-still-locked-in-another-game
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+    partial: 'covers lock + key kept, the opener''s passage both ways, the other game
+      still locked, doorway id and passage row kept; not covered: a second game''s
+      own opening kept, forward-only hazard/hazard_die, tolls nulled with where_it_was;
+      port: extend tests/shuffle.rs setup with a hazard on doorway 1000000007, a second
+      game''s passage and a toll, then pin playthrough_tolls (Turn::doorway_state
+      / remove_edge)'
+  a failed doorway rewrite rolls back deleted barriers and opening receipts:
+    pins: a write failure mid-shuffle leaves doorways, passages, tolls and events
+      as they were
+    by:
+    - rust tests/engine.rs::a_world_mechanic_of_a_kind_there_is_not_fails_the_line_and_keeps_nothing
+    - rust src/engine.rs::an_error_inside_a_turn_keeps_nothing
+    partial: 'a failing mechanic keeps nothing and turn errors roll back, but no test
+      fails after remove_edge has deleted rows; port: a Rust test injecting a store
+      failure on the second location_connections insert in Turn::shuffle_connections'
 test/models/world_mechanic/physical_sweep_test.rb:
   a browser walk keeps an opened moving door separate from the other game's lock:
     pins: walks a-moving-door-keeps-its-lock.yml on the Ruby loop (EngineSweep::Walk#play)
       and requires it to pass
     by:
     - sweep a-moving-door-keeps-its-lock
+test/models/world_mechanic/shuffle_connections_test.rb:
+  only edges from a mobile place to one that is not are candidates:
+    pins: anchor_edges is every doorway from a mobile room to an anchored one
+    by:
+    - vector shuffle_connections
+  a night repoints at least two edges:
+    pins: a shuffle night writes an event at the boundary and repoints at least two
+      anchor edges
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  every location keeps the same number of exits:
+    pins: the shuffle preserves every location's exit count
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  the world stays connected:
+    pins: after a night every location is reachable
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+    - vector shuffle_connections
+  an edge between two mobile places is left alone:
+    pins: doorways with two mobile ends are never touched
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  both directions of a repointed edge are written:
+    pins: each repointed doorway has a matching way back with the same distance and
+      method
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  a repointed edge keeps its distance and travel method:
+    pins: a repointed doorway keeps its own distance and travel method
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  the same night shuffles the same way every time:
+    pins: the arrangement is a pure function of story id and boundary
+    by:
+    - vector shuffle_connections
+  different nights do not all shuffle the same way:
+    pins: different boundaries give different arrangements
+    by:
+    - vector shuffle_connections
+  the event names what moved, from the end the player stands in:
+    pins: the event summary says '<mobile room> now opens onto X instead of Y.' for
+      each move
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  the event records the places it touched:
+    pins: the event links every mobile room and old/new anchor it touched
+    by:
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+  a world with fewer than two shufflable edges does not move:
+    pins: with under two anchor edges the night writes nothing and returns no event
+    open: 'no vector case has fewer than two anchor edges and the `edges.len() < 2`
+      guard in Turn::shuffle_connections is untested; port: a shuffle_connections
+      vector case with one anchor edge (arrangements all null) plus a Rust test on
+      a-lock-in-the-moving-city with one doorway removed asserting no world_events
+      row'
+  a night that would split the world in two is refused:
+    pins: an arrangement that disconnects the graph is never chosen
+    open: 'checked: no vector graph has a disconnecting candidate permutation, so
+      Graph::connected never decides an output; port: add the test''s A/B/C + X/Y/Z
+      graph to the shuffle_connections portion with 14 ats'
+  swapping one mobile place's own two edges is not a rearrangement:
+    pins: an arrangement with the same room-anchor adjacency is rejected and nothing
+      is written
+    by:
+    - vector shuffle_connections
+    partial: '25 all-null graphs (e.g. graph 0) exercise the same-adjacency rejection
+      in Graph::valid, but none is the single-mobile-room shape and nothing asserts
+      no rows; port: a vector case with one mobile room and two anchors'
+  a transposable pair of edges writes nothing on any night:
+    pins: a single mobile room with two anchor doorways never shuffles, on any of
+      14 nights
+    by:
+    - vector shuffle_connections
+    partial: 'same as above: the rule is pinned on other shapes; the exact shape over
+      14 ats would make it exact'
+  every sentence the log writes is true of the graph:
+    pins: within a mobile room a doorway that could stay put stays, and no sentence
+      claims a move that did not happen
+    by:
+    - vector shuffle_connections
+    - rust tests/shuffle.rs::the_nightly_shuffle_turns_the_mobile_doorways_as_the_ruby_engine_does
+    partial: vectors pin settle() output against Ruby's in 60 graphs and the fixture
+      pins one summary; no multi-night check that sentences match the graph
+  a world with nothing mobile does not move:
+    pins: a world with no mobile locations is never shuffled
+    open: 'no vector case without mobile rooms; port: a shuffle_connections vector
+      case with all locations anchored (anchor_edges [], arrangements null)'
 test/models/world_mechanic_test.rb:
   operation resolves the kind to the Ruby class that implements it:
     pins: WorldMechanic#operation maps kind shuffle_connections to WorldMechanic::ShuffleConnections
