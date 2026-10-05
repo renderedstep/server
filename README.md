@@ -128,6 +128,14 @@ bin/dev                # then open http://localhost:3000
 — under foreman, with both logs interleaved. `PORT=3142 bin/dev` moves the whole
 formation if something else already has 3000.
 
+For the terminal client `ta` (renderedstep/terminal),
+start it with `bin/dev --ta`: the same two processes on port 3100, which is the
+address `ta` is configured with (`engine_url = "http://127.0.0.1:3100"`). It
+stops first if the engine extension is not built, and warns if it is older than
+the pinned engine, since `ta` plays every turn through it and would otherwise
+see only a 500. `ta` also needs a player token from `rake players:invite[name]`
+below, stored once with `ta login`. An explicit `PORT` still wins over `--ta`.
+
 Why two: **a turn is a `NarrationJob`, not a request.** The browser posts the
 command, gets an acknowledgement back immediately (a fresh submission token;
 `play.js` echoes the typed line itself), and reads the prose as Turbo
@@ -511,6 +519,7 @@ toolchain.
 ```bash
 bin/rails engine:build          # cargo build --release --locked, then into ext/renderedstep/build/
 PORT=3142 bin/dev               # play; restart after a rebuild
+bin/dev --ta                    # the same, on 3100, for the terminal client `ta`
 ENGINE_SOURCE=../engine bin/rails engine:build   # against a local checkout of the engine instead
 ```
 
