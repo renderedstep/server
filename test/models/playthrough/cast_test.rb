@@ -20,7 +20,7 @@ class Playthrough::CastTest < ActiveSupport::TestCase
     @game = create(:playthrough, story: @story, character: @protagonist, current_location: @room)
   end
 
-  def kill!(character) = Playthrough::Turn.new(@game).harm!(character, character.max_hp)
+  def kill!(character) = wound!(@game, character, character.max_hp)
 
   test "the room's cast is the world's, plus the party" do
     assert_includes @game.cast_in(@room), @rowe

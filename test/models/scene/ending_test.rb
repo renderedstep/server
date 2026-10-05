@@ -177,7 +177,7 @@ class Scene::EndingTest < ActiveSupport::TestCase
   # with an ending on record, and any other pass's moment still does not mention
   # it.
   test "the ending is stated to the pass that asks for it and to nothing else" do
-    conclude!
+    concluded!
 
     assert_not_includes EngineMoment.new(@game.reload).narration_context, "The story has ended"
     assert_includes EngineMoment.new(@game.reload, ending: @outcome).narration_context,
@@ -192,7 +192,7 @@ class Scene::EndingTest < ActiveSupport::TestCase
   test "the ending is told who lies dead here, by the name the world's prose uses too" do
     ringer = create(:character, story: @story, fullname: "Marek Sollen", nickname: "the Ringer", location: @cell)
     create(:playthrough_vitals, :dead, playthrough: @game, character: ringer)
-    conclude!
+    concluded!
 
     ending = EngineMoment.new(@game.reload, ending: @outcome).narration_context
     assert_includes ending, "Dead here: Marek Sollen (the Ringer). They cannot speak or act."
@@ -213,7 +213,7 @@ class Scene::EndingTest < ActiveSupport::TestCase
 
   test "an ending with nobody dead in the room is told nothing about the dead" do
     create(:character, story: @story, fullname: "Marek Sollen", nickname: "the Ringer", location: @cell)
-    conclude!
+    concluded!
 
     assert_not_includes EngineMoment.new(@game.reload, ending: @outcome).narration_context, "Dead here"
   end
@@ -231,6 +231,17 @@ class Scene::EndingTest < ActiveSupport::TestCase
     arc = Playthrough::Arc.new(@game.reload)
     arc.run!
     arc.conclusion
+  end
+
+  # THE ROWS A CONCLUDED ARC LEAVES, for a test of what the ending's pass is
+  # told: the reached outcome, the closing scene with the engine's sentence on
+  # it, the chain head pointed at it, and the game ended.
+  def concluded!
+    scene = create(:scene, story: @story, location: @cell, previous_scene: @game.current_scene,
+                           description: @outcome.summary, summary: @outcome.summary, resolved_action: "conclude")
+    create(:playthrough_ending, playthrough: @game, quest_outcome: @outcome)
+    @game.update!(current_scene: scene)
+    @game.end!
   end
 
   def narrate(conclusion, answer, &block)

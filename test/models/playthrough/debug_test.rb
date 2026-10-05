@@ -619,4 +619,47 @@ class Playthrough::DebugTest < ActiveSupport::TestCase
   ensure
     had ? ENV[key] = previous : ENV.delete(key)
   end
+
+  # --- what a turn cost ------------------------------------------------------
+
+  # THE COST AND THE MODEL OF THE TURN JUST TAKEN, read off the messages filed
+  # under its scene: the classifier's exchange and the narrator's.
+  test "the debug view shows the cost and the model for the turn just taken" do
+    game = create(:playthrough, :started)
+    scene = create(:scene, story: game.story, location: game.current_location, previous_scene: game.current_scene,
+                           typed: "look at the awnings")
+    game.update!(current_scene: scene)
+    model = create(:model, :ollama)
+    { "classifier" => [ 120, 40 ], "narration" => [ 90, 12 ] }.each do |purpose, (input, output)|
+      chat = create(:chat, playthrough: game, purpose: purpose, model: model)
+      create(:message, chat: chat, model: model, scene: scene)
+      create(:message, :assistant, chat: chat, model: model, scene: scene, input_tokens: input, output_tokens: output)
+    end
+
+    turn = Playthrough::Debug.new(Playthrough.find(game.id)).latest_turn
+
+    assert_predicate turn, :recorded?
+    assert_equal 210, turn.input_tokens
+    assert_equal 52, turn.output_tokens
+    assert_equal [ "gemma3:12b" ], turn.models
+    assert_equal %w[classifier narration], turn.conversations.map(&:purpose).sort
+    assert_equal "look at the awnings", turn.typed
+  end
+
+  # A conversation with a character runs across turns, and the view finds the
+  # one still open.
+  test "the debug view finds the conversation a character is still having" do
+    game = create(:playthrough, :started)
+    grenn = create(:character, story: game.story, fullname: "Grenn Ollivar", location: game.current_location)
+    scene = create(:scene, story: game.story, location: game.current_location, previous_scene: game.current_scene)
+    game.update!(current_scene: scene)
+    chat = create(:chat, playthrough: game, purpose: Chat::CHARACTER, character: grenn)
+    create(:message, chat: chat, scene: scene)
+    create(:message, :assistant, chat: chat, scene: scene)
+
+    debug = Playthrough::Debug.new(Playthrough.find(game.id))
+
+    assert_equal [ grenn ], debug.durable_conversations.map(&:character)
+    assert_operator debug.output_tokens, :>, 0
+  end
 end
