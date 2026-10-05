@@ -5,6 +5,10 @@ require "test_helper"
 # and the engine sweep's browser turns) are what prove the browser plays
 # through it unchanged; these pin the session's own answers, and the guard.
 class Playthrough::SessionTest < ActiveSupport::TestCase
+  # A turn played here is played by the Rust engine, as a player's is
+  # (`PlaysOnRust`).
+  include PlaysOnRust
+
   # ONE LOOP, ONE WAY IN. A front end that builds its own `Playthrough::Turn`
   # has taken a share of the loop the session exists to own -- the outcome's
   # wording, the start of a game, the order lines are accepted in -- and the
@@ -125,16 +129,16 @@ class Playthrough::SessionTest < ActiveSupport::TestCase
     assert_predicate Playthrough::Session.new(create(:playthrough, :started)).accept!("/look", "b"), :persisted?
   end
 
+  # The engine makes the turn's model calls itself, so what is asserted is
+  # that the whole turn -- every chunk of prose its calls stream -- is played
+  # with the game's player current, and that nothing of it outlives the turn.
   test "every model call a turn makes is made with the game's player current" do
     player = create(:player)
     game = create(:playthrough, :started, player: player)
     seen = []
-    agent = FakeAgent.new({ "intent" => "other", "target" => "nothing" }, "The room is quiet.")
-    agent.define_singleton_method(:ask) do |*args, **kwargs, &block|
-      seen << Current.player
-      super(*args, **kwargs, &block)
+    replying(reply(:classifier, NOT_A_MOVE), reply(:narration, "The room is quiet.")) do
+      Playthrough::Session.new(game).play("look around") { seen << Current.player }
     end
-    BaseAgent.stub(:new, agent) { Playthrough::Session.new(game).play("look around") }
 
     assert_predicate seen, :any?
     assert_equal [ player ], seen.uniq

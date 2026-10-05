@@ -3,11 +3,14 @@ require "turbo/broadcastable/test_helper"
 
 # WHAT A JOB THAT PLAYS MORE THAN ONE LINE HAS TO GET RIGHT.
 #
-# `Playthrough::Turn#play` drains the submissions accepted before its own so
-# the accepted order survives a non-FIFO lock. That made one `Turn` play two
-# turns and one delivery arrive after a newer one had landed, and both are
-# states nothing in the loop had ever been in.
+# A turn drains the submissions accepted before its own so the accepted order
+# survives a non-FIFO lock. That made one turn play two lines and one delivery
+# arrive after a newer one had landed, and both are states nothing in the loop
+# had ever been in. The deliveries below are the browser's own, through
+# `NarrationJob`, played by the Rust engine (`PlaysOnRust`); the tests that
+# build a `Playthrough::Turn` are the Ruby loop's own.
 class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
+  include PlaysOnRust
   include Turbo::Broadcastable::TestHelper
 
   NOT_A_MOVE = { "intent" => "other", "target" => "nothing", "also_named" => "nothing", "thrown_at" => "nothing" }.freeze
@@ -70,7 +73,7 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
     reading = { "intent" => "drop", "target" => "red coin", "also_named" => "nothing", "thrown_at" => "nothing" }
 
     drained = capture_turbo_stream_broadcasts(@game) do
-      BaseAgent.stub(:new, FakeAgent.new(reading, "You pick up the red coin.")) do
+      replying(reply(:classifier, reading), reply(:narration, "You pick up the red coin.")) do
         NarrationJob.perform_now(@game.id, "/take red coin", "second")
       end
     end
@@ -81,10 +84,9 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
     assert_not_includes drained.last.to_html, "drop red coin",
                         "the later line's page is the one that stands"
 
+    # An overtaken delivery must not ask a model: no reply is declared.
     overtaken = capture_turbo_stream_broadcasts(@game) do
-      BaseAgent.stub(:new, ->(*) { flunk "an overtaken delivery must not ask a model" }) do
-        NarrationJob.perform_now(@game.id, "drop red coin", "first")
-      end
+      replying { NarrationJob.perform_now(@game.id, "drop red coin", "first") }
     end
 
     assert_empty overtaken, "the page the player is reading is newer than this submission"
@@ -100,15 +102,12 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
     refusal = { "intent" => "take", "target" => "a brass key nobody has", "also_named" => "nothing", "thrown_at" => "nothing" }
 
     capture_turbo_stream_broadcasts(@game) do
-      BaseAgent.stub(:new, FakeAgent.new(refusal)) do
-        NarrationJob.perform_now(@game.id, "look around", "first")
-      end
+      replying(reply(:classifier, refusal)) { NarrationJob.perform_now(@game.id, "look around", "first") }
     end
 
+    # A duplicate delivery must not ask a model: no reply is declared.
     repeated = capture_turbo_stream_broadcasts(@game) do
-      BaseAgent.stub(:new, ->(*) { flunk "a duplicate delivery must not ask a model" }) do
-        NarrationJob.perform_now(@game.id, "look around", "first")
-      end
+      replying { NarrationJob.perform_now(@game.id, "look around", "first") }
     end
 
     assert_equal 1, repeated.length
@@ -116,10 +115,13 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
   end
 
   # A PAGE THE CONSUMER CANNOT DELIVER IS NOT A LINE THE PLAYER LOSES. The
-  # pending page is broadcast from INSIDE `Command#execute!`, so a cable write
-  # that raised marked a submission `failed` before its line had ever been
-  # played: the player read an internal-failure notice for a line that was
-  # simply gone, and a redelivery of that token raised instead of replaying it.
+  # pending page used to be broadcast from INSIDE `Command#execute!`, so a
+  # cable write that raised marked a submission `failed` before its line had
+  # ever been played: the player read an internal-failure notice for a line
+  # that was simply gone, and a redelivery of that token raised instead of
+  # replaying it. The engine drains the earlier line and tells nobody about it
+  # (`Playthrough::RustEngine::Turn`), so the one pending page is the delivered
+  # line's own.
   test "a pending page that cannot be broadcast still plays every accepted line" do
     Playthrough::Command.accept!(@game, "look around", "first")
     attempted = []
@@ -133,20 +135,17 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
     end
 
     Turbo::StreamsChannel.stub(:broadcast_replace_to, refusing_start) do
-      OfflineExchange.with(NOT_A_MOVE, "You look around the room.", NOT_A_MOVE, "The room is quiet.") do
-        NarrationJob.perform_now(@game.id, "wait quietly", "second")
-      end
+      replying(*two_quiet_lines) { NarrationJob.perform_now(@game.id, "wait quietly", "second") }
     end
 
-    assert_equal [ "look around", "wait quietly" ], attempted, "both pending pages were attempted"
+    assert_equal [ "wait quietly" ], attempted, "the delivered line's pending page was attempted"
     assert_equal %w[completed completed], @game.commands.order(:id).pluck(:status)
     assert_equal [ "look around", "wait quietly" ], @game.reload.scene_chain.drop(1).map(&:typed)
     assert_equal "The room is quiet.", @game.current_scene.description
 
+    # A redelivery must not ask a model: no reply is declared.
     replayed = capture_turbo_stream_broadcasts(@game) do
-      BaseAgent.stub(:new, ->(*) { flunk "a redelivery must not ask a model" }) do
-        NarrationJob.perform_now(@game.id, "look around", "first")
-      end
+      replying { NarrationJob.perform_now(@game.id, "look around", "first") }
     end
 
     assert_empty replayed, "the drain passed that submission, so its own delivery still says nothing"
@@ -156,9 +155,12 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
   # THE SAME RULE ONE ROW ALONG. The final page is delivered outside the
   # receipt, so a failure there cost no submission its status -- it raised out
   # of the drain loop instead, and every line accepted behind the one that had
-  # just finished stayed pending with nothing left to play it.
+  # just finished stayed pending with nothing left to play it. So the first
+  # line's job fails to deliver its finish, and the line accepted behind it is
+  # still played by its own job and reaches its own page.
   test "a finish page that cannot be broadcast does not strand the line behind it" do
     Playthrough::Command.accept!(@game, "look around", "first")
+    Playthrough::Command.accept!(@game, "wait quietly", "second")
     finishes = 0
     broadcast = Turbo::StreamsChannel.method(:broadcast_replace_to)
     refusing_first_finish = lambda do |*args, **kwargs|
@@ -170,10 +172,10 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
       broadcast.call(*args, **kwargs)
     end
 
+    first, second = two_quiet_lines.each_slice(2).to_a
     Turbo::StreamsChannel.stub(:broadcast_replace_to, refusing_first_finish) do
-      OfflineExchange.with(NOT_A_MOVE, "You look around the room.", NOT_A_MOVE, "The room is quiet.") do
-        NarrationJob.perform_now(@game.id, "wait quietly", "second")
-      end
+      replying(*first) { NarrationJob.perform_now(@game.id, "look around", "first") }
+      replying(*second) { NarrationJob.perform_now(@game.id, "wait quietly", "second") }
     end
 
     assert_equal 2, finishes, "the line behind the undelivered page reached its own page"
@@ -198,6 +200,13 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
   end
 
   private
+
+  # The earlier line, then the one the job was delivered for, each read as
+  # neither a move nor an act and narrated.
+  def two_quiet_lines
+    [ reply(:classifier, NOT_A_MOVE), reply(:narration, "You look around the room."),
+      reply(:classifier, NOT_A_MOVE), reply(:narration, "The room is quiet.") ]
+  end
 
   def with_keep_turns(keep)
     original = Chat.const_get(:KEEP_TURNS)
