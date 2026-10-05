@@ -25,4 +25,38 @@ fi
 #
 #   PORT=3142 bin/dev
 #
-exec foreman start -f Procfile.dev -p "${PORT:-3000}" "$@"
+# `--ta` is the same formation on 3100, the address the terminal client `ta`
+# (renderedstep/terminal) is pointed at by default (`engine_url` in its
+# config.toml). It is a flag rather than a remembered `PORT=3100` so the number
+# lives here once. An explicit `PORT` still wins. The flag is taken out before
+# foreman sees the rest of the arguments.
+port_default=3000
+ta=
+for arg in "$@"; do
+  shift
+  if [ "$arg" = "--ta" ]; then
+    port_default=3100
+    ta=1
+  else
+    set -- "$@" "$arg"
+  fi
+done
+
+# `ta` plays through `/api/v1`, and every turn there is played by the engine
+# extension; without it, or with one built from an older pin, turns fail one at
+# a time in the client with a 500 it cannot explain. Say so before starting
+# anything instead: no extension stops here, a stale one is a warning, because a
+# build against a local engine (`ENGINE_SOURCE`) is deliberately not the pin.
+# Plain Ruby, no Rails boot -- `Update::EngineStamp` is written to be read so.
+if [ -n "$ta" ]; then
+  ruby -r ./lib/update/engine_stamp -e '
+    decision = Update::EngineStamp.check
+    exit unless decision.stale?
+    built = Dir[File.join(Update::EngineStamp::CRATE, Update::EngineStamp::LIBRARY_GLOB)]
+      .any? { |path| !path.end_with?(".stamp") }
+    warn "#{built ? "Warning" : "Cannot start"}: #{decision.reason} Run: bin/rails engine:build"
+    exit 1 unless built
+  ' || exit 1
+fi
+
+exec foreman start -f Procfile.dev -p "${PORT:-$port_default}" "$@"
