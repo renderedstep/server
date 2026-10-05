@@ -187,14 +187,14 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
   # of the rule: only delivery is swallowed, so the engine's own error still
   # reaches the caller and the submission still records what really happened.
   test "a failure notice that cannot be delivered still raises the engine's own error" do
-    failed = assert_raises(RuntimeError) do
-      BaseAgent.stub(:new, FakeAgent.new(RuntimeError.new("provider unavailable"))) do
-        Playthrough::Turn.new(@game).play("wait quietly", request_token: "only",
-                                          on_error: ->(_) { raise IOError, "the cable is down" })
+    failed = assert_raises(Playthrough::RustEngine::ModelFailed) do
+      replying(reply(:classifier, failure: :provider, message: "provider unavailable")) do
+        Playthrough::Session.new(@game).play("wait quietly", request_token: "only",
+                                             on_error: ->(_) { raise IOError, "the cable is down" })
       end
     end
 
-    assert_equal "provider unavailable", failed.message
+    assert_includes failed.message, "provider unavailable"
     assert_equal [ "failed" ], @game.commands.pluck(:status)
     assert_equal [ "error" ], @game.commands.pluck(:error_kind)
   end

@@ -611,18 +611,18 @@ class EngineSweepTest < ActiveSupport::TestCase
   # bell tower, the player climbs in after him, Grenn decides to go with them,
   # and the player comes back down with Grenn beside them. His `move:` receipt
   # for the bell was true when it was written, and the `follow` after it is
-  # what his whereabouts answer to now. Stated with the one writer of these
-  # rows, `Playthrough::Volition`, so it is the records a walk leaves.
+  # what his whereabouts answer to now. Stated as the rows the engine writes
+  # for those acts (`#acted!`), so it is the records a walk leaves.
   test "a walk a later travel agreement superseded is not a broken invariant" do
     seed, story = seeded_copy("the-lunar-cartographer")
     room, hallway, bell = the_way_up_the_tower(story)
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
-    Playthrough::Volition.new(game, grenn, location: hallway).apply!("move:#{bell.id}")
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
+    acted!(game, grenn, "move:#{bell.id}", from: hallway)
     game.update!(current_location: bell)
-    Playthrough::Volition.new(game, grenn, location: bell).apply!("follow")
+    acted!(game, grenn, "follow", from: bell)
     game.advance_followers_to!(hallway)
     game.update!(current_location: hallway)
 
@@ -638,7 +638,7 @@ class EngineSweepTest < ActiveSupport::TestCase
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
     game.npc_states.find_by!(character: grenn).update_columns(location_id: room.id)
 
     broken = EngineSweep::Invariants.new(story, seed: seed).check.sole
@@ -649,21 +649,39 @@ class EngineSweepTest < ActiveSupport::TestCase
 
   # ONLY A LATER AGREEMENT SUPERSEDES A WALK. Somebody who agreed to travel
   # and then walked off on their own is where that walk took them, which is
-  # what `Playthrough::Volition#walk_to!` writes and this still asks about.
+  # what the engine writes for the walk and this still asks about.
   test "a walk after a travel agreement is still asked about" do
     seed, story = seeded_copy("the-lunar-cartographer")
     room, hallway, = the_way_up_the_tower(story)
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("follow")
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
+    acted!(game, grenn, "follow", from: room)
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
     game.npc_states.find_by!(character: grenn).update_columns(location_id: room.id)
 
     broken = EngineSweep::Invariants.new(story, seed: seed).check.sole
 
     assert_equal "volitions_moved_what_they_named", broken.invariant
     assert_match(/"move:#{hallway.id}" receipt says applied/, broken.to_s)
+  end
+
+  # WHAT A PERSON'S OWN ACT LEAVES, as the engine writes it: the receipt, and
+  # where this game now has them -- a walk ends any travel agreement, and an
+  # agreement puts them beside the party.
+  def acted!(game, who, chosen, from:)
+    state = game.npc_states.find_or_create_by!(character: who) { |row| row.location = game.location_of(who) || from }
+    fact = case chosen
+    when /\Amove:(\d+)\z/
+      to = Location.find(Regexp.last_match(1))
+      state.update!(location: to, following: false)
+      "#{who.fullname} walked out of #{from.name} to #{to.name} and is no longer in #{from.name}."
+    when "follow"
+      state.update!(following: true, location: game.current_location)
+      "#{who.fullname} decided to go with #{game.character.fullname} and will travel with them."
+    end
+    Playthrough::Volition::Record.create!(playthrough: game, character: who, location: from, chosen: chosen, status: "applied",
+                                          fact: fact, serves: "none", round: 1, decided_by: "die")
   end
 
   # --- what somebody said unasked --------------------------------------------

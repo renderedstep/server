@@ -26,7 +26,6 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
     @monster = create(:character, :monster, story: @story, location: @room, fullname: "Marek Sollen",
                                             level: 3, hit_die: 8)
     @game = create(:playthrough, story: @story, character: @protagonist, current_location: @room)
-    @turn = Playthrough::Turn.new(@game)
   end
 
   def battle = Playthrough::Battle.new(@game)
@@ -60,7 +59,7 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   test "a condition line is the numbers, out of this game's own vitals" do
     assert_equal [ "18 of 18", "18 of 18" ], battle.bodies.map(&:state)
 
-    @turn.harm!(@monster, 5)
+    wound!(@game, @monster, 5)
 
     assert_equal [ "18 of 18", "13 of 18" ], battle.bodies.map(&:state)
   end
@@ -105,7 +104,7 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
 
     assert_not_predicate battle, :on?
 
-    @turn.strike!(@protagonist, landlord, round: 1)
+    blow!(@game, @protagonist, landlord, damage: 3, round: 1)
 
     assert_predicate battle, :on?
     assert_equal [ "Grenn Ollivar" ], battle.foes.map(&:fullname)
@@ -117,8 +116,8 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   test "the round the next line lands on counts up with the fight" do
     assert_equal 1, battle.round
 
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(@monster, @protagonist, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 1)
 
     assert_equal 2, battle.round
   end
@@ -128,9 +127,9 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   test "the last exchange is the blows of the round just fought" do
     assert_empty battle.last_exchange
 
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(@monster, @protagonist, round: 1)
-    @turn.strike!(@protagonist, @monster, round: 2)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 2)
 
     exchange = battle.last_exchange
 
@@ -164,8 +163,8 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   # the panel says both -- naming the player's own blow first and saying the
   # fight is on because they struck.
   test "the first panel of a fight the party opened says they struck and the foe answered" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(@monster, @protagonist, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 1)
 
     assert_predicate battle, :opened_by_the_party?
     assert_equal 1, battle.last_round
@@ -180,7 +179,7 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   # A ROUND NOBODY ANSWERED still reads as a round that is done -- the foe died,
   # or there was only ever one blow in it.
   test "a round the foe did not answer says so" do
-    @turn.strike!(@protagonist, @monster, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
 
     assert_equal "Round 1 is done: you struck Marek Sollen, and nobody answered. " \
                  "The fight is on because you struck.", battle.lead
@@ -189,10 +188,10 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   # AND THE CAUSE IS SAID ONCE. By round 2 the boundary is the only thing left
   # to say: the player knows why they are in a fight they opened two turns ago.
   test "the reason the fight is on is stated on the first panel and not after" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(@monster, @protagonist, round: 1)
-    @turn.strike!(@protagonist, @monster, round: 2)
-    @turn.strike!(@monster, @protagonist, round: 2)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 2)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 2)
 
     assert_equal "Round 2 is done: you struck Marek Sollen, and Marek Sollen answered.", battle.lead
     assert_equal "Round 3: what do you do?", battle.call_to_act
@@ -202,7 +201,7 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   # claim the player started it: `characters.hostile` is the world's, and a
   # monster that swings first is the asymmetry the captain's ruling keeps.
   test "a fight the foe opened is not attributed to the party" do
-    @turn.strike!(@monster, @protagonist, round: 1)
+    blow!(@game, @monster, @protagonist, damage: 3, round: 1)
 
     assert_not_predicate battle, :opened_by_the_party?
     assert_equal "Round 1 is done: Marek Sollen struck you.", battle.lead
@@ -250,13 +249,13 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
 
   # THE FIGHT ENDS BY THE RECORDS AND THE PANEL GOES WITH IT, all three ways.
   test "killing the last foe takes the panel away" do
-    @turn.harm!(@monster, @monster.max_hp)
+    wound!(@game, @monster, @monster.max_hp)
 
     assert_not_predicate battle, :on?
   end
 
   test "walking out takes the panel away, with the fight still standing behind you" do
-    @turn.strike!(@protagonist, @monster, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3, round: 1)
     @game.update!(current_location: @stair)
 
     assert_not_predicate battle, :on?
@@ -266,7 +265,7 @@ class Playthrough::BattleTest < ActiveSupport::TestCase
   # `Playthrough::DeathNotice` has the screen, and every typed line is refused
   # in front of the classifier.
   test "a game that is over shows no panel" do
-    @turn.harm!(@protagonist, @protagonist.max_hp)
+    wound!(@game, @protagonist, @protagonist.max_hp)
 
     assert_predicate @game.reload, :over?
     assert_not_predicate battle, :on?
