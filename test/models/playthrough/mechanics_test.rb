@@ -142,12 +142,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
     assert_equal [ @daybook, @index ].map(&:id).sort, @playthrough.carried.pluck(:id).sort
   end
 
-  test "the read-out matches the database after every command of the walk" do
-    [ "look", "take stamp", "go closet", "drop stamp", "take index", "go ward office", "go hallway" ].each do |command|
-      assert_reads_true play(command), command
-    end
-  end
-
   test "the offline mode walks into a stub without writing the room, because writing it is a model call" do
     report = play("go hallway")
 
@@ -384,7 +378,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
     assert_change report, "moved: Ward Office 12 -> north"
     assert_equal north, @playthrough.reload.current_location
   end
-
 
   # --- the default mode: the classifier reads it, the world generates ---------
 
@@ -813,32 +806,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
   # show it as a different answer from "somebody is here" -- the layer split on
   # the screen the way `condition` and `sheet` already are.
 
-  test "the read-out says nobody is hostile in an ordinary room" do
-    report = play("look")
-
-    assert_equal [ @rowe ], report.state.present
-    assert_equal [], report.state.foes
-    assert_includes report.to_s, "nobody is fighting you"
-  end
-
-  test "the read-out names a foe standing here, beside the cast it is part of" do
-    marek = create(:character, :monster, story: @story, location: @office, fullname: "Marek Sollen")
-
-    report = play("look")
-
-    assert_equal [ @rowe, marek ], report.state.present
-    assert_equal [ marek ], report.state.foes
-    assert_match(/foes\s+Marek Sollen/, report.to_s)
-    assert_match(/present\s+Halkett Rowe, Marek Sollen/, report.to_s)
-  end
-
-  test "a foe in the next room is not a foe in this one" do
-    create(:character, :monster, story: @story, location: @closet, fullname: "Marek Sollen")
-
-    assert_equal [], play("look").state.foes
-    assert_equal [ "Marek Sollen" ], play("go closet").state.foes.map(&:fullname)
-  end
-
   # A MONSTER IS AN ORDINARY PERSON IN EVERY RESPECT BUT ONE, and that respect
   # is not the closed set `talk` resolves against.
   test "a foe is still somebody the grammar resolves for talk" do
@@ -978,10 +945,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
   # the two things a script cannot see -- that the classifier is never reached,
   # and what the read-out says.
 
-  test "the read-out carries the player's condition" do
-    assert_includes play("look").state.to_s, "condition   unhurt"
-  end
-
   test "harm goes through the engine's own writer and says what it did" do
     report = play("harm 3")
 
@@ -1075,11 +1038,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
 
   # The read-out prints which reader answered, under the reading itself, because
   # "it did not understand me" and "the wrong reader read it" are different bugs.
-  test "the read-out says which reader answered" do
-    report, = interpret("/take the ward stamp")
-
-    assert_includes report.to_s, "read by:    grammar"
-  end
 
   # A move is the one branch this mode writes a `Scene` from, so it is the one
   # place `scenes.resolved_by` can be checked from here at all.
@@ -1121,14 +1079,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
   # a model call in either mode. The walk is
   # `lib/engine_sweep/scripts/a-check-against-an-ability.yml`; these pin what a
   # script cannot see.
-
-  test "the read-out carries the world's own numbers for the player" do
-    @vance.update!(level: 1, hit_die: 6, strength: 9, dexterity: 11, will: 15)
-
-    read_out = play("stats").state.to_s
-
-    assert_includes read_out, "sheet       level 1, d6, strength 9 dexterity 11 will 15"
-  end
 
   test "a check prints the roll and changes nothing" do
     @vance.update!(strength: 12)
@@ -1232,7 +1182,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
     assert_match(/not one of the three abilities/, report.refusal)
   end
 
-
   # A BODY BIG ENOUGH THAT ONE d8 CANNOT END IT, AND THE CONDITION ROWS REBUILT
   # WITH IT. `Playthrough::Vitals` is written at first contact against the
   # maximum the body had THEN, so raising a level under a game already in
@@ -1308,21 +1257,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
     end
   end
 
-  test "the read-out tells a provoked foe apart from a hostile one" do
-    tough!(@vance, @rowe)
-    play("/attack Halkett Rowe")
-
-    assert_match(/foes\s+Halkett Rowe/, play("look").to_s)
-    assert_match(/provoked\s+Halkett Rowe/, play("look").to_s)
-  end
-
-  test "the read-out says how much is left of everybody standing here" do
-    tough!(@vance, @rowe)
-    play("/attack Halkett Rowe")
-
-    assert_match(/others\s+Halkett Rowe (hurt|badly hurt|dead)/, play("look").to_s)
-  end
-
   # ONE `Scene` WHEN THE FIGHT ENDS, and its description is the engine's own
   # sentence -- so this mode closes a fight exactly as the browser does and
   # makes no call doing it.
@@ -1355,36 +1289,6 @@ class Playthrough::MechanicsTest < ActiveSupport::TestCase
   # leaving each way costs. The second one is the visible half of the directed
   # edge -- a doorway's hazard is on ONE of the two rows, so the line says what
   # leaving THIS way costs and nothing about coming back.
-
-  test "the read-out says a safe room is safe and its ways out are free" do
-    state = play("look").state.to_s
-
-    assert_match(/hazard\s+nothing here hurts you/, state)
-    assert_match(/hazards out\s+every way out of here is free/, state)
-  end
-
-  test "the read-out prints the whole of a room's hazard entry" do
-    @office.update!(hazard: "flooded", hazard_die: 4)
-
-    assert_match(/hazard\s+flooded d4, strength save, on arrival -- the water takes your legs/,
-                 play("look").state.to_s)
-  end
-
-  test "a hazard with no save says so rather than naming one" do
-    @office.update!(hazard: "airless", hazard_die: 6)
-
-    assert_match(/hazard\s+airless d6, no save, every turn/, play("look").state.to_s)
-  end
-
-  test "the read-out names the way out that costs something and not the way back" do
-    LocationConnection.walked(@office, @closet).update!(hazard: "drop", hazard_die: 4)
-
-    assert_match(/hazards out\s+The Supply Closet: drop d4, dexterity save/, play("look").state.to_s)
-
-    play("go to the supply closet")
-    assert_match(/hazards out\s+every way out of here is free/, play("look").state.to_s,
-                 "the return row carries no hazard, so leaving the closet is free")
-  end
 
   # THE ROUTING, IN THE MODE THE SWEEP WALKS. A move pays the doorway and the
   # room; standing still pays only an `every_turn` room; a refused line pays

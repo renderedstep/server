@@ -12,7 +12,7 @@ class Playthrough::MomentExperienceTest < ActiveSupport::TestCase
   end
 
   test "a blow with no scene reaches the injured character with the current fighting state" do
-    Playthrough::Turn.new(@game).strike!(@player, @npc, damage: @npc.max_hp - 1, round: 1)
+    blow!(@game, @player, @npc, damage: @npc.max_hp - 1)
     assert_equal @scene.id, @game.reload.current_scene_id
 
     prompt = EngineMoment.new(@game).character_prompt(@npc, "What happened to you?")
@@ -23,7 +23,7 @@ class Playthrough::MomentExperienceTest < ActiveSupport::TestCase
   end
 
   test "a ceasefire changes current conflict without erasing the injury or its cause" do
-    Playthrough::Turn.new(@game).strike!(@player, @npc, damage: 2, round: 1)
+    blow!(@game, @player, @npc, damage: 2)
     state = @game.npc_states.create!(character: @npc, location: @room)
     state.make_peace!
 
@@ -36,10 +36,7 @@ class Playthrough::MomentExperienceTest < ActiveSupport::TestCase
 
   test "a remote attack is not an unwounded bystander's experience" do
     victim = create(:character, story: @story, location: @elsewhere, fullname: "Orren", level: 10)
-    turn = Playthrough::Turn.new(@game)
-    turn.stand_in!(@elsewhere)
-    turn.strike!(@player, victim, damage: 2, round: 1)
-    turn.stand_in!(@room)
+    blow!(@game, @player, victim, damage: 2, room: @elsewhere)
 
     prompt = EngineMoment.new(@game).character_prompt(@npc, "What happened while I was away?")
 
@@ -71,7 +68,7 @@ class Playthrough::MomentExperienceTest < ActiveSupport::TestCase
   end
 
   test "another game neither inherits the wound nor recalls its blow" do
-    Playthrough::Turn.new(@game).strike!(@player, @npc, damage: 2, round: 1)
+    blow!(@game, @player, @npc, damage: 2)
     fresh = create(:playthrough, story: @story, character: @player, current_location: @room, current_scene: @scene)
     prompt = EngineMoment.new(fresh).character_prompt(@npc, "Hello.")
 

@@ -335,7 +335,7 @@ class Story::DoctorTest < ActiveSupport::TestCase
     room = story.locations.first
     create(:item, :lying, location: room, name: "ward stamp")
     played = create(:playthrough, story: story, character: story.protagonist, current_location: room)
-    Playthrough::Turn.new(played).carry!(played.items_lying_in(room).sole)
+    carried!(played, played.items_lying_in(room).sole)
 
     assert_empty but_the_arc(Story::Doctor.new(story))
   end
@@ -1050,34 +1050,6 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_equal row, finding.subject
   end
 
-  # AN OFFLINE WALK IS A WALK. A move with no model stands the party in the
-  # room and snapshots it without writing a `Scene`, so a doctor that read only
-  # the scene chain took the row written at first contact there for a
-  # stranger's -- a `safe` finding, and a repair would have deleted it. The
-  # walk goes out and comes back, so the room is neither the one the game is
-  # standing in nor on the chain.
-  test "a condition written on an offline walk is not reported as an unmet character" do
-    story = create(:story)
-    court = create(:location, story: story, name: "The Causeway Court")
-    post = create(:location, story: story, name: "The Tide Post")
-    [ [ court, post ], [ post, court ] ].each do |from, to|
-      create(:location_connection, location: from, connected_location: to, distance: "adjacent", travel_method: "walking")
-    end
-    neb = create(:character, story: story, fullname: "Neb Halloran", location: post, level: 1, hit_die: 8)
-    opening = create(:scene, story: story, location: court, description: "The bell is on its hook.")
-    game = create(:playthrough, story: story, character: create(:character, :protagonist, story: story),
-                                current_location: court, current_scene: opening)
-
-    BaseAgent.stub(:new, ->(*) { raise "an offline walk made a model call" }) do
-      [ "/go tide post", "/go causeway court" ].each { |line| Playthrough::Mechanics.new(game.reload, model: false).run(line) }
-    end
-
-    assert_equal court, game.reload.current_location
-    assert_equal [ court ], game.scene_chain.map(&:location), "the walk wrote no arrival"
-    assert Playthrough::Vitals.exists?(playthrough: game, character: neb), "first contact wrote Neb's row"
-    assert_not_includes codes(story), :vitals_for_an_unmet_character
-  end
-
   # THE PARTY IS NEVER ONE OF THOSE: the protagonist and any companion are
   # wherever the playthrough is rather than in a room, which is the same
   # exception `cast_unmoved` makes.
@@ -1197,7 +1169,7 @@ class Story::DoctorTest < ActiveSupport::TestCase
     room = create(:location, story: story)
     vance = create(:character, :protagonist, story: story, level: 1, hit_die: 8)
     game = create(:playthrough, story: story, character: vance, current_location: room)
-    Playthrough::Turn.new(game).harm!(vance, vance.max_hp)
+    wound!(game, vance, vance.max_hp)
 
     assert_predicate game.reload, :over?
     assert_not_includes codes(story), :playthrough_dead_but_not_ended
@@ -1239,7 +1211,7 @@ class Story::DoctorTest < ActiveSupport::TestCase
     room = create(:location, story: story)
     vance = create(:character, :protagonist, story: story, level: 1, hit_die: 8)
     game = create(:playthrough, story: story, character: vance, current_location: room)
-    Playthrough::Turn.new(game).harm!(vance, vance.max_hp)
+    wound!(game, vance, vance.max_hp)
 
     assert_not_includes codes(story), :playthrough_ended_for_no_recorded_reason
   end
@@ -2338,5 +2310,37 @@ class Story::DoctorTest < ActiveSupport::TestCase
 
     assert_includes codes, :character_without_desires
     assert_not_includes codes, :character_without_a_stat_block
+  end
+end
+
+# THE DOCTOR OVER ROWS THE ENGINE WROTE ON A WALK: the walk is played by the
+# Rust engine with no model, on a scratch copy of the database (`PlaysOnRust`).
+class Story::DoctorOfflineWalkTest < ActiveSupport::TestCase
+  include PlaysOnRust
+
+  # AN OFFLINE WALK IS A WALK. A move with no model stands the party in the
+  # room and snapshots it without writing a `Scene`, so a doctor that read only
+  # the scene chain took the row written at first contact there for a
+  # stranger's -- a `safe` finding, and a repair would have deleted it. The
+  # walk goes out and comes back, so the room is neither the one the game is
+  # standing in nor on the chain.
+  test "a condition written on an offline walk is not reported as an unmet character" do
+    story = create(:story)
+    court = create(:location, story: story, name: "The Causeway Court")
+    post = create(:location, story: story, name: "The Tide Post")
+    [ [ court, post ], [ post, court ] ].each do |from, to|
+      create(:location_connection, location: from, connected_location: to, distance: "adjacent", travel_method: "walking")
+    end
+    neb = create(:character, story: story, fullname: "Neb Halloran", location: post, level: 1, hit_die: 8)
+    opening = create(:scene, story: story, location: court, description: "The bell is on its hook.")
+    game = create(:playthrough, story: story, character: create(:character, :protagonist, story: story),
+                                current_location: court, current_scene: opening)
+
+    [ "/go tide post", "/go causeway court" ].each { |line| Playthrough::RustEngine.play(game.reload, line) }
+
+    assert_equal court, game.reload.current_location
+    assert_equal [ court ], game.scene_chain.map(&:location), "the walk wrote no arrival"
+    assert Playthrough::Vitals.exists?(playthrough: game, character: neb), "first contact wrote Neb's row"
+    assert_not_includes Story::Doctor.new(story).findings.map(&:code), :vitals_for_an_unmet_character
   end
 end

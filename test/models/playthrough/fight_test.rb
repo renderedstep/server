@@ -40,7 +40,7 @@ class Playthrough::FightTest < ActiveSupport::TestCase
   test "the first round is round one, off the records" do
     assert_equal 1, fight.next_round
 
-    @turn.strike!(@protagonist, @monster, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3)
 
     assert_equal 2, fight.next_round
     assert_predicate fight, :on?
@@ -50,8 +50,8 @@ class Playthrough::FightTest < ActiveSupport::TestCase
   # however many people swung -- which is what the closing scene's story time is
   # counted in.
   test "several blows in one round are still one round" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(@monster, @protagonist, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3)
+    blow!(@game, @monster, @protagonist, damage: 3)
 
     assert_equal 2, fight.next_round
     assert_equal 1, fight.rounds
@@ -66,8 +66,8 @@ class Playthrough::FightTest < ActiveSupport::TestCase
 
   # ENDING ONE: nobody left to fight.
   test "it is over when the last live foe in the room is down" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.harm!(@monster, @monster.max_hp)
+    blow!(@game, @protagonist, @monster, damage: 3)
+    wound!(@game, @monster, @monster.max_hp)
 
     assert_predicate fight, :over?
   end
@@ -75,16 +75,16 @@ class Playthrough::FightTest < ActiveSupport::TestCase
   # ENDING TWO: the party left -- the captain's call C1, a fight is always
   # escapable by leaving the room.
   test "it is over when the party is standing somewhere else" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.stand_in!(@elsewhere)
+    blow!(@game, @protagonist, @monster, damage: 3)
+    @game.update!(current_location: @elsewhere)
 
     assert_predicate fight, :over?
   end
 
   # ENDING THREE: the player is dead, and nothing will ever change again.
   test "it is over when the player is dead" do
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.harm!(@protagonist, @protagonist.max_hp)
+    blow!(@game, @protagonist, @monster, damage: 3)
+    wound!(@game, @protagonist, @protagonist.max_hp)
 
     assert_predicate @game, :over?
     assert_predicate fight, :over?
@@ -150,8 +150,8 @@ class Playthrough::FightTest < ActiveSupport::TestCase
   # swung at, because that is the one the player named.
   test "the opponent is the last person the player swung at" do
     other = create(:character, :monster, story: @story, location: @room, fullname: "Ada Threnn")
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.strike!(other, @protagonist, round: 1)
+    blow!(@game, @protagonist, @monster, damage: 3)
+    blow!(@game, other, @protagonist, damage: 3)
 
     assert_equal @monster, fight.opponent
   end

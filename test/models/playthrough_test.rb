@@ -315,6 +315,21 @@ class PlaythroughTest < ActiveSupport::TestCase
     assert Chat.exists?(in_flight.id)
   end
 
+  # Nothing is pruned unless somebody sets a cap: the engine keeps every
+  # receipt of every turn.
+  test "prune_conversations! is a no-op when no cap is set" do
+    playthrough = create(:playthrough, :started)
+    first = scene_in(playthrough)
+    second = scene_in(playthrough, previous_scene: first)
+    playthrough.update!(current_scene: second)
+    [ first, second ].each do |scene|
+      %w[classifier narration].each { |purpose| chat_for(playthrough, scene, purpose: purpose) }
+    end
+
+    assert_equal 0, playthrough.prune_conversations!(keep: nil)
+    assert_equal 4, playthrough.chats.one_shot.count
+  end
+
   test "destroying a playthrough takes its conversations with it" do
     playthrough = create(:playthrough, :started)
     create(:chat, playthrough: playthrough, purpose: "classifier")
@@ -430,7 +445,7 @@ class PlaythroughTest < ActiveSupport::TestCase
 
     first = create(:playthrough, story: story, character: protagonist, current_location: room)
     second = create(:playthrough, story: story, character: protagonist, current_location: room)
-    Playthrough::Turn.new(first).carry!(first.items_lying_in(room).sole)
+    carried!(first, first.items_lying_in(room).sole)
 
     assert_equal [ "Ward Office 12 daybook", "ward stamp" ], first.carried.pluck(:name).sort
     assert_equal [ "Ward Office 12 daybook" ], second.carried.pluck(:name)

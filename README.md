@@ -544,9 +544,12 @@ engine owns, byte for byte at the pinned commit, and moves them only with the
 pin. They were written by the Ruby turn loop until the engine took them over;
 the commit tagged `ruby-reference-final` is where every turn moved to Rust, and
 every golden it holds was unchanged when the engine took them over. `Playthrough::Turn` is still in the
-code: the test suite plays it by default, because its tests run inside a
-transaction the engine, on its own connection, could not see into. Every request
-it sends is the engine's (`Playthrough::Requests`). The benches and the
+code, for its own tests and nothing else: the test suite plays the engine, and a
+test that plays a turn does it on a scratch copy of the database, where the
+engine, on its own connection, can read what the test wrote (`PlaysOnRust`).
+`test/ruby_loop_coverage.yml` names, for each of the Ruby loop's tests, what
+holds the engine to the same behaviour. Every request the Ruby loop sends is
+the engine's (`Playthrough::Requests`). The benches and the
 mechanics console play on the engine. No setting turns the Ruby loop on for a
 player, and no gate judges the engine against it.
 

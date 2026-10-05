@@ -24,12 +24,12 @@
 # they have always been told: the crisis notice, the setup notice, the failure
 # copy.
 #
-# THE RUBY TURN LOOP IS THE PARITY REFERENCE, and nothing else. `Playthrough::Turn`
-# stays in the code because the parity gates judge the Rust engine against what
-# it does (`bin/rails engine:rust_gates`), and the engine sweep and the suite's
-# transactional tests exercise it. `.using(:ruby)` plays it for one block;
-# `.reference_by_default!` makes it the default for the test suite and refuses
-# anywhere else. No setting turns it on for a player.
+# THE RUBY TURN LOOP IS KEPT UNTIL ITS TESTS HAVE COUNTERPARTS, and nothing
+# plays it but them. `Playthrough::Turn` stays in the code while its own tests
+# still run (test/ruby_loop_coverage.yml names, for each, the check that holds
+# the Rust engine to the same behaviour), and `.using(:ruby)` plays it for one
+# block -- for asking by hand where the two loops part. No setting turns it on
+# for a player, and the test suite plays Rust.
 #
 # THE CREDENTIALS ARE THE ONES RUBY USES. `.models` reads `OPENROUTER_API_KEY`
 # (the Direct route), `OPENROUTER_MODEL`, and the System One keys exactly as
@@ -77,12 +77,11 @@ module Playthrough::RustEngine
   FAILURES = Concurrent::Map.new
 
   # Which engine plays a turn: Rust, unless this thread is playing the Ruby
-  # reference, or the test suite made it the default.
-  def self.engine = Thread.current[:turn_engine] || @default || :rust
+  # reference.
+  def self.engine = Thread.current[:turn_engine] || :rust
 
-  # Plays the block on one engine, for this thread: the sweep, the gates and
-  # the switch's own tests play Rust inside a suite whose default is the Ruby
-  # loop, and a test about the Ruby walk itself asks for that loop by name.
+  # Plays the block on one engine, for this thread: a test about the Ruby walk
+  # itself asks for that loop by name.
   def self.using(engine)
     raise ArgumentError, "an engine is one of #{ENGINES.inspect}" unless ENGINES.include?(engine)
 
@@ -91,16 +90,6 @@ module Playthrough::RustEngine
     yield
   ensure
     Thread.current[:turn_engine] = previous
-  end
-
-  # THE SUITE'S DEFAULT. Almost every test plays inside a transaction the
-  # engine could neither see into nor write past, so the suite plays the Ruby
-  # reference unless a test asks for Rust. Refused outside the test
-  # environment: there is no way to turn the reference on for a player.
-  def self.reference_by_default!
-    raise EngineError.new(:reference, "the Ruby turn loop is the test suite's, not a way to play") unless Rails.env.test?
-
-    @default = :ruby
   end
 
   # The extension's module, or nil when it is not built or does not load --

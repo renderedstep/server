@@ -2,6 +2,8 @@ require "test_helper"
 require "turbo/broadcastable/test_helper"
 
 class TurnsControllerTest < ActionDispatch::IntegrationTest
+  # The turns are played by the Rust engine, as a player's are (`PlaysOnRust`).
+  include PlaysOnRust
   include Turbo::Broadcastable::TestHelper
 
   test "only an acknowledged legacy interruption unblocks later play and keeps saved effects" do
@@ -11,7 +13,7 @@ class TurnsControllerTest < ActionDispatch::IntegrationTest
     old = create(:playthrough_command, playthrough: game, status: "running")
     later = create(:playthrough_command, playthrough: game, command: "/drop red coin")
     assert_raises(Playthrough::Command::InterruptedError) do
-      Playthrough::Turn.new(game).play(later.command, request_token: later.request_token)
+      replying { Playthrough::Session.new(game).play(later.command, request_token: later.request_token) }
     end
     assert_equal "pending", later.reload.status
     assert_includes game.carried, coin
@@ -20,8 +22,8 @@ class TurnsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "interruption_acknowledged", old.reload.error_kind
     assert_equal "failed", old.status
     assert_includes game.carried, coin
-    BaseAgent.stub(:new, FakeAgent.new("You put down the red coin.")) do
-      Playthrough::Turn.new(game).play(later.command, request_token: later.request_token)
+    replying(reply(:narration, "You put down the red coin.")) do
+      Playthrough::Session.new(game).play(later.command, request_token: later.request_token)
     end
     assert_equal game.current_location, coin.reload.location
     assert_predicate later.reload, :completed?
@@ -107,7 +109,7 @@ class TurnsControllerTest < ActionDispatch::IntegrationTest
     item = lying_here(playthrough, playthrough.current_location, name: "red coin")
     immediate = ->(*arguments) { NarrationJob.perform_now(*arguments) }
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, FakeAgent.new(RuntimeError.new("provider unavailable"))) do
+      replying(reply(:narration, failure: :provider, message: "provider unavailable")) do
         NarrationJob.stub(:perform_later, immediate) do
           post playthrough_turns_path(playthrough),
                params: { command: "/take red coin", request_token: "instant" }, as: :turbo_stream

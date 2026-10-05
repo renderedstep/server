@@ -65,13 +65,12 @@ declare_environment.call
 # `test/models/chat_test.rb`).
 RubyLLM.config.openrouter_api_key = nil
 
-# THE SUITE PLAYS THE RUBY TURN LOOP by default: almost every test runs inside
-# a transaction the Rust engine, on a connection of its own, could neither see
-# into nor write past. The engine sweep and the Rust engine's own tests ask for
-# Rust (`Playthrough::RustEngine.using(:rust)`), on scratch copies of the
-# database. No gate holds the engine to this loop: the engine is held to its
-# own goldens. See `Playthrough::RustEngine` and docs/engine-parity.md.
-Playthrough::RustEngine.reference_by_default!
+# THE SUITE PLAYS THE RUST ENGINE, as a player does. The engine plays on a
+# connection of its own, so it can neither see into nor write past the
+# transaction an ordinary test runs in: a test that plays a turn runs on a
+# scratch copy of the database instead (`PlaysOnRust`, and the engine sweep's
+# own `EngineSweep::Parity::InProcess`). A test of the Ruby turn loop itself
+# builds a `Playthrough::Turn` by name.
 
 require "rails/test_help"
 require "minitest/mock"
@@ -84,6 +83,8 @@ require_relative "support/refusal_corpus_skeleton"
 require_relative "support/forkable_world"
 require_relative "support/protocol_v1"
 require_relative "support/engine_moment"
+require_relative "support/plays_on_rust"
+require_relative "support/engine_records"
 
 module ActiveSupport
   class TestCase

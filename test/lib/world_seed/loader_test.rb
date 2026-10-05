@@ -481,7 +481,7 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     played = create(:playthrough, story: story, character: story.protagonist, current_location: closet)
     template = closet.items.templates.find_by(name: "A Private Index")
     copy = played.items_lying_in(closet).find_by(name: "A Private Index")
-    Playthrough::Turn.new(played).send(:carry!, copy)
+    carried!(played, copy)
 
     WorldSeed::Loader.new(document).load!
 
@@ -1213,28 +1213,6 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     loader.load!
 
     assert_empty loader.warnings, "a world with no playthroughs and no turns can be dropped and rebuilt"
-  end
-
-  # THE PHANTOM DOORWAY. `WorldMechanic::ShuffleConnections` repoints the far
-  # end of a mobile room's doorway and preserves the count, so re-asserting the
-  # file's own pair gives the room a second one -- which a later night then
-  # reports as having moved when a player standing there sees no such thing.
-  test "a doorway the world's own mechanic moved is not re-asserted as a second one" do
-    story = WorldSeed::Loader.new(with_shuffle).load!
-    mechanic = story.world_mechanics.sole
-    at = mechanic.next_boundary_after(story.start_time)
-
-    assert mechanic.operation.run!(at), "the world did not move, so there is nothing to re-assert over"
-    mechanic.update!(last_run_at: at)
-    moved = doorways(story)
-
-    loader = WorldSeed::Loader.new(with_shuffle)
-    assert_no_difference -> { LocationConnection.count } do
-      loader.load!
-    end
-
-    assert_equal moved, doorways(story), "the file was re-asserted over the arrangement the world had moved to"
-    assert_match(/left .* opening where the world put it/, loader.reconciled.join("\n"))
   end
 
   test "a doorway that is genuinely missing is still written" do
@@ -1986,4 +1964,46 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       ]
     ))
   end
+end
+
+# THE LOADER OVER A WORLD THE ENGINE HAS MOVED: the night is played on a
+# scratch copy of the database (`PlaysOnRust`), where the engine, on a
+# connection of its own, reads and writes the rows the loader then reconciles.
+class WorldSeed::LoaderOverAMovedWorldTest < ActiveSupport::TestCase
+  include PlaysOnRust
+
+  # THE PHANTOM DOORWAY. The nightly shuffle repoints the far end of a mobile
+  # room's doorway and preserves the count, so re-asserting the file's own
+  # pair gives the room a second one -- which a later night then reports as
+  # having moved when a player standing there sees no such thing. The night is
+  # the engine's: a line played past midnight catches the world up.
+  test "a doorway the world's own mechanic moved is not re-asserted as a second one" do
+    story = WorldSeed::Loader.new(with_shuffle).load!
+    mechanic = story.world_mechanics.sole
+    at = mechanic.next_boundary_after(story.start_time)
+
+    filed = doorways(story)
+    game = Playthrough::Session.begin!(story).playthrough
+    game.current_scene.update!(story_timestamp: at + 1.minute)
+    Playthrough::RustEngine.play(game, "look")
+    moved = doorways(story)
+
+    assert_not_equal filed, moved, "the world did not move, so there is nothing to re-assert over"
+    assert_equal at, mechanic.reload.last_run_at
+
+    loader = WorldSeed::Loader.new(with_shuffle)
+    assert_no_difference -> { LocationConnection.count } do
+      loader.load!
+    end
+
+    assert_equal moved, doorways(story), "the file was re-asserted over the arrangement the world had moved to"
+    assert_match(/left .* opening where the world put it/, loader.reconciled.join("\n"))
+  end
+
+  private
+
+  # `WorldSeed::LoaderTest`'s world and its reading of the doorways.
+  def with_shuffle = loader_test.send(:with_shuffle)
+  def doorways(story) = loader_test.send(:doorways, story)
+  def loader_test = @loader_test ||= WorldSeed::LoaderTest.new("helpers")
 end

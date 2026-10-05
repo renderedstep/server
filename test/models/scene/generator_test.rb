@@ -66,9 +66,8 @@ class Scene::GeneratorTest < ActiveSupport::TestCase
     destination = realized_location(description: "Maren Vosk waits beside a brass key on the desk.")
     person = create(:character, story: @story, location: destination, fullname: "Maren Vosk")
     key = lying_here(game, destination, name: "brass key")
-    turn = Playthrough::Turn.new(game)
-    turn.harm!(person, person.max_hp)
-    turn.carry!(key)
+    wound!(game, person, person.max_hp)
+    carried!(game, key)
 
     scene, agent = generate(destination, playthrough: game)
     prompt = agent.prompts.last
@@ -89,7 +88,7 @@ class Scene::GeneratorTest < ActiveSupport::TestCase
   test "a playthrough arrival supplies wounds and the actual crossing result before claiming it" do
     game = create(:playthrough, :started, story: @story)
     destination = realized_location
-    Playthrough::Turn.new(game).harm!(game.character, 3)
+    wound!(game, game.character, 3)
     toll = create(:playthrough_toll, playthrough: game, location: destination,
                                     damage: 3, hp_after: game.condition.hp)
 

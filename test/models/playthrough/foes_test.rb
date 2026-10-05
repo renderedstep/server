@@ -46,7 +46,7 @@ class Playthrough::FoesTest < ActiveSupport::TestCase
   # THE HALF A WORLD-LEVEL SCOPE CANNOT ANSWER. `Character.hostile` still holds
   # him; this game has taken his last hit point, so this game has no foe here.
   test "a foe this game has killed is not a foe in this game" do
-    Playthrough::Turn.new(@game).harm!(@monster, @monster.max_hp)
+    wound!(@game, @monster, @monster.max_hp)
 
     assert_predicate @game.vitals_for(@monster), :dead?
     assert_equal [], @game.foes_in(@room)
@@ -57,14 +57,14 @@ class Playthrough::FoesTest < ActiveSupport::TestCase
   # `Playthrough` rather than on `Location`.
   test "one game's dead foe is another game's live one" do
     other = create(:playthrough, story: @story, character: @protagonist, current_location: @room)
-    Playthrough::Turn.new(@game).harm!(@monster, @monster.max_hp)
+    wound!(@game, @monster, @monster.max_hp)
 
     assert_equal [], @game.foes_in(@room)
     assert_equal [ @monster ], other.foes_in(@room)
   end
 
   test "a wounded foe is still a foe" do
-    Playthrough::Turn.new(@game).harm!(@monster, 1)
+    wound!(@game, @monster, 1)
 
     assert_equal [ @monster ], @game.foes_in(@room)
   end
@@ -101,9 +101,8 @@ class Playthrough::FoesTest < ActiveSupport::TestCase
   end
 
   test "a provoked person this game has killed is not a foe either" do
-    turn = Playthrough::Turn.new(@game)
-    turn.strike!(@protagonist, @bystander, round: 1)
-    turn.harm!(@bystander, @bystander.max_hp)
+    blow!(@game, @protagonist, @bystander, damage: 1)
+    wound!(@game, @bystander, @bystander.max_hp)
 
     assert_equal [ @monster ], @game.foes_in(@room)
   end

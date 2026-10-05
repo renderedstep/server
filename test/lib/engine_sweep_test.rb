@@ -147,34 +147,6 @@ class EngineSweepTest < ActiveSupport::TestCase
     assert_nil Story.find_by(title: "The Unrecorded Hour#{EngineSweep::Walk::TITLE_SUFFIX}")
   end
 
-  # A DATABASE WITH A HISTORY ROLLS THE SAME DICE AS AN EMPTY ONE. `Roll.seed`
-  # is built out of row ids, and these are the counters a freshly prepared
-  # development database stands at once `db:seed` has loaded the checked-in
-  # worlds. Before a walk pinned its ids the copy took the next id instead, and
-  # this script failed there while passing here: a volition die rolled
-  # differently and a bystander walked into the fight room.
-  SEEDED_COUNTERS = { "stories" => 3, "universes" => 3, "locations" => 13, "location_connections" => 20,
-                      "characters" => 9, "items" => 7, "races" => 13, "scenes" => 3,
-                      "world_events" => 2, "world_mechanics" => 1 }.freeze
-
-  # ON THE RUBY WALK, which pins its counters inside this test's transaction.
-  # A walk on the Rust engine starts from a copy of the committed file, which
-  # a transactional test cannot move; both walks pin with the same `#pin_ids!`.
-  test "a walk rolls the same dice whatever ids the database has already handed out" do
-    connection = ActiveRecord::Base.connection
-    SEEDED_COUNTERS.each do |table, seq|
-      connection.exec_delete("DELETE FROM sqlite_sequence WHERE name = #{connection.quote(table)}")
-      connection.exec_insert("INSERT INTO sqlite_sequence (name, seq) VALUES (#{connection.quote(table)}, #{seq})")
-    end
-    fight = EngineSweep.scripts.select { |script| script.name == "a-fight-the-player-wins" }
-
-    result = EngineSweep.run(fight, engine: :ruby).sole
-
-    assert_predicate result, :passed?, result.report
-    assert_equal 13, connection.select_value("SELECT seq FROM sqlite_sequence WHERE name = 'locations'"),
-                 "the walk's pinned counters outlived its rollback"
-  end
-
   # --- the script format -----------------------------------------------------
 
   test "an expectation that does not hold is reported with the script, the step, the line and both sides" do
@@ -639,18 +611,18 @@ class EngineSweepTest < ActiveSupport::TestCase
   # bell tower, the player climbs in after him, Grenn decides to go with them,
   # and the player comes back down with Grenn beside them. His `move:` receipt
   # for the bell was true when it was written, and the `follow` after it is
-  # what his whereabouts answer to now. Stated with the one writer of these
-  # rows, `Playthrough::Volition`, so it is the records a walk leaves.
+  # what his whereabouts answer to now. Stated as the rows the engine writes
+  # for those acts (`#acted!`), so it is the records a walk leaves.
   test "a walk a later travel agreement superseded is not a broken invariant" do
     seed, story = seeded_copy("the-lunar-cartographer")
     room, hallway, bell = the_way_up_the_tower(story)
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
-    Playthrough::Volition.new(game, grenn, location: hallway).apply!("move:#{bell.id}")
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
+    acted!(game, grenn, "move:#{bell.id}", from: hallway)
     game.update!(current_location: bell)
-    Playthrough::Volition.new(game, grenn, location: bell).apply!("follow")
+    acted!(game, grenn, "follow", from: bell)
     game.advance_followers_to!(hallway)
     game.update!(current_location: hallway)
 
@@ -666,7 +638,7 @@ class EngineSweepTest < ActiveSupport::TestCase
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
     game.npc_states.find_by!(character: grenn).update_columns(location_id: room.id)
 
     broken = EngineSweep::Invariants.new(story, seed: seed).check.sole
@@ -677,21 +649,39 @@ class EngineSweepTest < ActiveSupport::TestCase
 
   # ONLY A LATER AGREEMENT SUPERSEDES A WALK. Somebody who agreed to travel
   # and then walked off on their own is where that walk took them, which is
-  # what `Playthrough::Volition#walk_to!` writes and this still asks about.
+  # what the engine writes for the walk and this still asks about.
   test "a walk after a travel agreement is still asked about" do
     seed, story = seeded_copy("the-lunar-cartographer")
     room, hallway, = the_way_up_the_tower(story)
     game = create(:playthrough, story: story, character: story.protagonist, current_location: room)
     grenn = story.characters.find_by!(fullname: "Grenn Ollivar")
 
-    Playthrough::Volition.new(game, grenn, location: room).apply!("follow")
-    Playthrough::Volition.new(game, grenn, location: room).apply!("move:#{hallway.id}")
+    acted!(game, grenn, "follow", from: room)
+    acted!(game, grenn, "move:#{hallway.id}", from: room)
     game.npc_states.find_by!(character: grenn).update_columns(location_id: room.id)
 
     broken = EngineSweep::Invariants.new(story, seed: seed).check.sole
 
     assert_equal "volitions_moved_what_they_named", broken.invariant
     assert_match(/"move:#{hallway.id}" receipt says applied/, broken.to_s)
+  end
+
+  # WHAT A PERSON'S OWN ACT LEAVES, as the engine writes it: the receipt, and
+  # where this game now has them -- a walk ends any travel agreement, and an
+  # agreement puts them beside the party.
+  def acted!(game, who, chosen, from:)
+    state = game.npc_states.find_or_create_by!(character: who) { |row| row.location = game.location_of(who) || from }
+    fact = case chosen
+    when /\Amove:(\d+)\z/
+      to = Location.find(Regexp.last_match(1))
+      state.update!(location: to, following: false)
+      "#{who.fullname} walked out of #{from.name} to #{to.name} and is no longer in #{from.name}."
+    when "follow"
+      state.update!(following: true, location: game.current_location)
+      "#{who.fullname} decided to go with #{game.character.fullname} and will travel with them."
+    end
+    Playthrough::Volition::Record.create!(playthrough: game, character: who, location: from, chosen: chosen, status: "applied",
+                                          fact: fact, serves: "none", round: 1, decided_by: "die")
   end
 
   # --- what somebody said unasked --------------------------------------------
@@ -1226,41 +1216,6 @@ class EngineSweepTest < ActiveSupport::TestCase
     assert_empty EngineSweep::Invariants.new(story, seed: seed).check
   end
 
-  # THE INVARIANT ACROSS AN ACTUAL WALK, ON A WORLD THAT HAS GEOMETRY, and it is
-  # the one this slice most wants: the two assertions above load and check
-  # without taking a turn, and the only scripted walk is over a flat world where
-  # both sides of every comparison are nil -- so it would hold even if the two
-  # readers disagreed about a box entirely.
-  #
-  # NOT A SCRIPT, because `EngineSweep::Script` resolves a world by slug out of
-  # `db/seeds/worlds/` and the captain's fourth ruling leaves those three flat.
-  # `Playthrough::Mechanics` with `model: false` is what a script's step runs
-  # anyway (`EngineSweep::Walk#engine_for`), so the typed lines below go through
-  # the same engine the browser moves the world with.
-  #
-  # THE MOVE IS BETWEEN TWO CHILDREN OF ONE PLACE -- out of the taproom, into
-  # the back room and back again -- which is the case the whole programme exists
-  # for, and it must leave all six facts about all four rooms exactly as the
-  # file wrote them.
-  test "typed lines that move the party between two rooms of one place move no wall" do
-    seed = WorldSeed.parse(File.read(Rails.root.join("test/fixtures/files/a-world-with-an-interior.yml")))
-    story = WorldSeed::Loader.new(seed.deep_dup).load!
-    game = Playthrough.create!(story: story, character: story.protagonist,
-                               current_location: story.locations.realized.order(:id).first,
-                               current_scene: story.opening_scene)
-    engine = Playthrough::Mechanics.new(game, model: false)
-
-    [ "go to The Back Room", "look", "go to The Taproom" ].each do |typed|
-      report = engine.run(typed)
-
-      assert_not report.refused?, "#{typed.inspect} was refused: #{report.refusal}"
-    end
-
-    assert_equal "The Taproom", game.reload.current_location.name
-    assert_equal 2, story.locations.where.not(parent_location_id: nil).count
-    assert_empty EngineSweep::Invariants.new(story, seed: seed).check
-  end
-
   # THE LOADER RESOLVES A `parent` KEY ON `WorldSeed.natural_key`, so a file may
   # spell it with or without its article and still name one place. The invariant
   # has to read it the same way, or a world the format accepts would break a
@@ -1416,5 +1371,76 @@ class EngineSweepTest < ActiveSupport::TestCase
       create(:location_connection, location: origin, connected_location: destination,
                                    distance: "adjacent", travel_method: "walking")
     end
+  end
+end
+
+# THE SWEEP ON A DATABASE A TEST HAS WRITTEN: each test here commits its rows
+# to a scratch copy (`PlaysOnRust`), which is what the Rust engine, on a
+# connection of its own, can read.
+class EngineSweepOnAScratchCopyTest < ActiveSupport::TestCase
+  include PlaysOnRust
+
+  # A DATABASE WITH A HISTORY ROLLS THE SAME DICE AS AN EMPTY ONE. `Roll.seed`
+  # is built out of row ids, and these are the counters a freshly prepared
+  # development database stands at once `db:seed` has loaded the checked-in
+  # worlds. Before a walk pinned its ids the copy took the next id instead, and
+  # this script failed there while passing here: a volition die rolled
+  # differently and a bystander walked into the fight room.
+  SEEDED_COUNTERS = { "stories" => 3, "universes" => 3, "locations" => 13, "location_connections" => 20,
+                      "characters" => 9, "items" => 7, "races" => 13, "scenes" => 3,
+                      "world_events" => 2, "world_mechanics" => 1 }.freeze
+
+  # The counters are set on this test's own copy of the database, which the
+  # walk copies again and pins (`EngineSweep::Walk#pin_ids!`), so a walk can
+  # move nothing of the database it was handed.
+  test "a walk rolls the same dice whatever ids the database has already handed out" do
+    connection = ActiveRecord::Base.connection
+    SEEDED_COUNTERS.each do |table, seq|
+      connection.exec_delete("DELETE FROM sqlite_sequence WHERE name = #{connection.quote(table)}")
+      connection.exec_insert("INSERT INTO sqlite_sequence (name, seq) VALUES (#{connection.quote(table)}, #{seq})")
+    end
+    fight = EngineSweep.scripts.select { |script| script.name == "a-fight-the-player-wins" }
+
+    result = EngineSweep.run(fight).sole
+
+    assert_predicate result, :passed?, result.report
+    assert_equal 13, connection.select_value("SELECT seq FROM sqlite_sequence WHERE name = 'locations'"),
+                 "the walk's pinned counters reached the database it copied"
+  end
+
+  # THE INVARIANT ACROSS AN ACTUAL WALK, ON A WORLD THAT HAS GEOMETRY, and it is
+  # the one this slice most wants: the box invariant's own tests (in
+  # `EngineSweepTest`) load and check without taking a turn, and the only
+  # scripted walk is over a flat world where both sides of every comparison are
+  # nil -- so it would hold even if the two readers disagreed about a box
+  # entirely.
+  #
+  # NOT A SCRIPT, because `EngineSweep::Script` resolves a world by slug out of
+  # `db/seeds/worlds/` and the captain's fourth ruling leaves those three flat.
+  # `EngineSweep::RustMechanics` is what a script's typed step plays through,
+  # so the typed lines below go through the engine the browser moves the world
+  # with.
+  #
+  # THE MOVE IS BETWEEN TWO CHILDREN OF ONE PLACE -- out of the taproom, into
+  # the back room and back again -- which is the case the whole programme exists
+  # for, and it must leave all six facts about all four rooms exactly as the
+  # file wrote them.
+  test "typed lines that move the party between two rooms of one place move no wall" do
+    seed = WorldSeed.parse(File.read(Rails.root.join("test/fixtures/files/a-world-with-an-interior.yml")))
+    story = WorldSeed::Loader.new(seed.deep_dup).load!
+    game = Playthrough.create!(story: story, character: story.protagonist,
+                               current_location: story.locations.realized.order(:id).first,
+                               current_scene: story.opening_scene)
+    engine = EngineSweep::RustMechanics.new(game)
+
+    [ "go to The Back Room", "look", "go to The Taproom" ].each do |typed|
+      report = engine.run(typed)
+
+      assert_not report.refused?, "#{typed.inspect} was refused: #{report.refusal}"
+    end
+
+    assert_equal "The Taproom", game.reload.current_location.name
+    assert_equal 2, story.locations.where.not(parent_location_id: nil).count
+    assert_empty EngineSweep::Invariants.new(story, seed: seed).check
   end
 end

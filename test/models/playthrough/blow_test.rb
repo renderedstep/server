@@ -64,7 +64,7 @@ class Playthrough::BlowTest < ActiveSupport::TestCase
   # of a moment, so its condition is a value built out of its own column.
   test "the condition is the hit points on the row and not the ones on the record" do
     blow = create(:playthrough_blow, playthrough: @game, target: @monster, hp_after: 2)
-    Playthrough::Turn.new(@game).harm!(@monster, 1)
+    wound!(@game, @monster, 1)
 
     assert_equal 2, blow.condition.hp
     assert_equal @monster.max_hp, blow.condition.max
@@ -105,11 +105,11 @@ class Playthrough::BlowTest < ActiveSupport::TestCase
   # are the four statements that stop that, and they are tests rather than
   # assumptions because it is the shape a `dependent:` nobody wrote fails in.
 
+  # The rows a fight that killed somebody leaves: a blow its closing scene
+  # claimed, the killing blow, and the body kept where it fell.
   test "a whole story with a fight in it can be deleted" do
-    @turn = Playthrough::Turn.new(@game)
-    @turn.strike!(@protagonist, @monster, round: 1)
-    @turn.harm!(@monster, @monster.max_hp)
-    Playthrough::Fight.new(@game).close!
+    create(:playthrough_blow, :closed, playthrough: @game, attacker: @protagonist, target: @monster, round: 1)
+    blow!(@game, @protagonist, @monster, damage: @monster.max_hp, round: 2)
 
     @story.destroy!
 

@@ -243,8 +243,7 @@ class Playthrough::ArcTest < ActiveSupport::TestCase
 
     assert_equal first, arc.next_step
 
-    @game.update!(current_location: @cell)
-    arc.run!
+    create(:playthrough_beat, playthrough: @game, quest_step: first)
 
     assert_equal "And get out again.", Playthrough::Arc.new(@game.reload).next_step.summary
   end

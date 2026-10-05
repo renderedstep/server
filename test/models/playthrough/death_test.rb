@@ -48,7 +48,7 @@ class Playthrough::DeathTest < ActiveSupport::TestCase
   end
 
   test "the moment a game ended is never re-dated" do
-    @turn.harm!(@vance, 6)
+    wound!(@game, @vance, 6)
     was = @game.reload.ended_at
 
     @game.end!(at: 1.year.from_now)

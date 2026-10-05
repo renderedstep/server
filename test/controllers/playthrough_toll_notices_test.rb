@@ -2,6 +2,9 @@ require "test_helper"
 require "turbo/broadcastable/test_helper"
 
 class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
+  # The crossings are played by the Rust engine, as a player's are
+  # (`PlaysOnRust`); its dice decide what the doorway costs.
+  include PlaysOnRust
   include Turbo::Broadcastable::TestHelper
 
   QUIET_ARRIVAL = {
@@ -19,9 +22,9 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
   end
 
   test "a quiet arrival description still shows the claimed harm with debug off" do
-    agent = FakeAgent.new(QUIET_ARRIVAL)
-    scene = Roll.stub(:die, 3) do
-      BaseAgent.stub(:new, agent) { Playthrough::Turn.new(@game).play("/move Counting House") }
+    # One call, the arrival's: `replying` fails the test on any other.
+    scene = replying(reply(:arrival, QUIET_ARRIVAL)) do
+      Playthrough::Session.new(@game).play("/move Counting House", request_token: "crossing")
     end
     toll = @game.tolls.sole
 
@@ -32,10 +35,9 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
     assert_select ".log .turn + .notice", text: toll.to_s, count: 1
     assert_select ".machinery", count: 0
     assert_not_includes response.body, QUIET_ARRIVAL.fetch("summary")
-    assert_equal 3, toll.damage
+    assert_operator toll.damage, :positive?
     assert_equal scene, toll.scene
     assert_equal QUIET_ARRIVAL.fetch("description"), scene.reload.description
-    assert_equal 1, agent.prompts.length
   end
 
   test "a shared opening shows only this game's claimed tolls" do
@@ -102,10 +104,8 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
   test "redelivering a job shows one toll notice without another model call or charge" do
     streams = Playthrough::Debug.stub(:enabled?, false) do
       capture_turbo_stream_broadcasts(@game) do
-        Roll.stub(:die, 3) do
-          BaseAgent.stub(:new, FakeAgent.new(QUIET_ARRIVAL)) do
-            NarrationJob.perform_now(@game.id, "/move Counting House", "arrival-form")
-          end
+        replying(reply(:arrival, QUIET_ARRIVAL)) do
+          NarrationJob.perform_now(@game.id, "/move Counting House", "arrival-form")
         end
       end
     end
@@ -115,10 +115,9 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
     delivered = nil
     assert_no_difference [ "Playthrough::Toll.count", "Scene.count" ] do
       delivered = Playthrough::Debug.stub(:enabled?, false) do
+        # A redelivery must not ask a model: no reply is declared.
         capture_turbo_stream_broadcasts(@game) do
-          BaseAgent.stub(:new, ->(*) { flunk "redelivery must not ask a model" }) do
-            NarrationJob.perform_now(@game.id, "/move Counting House", "arrival-form")
-          end
+          replying { NarrationJob.perform_now(@game.id, "/move Counting House", "arrival-form") }
         end
       end
     end

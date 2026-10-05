@@ -1,12 +1,12 @@
 require "test_helper"
 
-# THE EVENT-ROW ADAPTER: a turn an API client asked for, played through the
-# one loop with the fake at the model boundary, and the rows it leaves
-# validated against docs/protocol/v1.
+# THE EVENT-ROW ADAPTER: a turn an API client asked for, played by the Rust
+# engine with its replay at the model boundary (`PlaysOnRust`), and the rows
+# it leaves validated against docs/protocol/v1.
 class NarrationJobEventsTest < ActiveJob::TestCase
+  include PlaysOnRust
   include ProtocolV1
 
-  NOT_A_MOVE = { "intent" => "other", "target" => "nothing" }.freeze
   NARRATION = "The ledger falls open on a page of names, and every one of them has been struck through twice.".freeze
 
   setup do
@@ -14,14 +14,18 @@ class NarrationJobEventsTest < ActiveJob::TestCase
     @game = create(:playthrough, :started, player: @player)
   end
 
-  def play(line, token, *responses)
+  def play(line, token, *replies)
     command = Playthrough::Session.new(@game).accept!(line, token)
-    BaseAgent.stub(:new, FakeAgent.new(*responses)) { NarrationJob.perform_now(@game.id, command.command, token, "events") }
+    replying(*replies) { NarrationJob.perform_now(@game.id, command.command, token, "events") }
     command.reload
   end
 
+  def not_a_move = reply(:classifier, NOT_A_MOVE)
+
+  def narration = reply(:narration, NARRATION)
+
   test "a narrated turn leaves started, batched prose and finished, each conforming" do
-    command = play("open the ledger", "t1", NOT_A_MOVE, NARRATION)
+    command = play("open the ledger", "t1", not_a_move, narration)
     events = command.turn_events.order(:sequence).to_a
 
     assert_equal (1..events.size).to_a, events.map(&:sequence)
@@ -42,7 +46,7 @@ class NarrationJobEventsTest < ActiveJob::TestCase
 
   test "a refused line finishes as refused with the refusal's kind and sentence" do
     create(:item, :lying, location: @game.current_location, name: "ward stamp")
-    command = play("pick up the cellar key", "t2", { "intent" => "take", "target" => "nothing" })
+    command = play("pick up the cellar key", "t2", reply(:classifier, NOT_A_MOVE.merge("intent" => "take")))
     finished = command.turn_events.find_by!(kind: "finished").data
 
     assert_protocol "FinishedEvent", finished
@@ -54,7 +58,7 @@ class NarrationJobEventsTest < ActiveJob::TestCase
   end
 
   test "the turn's player does not outlive the turn" do
-    play("open the ledger", "t3", NOT_A_MOVE, NARRATION)
+    play("open the ledger", "t3", not_a_move, narration)
     assert_nil Current.player
   end
 
@@ -67,8 +71,8 @@ class NarrationJobEventsTest < ActiveJob::TestCase
   test "a round that leaves the fight on finishes as attacked, with its blows and the panel's line" do
     game = fighting_game
     command = Playthrough::Session.new(game).accept!("/attack marek", "t4")
-    exploded = ->(*) { raise "a round of a fight must make no model call" }
-    BaseAgent.stub(:new, exploded) { NarrationJob.perform_now(game.id, command.command, "t4", "events") }
+    # No reply is declared: a round of a fight makes no model call.
+    replying { NarrationJob.perform_now(game.id, command.command, "t4", "events") }
     command.reload
     finished = command.turn_events.find_by!(kind: "finished").data
 

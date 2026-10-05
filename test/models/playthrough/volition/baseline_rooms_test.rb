@@ -116,13 +116,33 @@ class Playthrough::Volition::BaselineRoomsTest < ActiveSupport::TestCase
     end
     entry[:past].to_a.each do |name, shape, where|
       who = people.fetch(name)
-      from = game.location_of(who) || room
-      token = shape == :move ? "move:#{rooms.fetch(where).id}" : shape.to_s
-      Playthrough::Volition.new(game, who, location: from).apply!(token)
+      past_act!(game, who, game.location_of(who) || room, shape, where && rooms.fetch(where))
     end
     ids = people.values.map(&:id)
     Playthrough::Requests.build(:volition, playthrough: game.id, characters: ids, speakers: speaking ? ids : [],
                                            location: room.id, line: entry[:line])
+  end
+
+  # AN ACT ALREADY TAKEN, AS THE ROWS IT LEFT: the record the engine writes
+  # for it, decided by the die, and -- for a walk or a promise to follow --
+  # where this game now has the person. Each staged person's pursuit pulls
+  # toward the act they are staged taking, so it serves their conscious
+  # pursuit; waiting serves nothing.
+  def past_act!(game, who, from, shape, to)
+    state = -> { game.npc_states.find_or_create_by!(character: who) { |row| row.location = from } }
+    chosen, fact = case shape
+    when :wait then [ "wait", "#{who.fullname} stayed in #{from.name} and changed nothing." ]
+    when :move
+      state.call.update!(location: to, following: false)
+      [ "move:#{to.id}", "#{who.fullname} walked out of #{from.name} to #{to.name} and is no longer in #{from.name}." ]
+    when :follow
+      state.call.update!(following: true, location: game.current_location)
+      [ "follow", "#{who.fullname} decided to go with #{game.character.fullname} and will travel with them." ]
+    end
+    waited = shape == :wait
+    create(:playthrough_volition, playthrough: game, character: who, location: from, chosen: chosen, fact: fact,
+                                  status: waited ? "none" : "applied", serves: waited ? "none" : "conscious",
+                                  round: 1, decided_by: "die")
   end
 
   def requests(speaking: false)

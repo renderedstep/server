@@ -22,7 +22,7 @@ class Playthrough::Volition::RequestTest < ActiveSupport::TestCase
     @game = create(:playthrough, story: @story, character: @player, current_location: @room)
     @clerk = create(:character, :driven, story: @story, location: @room, fullname: "Odile Vance", nickname: "Odile")
     create(:item, character: nil, location: @room, playthrough: @game, name: "a brass ledger key")
-    Playthrough::Volition.new(@game, @clerk, location: @room).apply!(Playthrough::Volition::WAIT)
+    create(:playthrough_volition, :waited, playthrough: @game, character: @clerk, location: @room, decided_by: "die")
   end
 
   def request

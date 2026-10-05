@@ -6,20 +6,13 @@ require "test_helper"
 # of it needs the extension built; `test/lib/rust_engine_extension_test.rb` is
 # what runs against the real one.
 class Playthrough::RustEngineTest < ActiveSupport::TestCase
+  # The suite plays Rust too, as a player does: nothing makes the Ruby loop a
+  # default anywhere.
   test "the Rust engine plays unless a block asks for the Ruby reference" do
-    Playthrough::RustEngine.using(:rust) do
-      assert_equal :rust, Playthrough::RustEngine.engine
-      Playthrough::RustEngine.using(:ruby) { assert_equal :ruby, Playthrough::RustEngine.engine }
-    end
-    # The suite's own default, set once in test_helper.
-    assert_equal :ruby, Playthrough::RustEngine.engine
+    assert_equal :rust, Playthrough::RustEngine.engine
+    Playthrough::RustEngine.using(:ruby) { assert_equal :ruby, Playthrough::RustEngine.engine }
+    assert_equal :rust, Playthrough::RustEngine.engine
     assert_raises(ArgumentError) { Playthrough::RustEngine.using(:python) { nil } }
-  end
-
-  test "the Ruby reference cannot be made the default outside the test environment" do
-    Rails.env.stub(:test?, false) do
-      assert_raises(Playthrough::RustEngine::EngineError) { Playthrough::RustEngine.reference_by_default! }
-    end
   end
 
   test "a missing extension is an error in words, never a load error" do

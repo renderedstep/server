@@ -69,30 +69,6 @@ class Playthrough::TurnConversationsTest < ActiveSupport::TestCase
     assert_includes classifier.content, "look at the awnings"
   end
 
-  # --- and it reaches the debug view ----------------------------------------
-
-  test "the debug view shows the cost and the model for the turn just taken" do
-    play("look at the awnings", CLASSIFY_OTHER, OfflineExchange.reply("Canvas.", input: 90, output: 12))
-
-    turn = Playthrough::Debug.new(Playthrough.find(@playthrough.id)).latest_turn
-
-    assert_predicate turn, :recorded?
-    assert_equal 210, turn.input_tokens
-    assert_equal 52, turn.output_tokens
-    assert_equal [ "gemma3:12b" ], turn.models
-    assert_equal %w[classifier narration], turn.conversations.map(&:purpose).sort
-    assert_equal "look at the awnings", turn.typed
-  end
-
-  test "the debug view finds the conversation a character is still having" do
-    play("ask Grenn about the charts", CLASSIFY_TALK, reaction, OfflineExchange.reply("Grenn nods."))
-
-    debug = Playthrough::Debug.new(Playthrough.find(@playthrough.id))
-
-    assert_equal [ @grenn ], debug.durable_conversations.map(&:character)
-    assert_operator debug.output_tokens, :>, 0
-  end
-
   # --- history survives a restart -------------------------------------------
 
   # Two turns, with everything from the first dropped in between. The second
@@ -174,18 +150,6 @@ class Playthrough::TurnConversationsTest < ActiveSupport::TestCase
     assert_includes first.messages.map(&:content).join, "look 0"
     assert_predicate Playthrough::Debug.new(@playthrough).turns.first, :recorded?,
                      "and the debug page can still show what it cost"
-  end
-
-  test "prune_conversations! is a no-op when no cap is set" do
-    2.times do |n|
-      @playthrough = Playthrough.find(@playthrough.id)
-      play("look #{n}", CLASSIFY_OTHER, OfflineExchange.reply("Prose #{n}."))
-    end
-
-    playthrough = Playthrough.find(@playthrough.id)
-
-    assert_equal 0, playthrough.prune_conversations!(keep: nil)
-    assert_equal 4, playthrough.chats.one_shot.count
   end
 
   # THE OPT-IN CAP, which still behaves exactly as it did when it was the

@@ -182,6 +182,36 @@ class Playthrough::RustEngine::TurnTest < ActiveSupport::TestCase
     assert_equal "failed", @game.commands.find_by!(request_token: "t-4").status
   end
 
+  # ONE GAME'S TURNS ARE HANDED TO THE ENGINE ONE AT A TIME, IN THE ORDER THEY
+  # TOOK THE GAME'S LOCK. The engine plays on a connection of its own and knows
+  # nothing of `GameLock`, so the wrapper holds it across the whole call: a
+  # second delivery waits while the first is still out with its model.
+  test "a second delivery for one game waits until the engine has finished the first" do
+    entered = Queue.new
+    release = Queue.new
+    handed = []
+    extension = Extension.new do |game, line, token, _block|
+      handed << line
+      entered << line
+      release.pop if line == "/take red coin"
+      Playthrough::Command.accept!(game, line, token).update!(status: "completed")
+      { turned: { scene: nil, refusal: nil, safety_notice: false, setup: false }, state: {} }
+    end
+
+    on_rust(extension) do
+      first = Thread.new { Playthrough::Session.new(Playthrough.find(@game.id)).play("/take red coin", request_token: "red") }
+      assert_equal "/take red coin", Timeout.timeout(5) { entered.pop }
+      second = Thread.new { Playthrough::Session.new(Playthrough.find(@game.id)).play("/take blue coin", request_token: "blue") }
+
+      assert_nil second.join(0.3), "the second delivery reached the engine while the first was still out"
+      release << :go
+      [ first, second ].each { |thread| assert thread.join(5), "a delivery never finished" }
+    end
+
+    assert_equal [ "/take red coin", "/take blue coin" ], handed
+    assert_equal %w[completed completed], @game.commands.order(:id).pluck(:status)
+  end
+
   private
 
   # The Rust engine, with the stand-in loaded and the transaction every test

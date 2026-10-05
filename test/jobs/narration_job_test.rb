@@ -2,26 +2,32 @@ require "test_helper"
 require "turbo/broadcastable/test_helper"
 
 class NarrationJobTest < ActiveJob::TestCase
+  # Every turn here is played by the Rust engine, as a player's is, on a
+  # scratch copy of the database (`PlaysOnRust`).
+  include PlaysOnRust
   include Turbo::Broadcastable::TestHelper
 
-  # Never a live model: the fake stands in at the BaseAgent boundary, so these
-  # pass with no API key and no ollama running. The queued responses are the
-  # turn's model calls in order -- classification first, then whatever the
-  # classification led to.
-  NOT_A_MOVE = { "intent" => "other", "target" => "nothing" }.freeze
+  # Never a live model: the engine's replay answers each call, so these pass
+  # with no API key. The replies are the turn's model calls in order --
+  # classification first, then whatever the classification led to -- and a
+  # call nobody declared fails the test.
 
   # Long enough that batching has something to do: BATCH_SIZE is 20 characters,
   # and the fake streams a word at a time the way RubyLLM streams tokens.
   NARRATION = "The ledger falls open on a page of names, and every one of them " \
               "has been struck through twice.".freeze
 
-  def play(playthrough, command, *responses)
-    agent = FakeAgent.new(*responses)
-
+  def play(playthrough, command, *replies)
     capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, agent) { NarrationJob.perform_now(playthrough.id, command) }
+      replying(*replies) { NarrationJob.perform_now(playthrough.id, command) }
     end
   end
+
+  def read_as(content) = reply(:classifier, PlaysOnRust::NOT_A_MOVE.merge(content))
+
+  def not_a_move = reply(:classifier, PlaysOnRust::NOT_A_MOVE)
+
+  def narration(text = NARRATION) = reply(:narration, text)
 
   def appends(streams)
     streams.select { |s| s["action"] == "append" }
@@ -29,7 +35,7 @@ class NarrationJobTest < ActiveJob::TestCase
 
   test "the job creates the streaming target before any prose and restores the input last" do
     playthrough = create(:playthrough, :started)
-    streams = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION)
+    streams = play(playthrough, "open the ledger", not_a_move, narration)
 
     assert_equal "replace", streams.first["action"]
     assert_equal "turn_log", streams.first["target"]
@@ -44,13 +50,12 @@ class NarrationJobTest < ActiveJob::TestCase
 
   test "a duplicate job only refreshes the finished log without a new pending page" do
     playthrough = create(:playthrough, :started)
-    BaseAgent.stub(:new, FakeAgent.new(NOT_A_MOVE, NARRATION)) do
+    replying(not_a_move, narration) do
       NarrationJob.perform_now(playthrough.id, "open the ledger", "same-form")
     end
+    # A redelivery cannot ask a model: no reply is declared for it.
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, ->(*) { flunk "a redelivery cannot ask a model" }) do
-        NarrationJob.perform_now(playthrough.id, "open the ledger", "same-form")
-      end
+      replying { NarrationJob.perform_now(playthrough.id, "open the ledger", "same-form") }
     end
 
     assert_equal 1, streams.length
@@ -62,7 +67,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "narrates a turn, appends the prose, and persists it" do
     playthrough = create(:playthrough, :started)
 
-    streams = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION)
+    streams = play(playthrough, "open the ledger", not_a_move, narration)
 
     assert_equal NARRATION, appends(streams).map(&:text).join
     assert_equal [ "stream" ], appends(streams).map { |s| s["target"] }.uniq
@@ -80,7 +85,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "batches the prose rather than broadcasting a token at a time" do
     playthrough = create(:playthrough, :started)
 
-    batches = appends(play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION)).map(&:text)
+    batches = appends(play(playthrough, "open the ledger", not_a_move, narration)).map(&:text)
 
     assert_operator batches.count, :<, NARRATION.split.count,
                     "batching should broadcast fewer times than there are words"
@@ -96,7 +101,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "finishes by replacing the turn log with the log, the place and the input" do
     playthrough = create(:playthrough, :started)
 
-    streams = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION)
+    streams = play(playthrough, "open the ledger", not_a_move, narration)
     replace = streams.last
 
     assert_equal "replace", replace["action"]
@@ -114,7 +119,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "the finished log carries the verdict controls for the new turn" do
     playthrough = create(:playthrough, :started)
 
-    replace = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION).last
+    replace = play(playthrough, "open the ledger", not_a_move, narration).last
 
     assert_match "footer class=\"verdict\"", replace.to_html
     assert_match %(id="verdict_scene_#{playthrough.reload.current_scene.id}"), replace.to_html
@@ -126,7 +131,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "the finished log is no longer marked as streaming" do
     playthrough = create(:playthrough, :started)
 
-    replace = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION).last
+    replace = play(playthrough, "open the ledger", not_a_move, narration).last
 
     assert_match 'class="log"', replace.to_html
     assert_no_match(/cursor/, replace.to_html)
@@ -143,7 +148,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "the broadcast form does not carry autofocus" do
     playthrough = create(:playthrough, :started)
 
-    replace = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION).last
+    replace = play(playthrough, "open the ledger", not_a_move, narration).last
 
     assert_match "what do you do?", replace.to_html
     assert_no_match(/autofocus/, replace.to_html)
@@ -160,8 +165,8 @@ class NarrationJobTest < ActiveJob::TestCase
                                  distance: "adjacent", travel_method: "taking stairs")
 
     streams = play(playthrough, "take the stairs down",
-                   { "intent" => "move", "target" => "The Sunken Stair" },
-                   { "description" => "The stair gives under you.", "summary" => "They go down." })
+                   read_as("intent" => "move", "target" => "The Sunken Stair"),
+                   reply(:arrival, { "description" => "The stair gives under you.", "summary" => "They go down." }))
 
     assert_equal "The stair gives under you.", appends(streams).map(&:text).join
 
@@ -177,9 +182,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "a turn nobody is listening to still lands" do
     playthrough = create(:playthrough, :started)
 
-    BaseAgent.stub(:new, FakeAgent.new(NOT_A_MOVE, NARRATION)) do
-      NarrationJob.perform_now(playthrough.id, "open the ledger")
-    end
+    replying(not_a_move, narration) { NarrationJob.perform_now(playthrough.id, "open the ledger") }
 
     assert_equal NARRATION, playthrough.reload.current_scene.description
   end
@@ -190,8 +193,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "a failed turn returns the input along with a line saying so" do
     playthrough = create(:playthrough, :started)
 
-    # Nothing queued, so classification raises.
-    streams = play(playthrough, "open the ledger")
+    streams = play(playthrough, "open the ledger", reply(:classifier, failure: :provider, message: "502 Bad Gateway"))
     replace = streams.last
 
     assert_equal "replace", replace["action"]
@@ -211,8 +213,8 @@ class NarrationJobTest < ActiveJob::TestCase
     raised = "generated text arrived at its 320-character cap (320 characters), so it " \
              'was cut off rather than finished: "...his own workspace,."'
 
-    html = play(playthrough, "ask him about the ledger", NOT_A_MOVE,
-                SanitizesGeneratedText::TruncatedTextError.new(raised)).last.to_html
+    html = play(playthrough, "ask him about the ledger", not_a_move,
+                reply(:narration, failure: :provider, message: raised)).last.to_html
 
     assert_match Playthrough::TurnFailureNotice::MESSAGE, html
     assert_no_match(/320-character cap/, html, "an internal cap is not the player's business")
@@ -227,11 +229,11 @@ class NarrationJobTest < ActiveJob::TestCase
     original = Rails.logger
     Rails.logger = ActiveSupport::Logger.new(written)
 
-    play(playthrough, "ask him about the ledger", NOT_A_MOVE,
-         SanitizesGeneratedText::TruncatedTextError.new("cut off at its 320-character cap"))
+    play(playthrough, "ask him about the ledger", not_a_move,
+         reply(:narration, failure: :provider, message: "cut off at its 320-character cap"))
 
     assert_match(/Narration failed/, written.string)
-    assert_match(/TruncatedTextError/, written.string)
+    assert_match(/Playthrough::RustEngine::ModelFailed/, written.string)
     assert_match(/cut off at its 320-character cap/, written.string)
   ensure
     Rails.logger = original
@@ -241,13 +243,14 @@ class NarrationJobTest < ActiveJob::TestCase
   test "every failed turn reads the same, whichever call failed" do
     %w[classifier narrator].each do |failing|
       playthrough = create(:playthrough, :started)
-      queued = failing == "classifier" ? [] : [ NOT_A_MOVE, RubyLLM::Error.new("502 Bad Gateway") ]
+      bad_gateway = { failure: :provider, message: "502 Bad Gateway" }
+      queued = failing == "classifier" ? [ reply(:classifier, **bad_gateway) ] : [ not_a_move, reply(:narration, **bad_gateway) ]
 
       html = play(playthrough, "open the ledger", *queued).last.to_html
 
       assert_match Playthrough::TurnFailureNotice::MESSAGE, html
       assert_no_match(/Bad Gateway/, html)
-      assert_no_match(/FakeAgent/, html, "an internal message is not player-facing copy")
+      assert_no_match(/provider/i, html, "an internal message is not player-facing copy")
     end
   end
 
@@ -263,9 +266,7 @@ class NarrationJobTest < ActiveJob::TestCase
     later = create(:playthrough_command, playthrough: playthrough, command: "/wait")
 
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, ->(*) { flunk "nothing here may ask a model" }) do
-        NarrationJob.perform_now(playthrough.id, later.command, later.request_token)
-      end
+      replying { NarrationJob.perform_now(playthrough.id, later.command, later.request_token) }
     end
     page = Nokogiri::HTML.fragment(streams.last.to_html)
 
@@ -287,9 +288,7 @@ class NarrationJobTest < ActiveJob::TestCase
     failed = create(:playthrough_command, playthrough: playthrough, status: "failed", error_kind: "error")
 
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, ->(*) { flunk "a failed delivery must not ask a model" }) do
-        NarrationJob.perform_now(playthrough.id, failed.command, failed.request_token)
-      end
+      replying { NarrationJob.perform_now(playthrough.id, failed.command, failed.request_token) }
     end
     page = Nokogiri::HTML.fragment(streams.last.to_html)
 
@@ -311,7 +310,7 @@ class NarrationJobTest < ActiveJob::TestCase
     playthrough = create(:playthrough, :started)
     item = lying_here(playthrough, playthrough.current_location, name: "red coin")
 
-    html = play(playthrough, "/take red coin", BaseAgent::NoModelConfiguredError).last.to_html
+    html = play(playthrough, "/take red coin", reply(:narration, failure: :no_model)).last.to_html
 
     assert_includes playthrough.reload.carried, item, "the action was committed and stands"
     assert_match Playthrough::SetupNotice::COMPLETED, html
@@ -329,7 +328,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "a turn that stopped at its first call names the configuration without claiming a turn" do
     playthrough = create(:playthrough, :started)
 
-    html = play(playthrough, "open the ledger", BaseAgent::NoModelConfiguredError).last.to_html
+    html = play(playthrough, "open the ledger", reply(:classifier, failure: :no_model)).last.to_html
 
     assert_match Playthrough::SetupNotice::UNFINISHED, html
     assert_match Playthrough::SetupNotice::WAYS_OUT, html
@@ -346,7 +345,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "a turn that stopped at its first call for want of a model offers no resume that cannot finish" do
     playthrough = create(:playthrough, :started)
 
-    page = Nokogiri::HTML.fragment(play(playthrough, "open the ledger", BaseAgent::NoModelConfiguredError).last.to_html)
+    page = Nokogiri::HTML.fragment(play(playthrough, "open the ledger", reply(:classifier, failure: :no_model)).last.to_html)
 
     submission = playthrough.commands.sole
     assert_equal "failed", submission.status
@@ -362,7 +361,7 @@ class NarrationJobTest < ActiveJob::TestCase
   # the same -- without quoting what the provider said back.
   test "a rejected key is named as configuration rather than logged and hidden" do
     playthrough = create(:playthrough, :started)
-    rejected = BaseAgent::UnauthorizedProviderError.new("openrouter rejected our credentials (sk-live-secret)")
+    rejected = reply(:classifier, failure: :unauthorized, message: "openrouter rejected our credentials (sk-live-secret)")
 
     html = play(playthrough, "open the ledger", rejected).last.to_html
 
@@ -377,7 +376,7 @@ class NarrationJobTest < ActiveJob::TestCase
     playthrough = create(:playthrough, :started)
     prose = "The sign reads <ALL DEBTS SETTLED> & nobody believes it, not once."
 
-    streams = play(playthrough, "read the sign", NOT_A_MOVE, prose)
+    streams = play(playthrough, "read the sign", not_a_move, narration(prose))
 
     assert_equal prose, appends(streams).map(&:text).join
     html = appends(streams).map(&:to_html).join
@@ -396,7 +395,7 @@ class NarrationJobTest < ActiveJob::TestCase
     playthrough = create(:playthrough, :started)
 
     streams = play(playthrough, "tell him nobody would miss him",
-                   NOT_A_MOVE, BaseAgent::CrisisResponseError)
+                   not_a_move, reply(:narration, failure: :crisis))
     replace = streams.last
 
     assert_equal "replace", replace["action"]
@@ -415,7 +414,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "the safety message stands where the turn would have been" do
     playthrough = create(:playthrough, :started)
 
-    html = play(playthrough, "tell him to do it", NOT_A_MOVE, BaseAgent::CrisisResponseError).last.to_html
+    html = play(playthrough, "tell him to do it", not_a_move, reply(:narration, failure: :crisis)).last.to_html
     notice = html.index(Playthrough::SafetyNotice::HEADING)
 
     assert_operator notice, :>, html.index('class="log"'), "it belongs below the log, not above it"
@@ -428,7 +427,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "an exhausted refusal is a failed turn and not a safety message" do
     playthrough = create(:playthrough, :started)
 
-    replace = play(playthrough, "narrate it", NOT_A_MOVE, BaseAgent::RefusalError).last
+    replace = play(playthrough, "narrate it", not_a_move, reply(:narration, failure: :refused)).last
 
     assert_match "alert", replace.to_html
     assert_no_match(/game speaking/, replace.to_html)
@@ -438,7 +437,7 @@ class NarrationJobTest < ActiveJob::TestCase
   test "a turn that lands normally says nothing out of band" do
     playthrough = create(:playthrough, :started)
 
-    replace = play(playthrough, "open the ledger", NOT_A_MOVE, NARRATION).last
+    replace = play(playthrough, "open the ledger", not_a_move, narration).last
 
     assert_no_match(/game speaking/, replace.to_html)
     assert_no_match(/notice/, replace.to_html)
@@ -454,8 +453,8 @@ class NarrationJobTest < ActiveJob::TestCase
   # one line: nothing is written, no narrator is asked, and the player reads the
   # engine's own words and gets the input back so the next line can follow.
   #
-  # `NOT_A_MOVE` and nothing else is queued -- the FakeAgent raises when it runs
-  # out -- so a narrator call on this path would fail the test.
+  # The classifier's reply and nothing else is declared, so a narrator call on
+  # this path would fail the test.
   test "two acts on one line arrive as a refusal with the input back" do
     playthrough = create(:playthrough, :started)
     here = playthrough.current_location
@@ -463,7 +462,7 @@ class NarrationJobTest < ActiveJob::TestCase
     apron = create(:item, :lying, location: here, name: "copy-room apron")
 
     streams = play(playthrough, "pick up the index and the apron",
-                   { "intent" => "take", "target" => index.name, "also_named" => apron.name })
+                   read_as("intent" => "take", "target" => index.name, "also_named" => apron.name))
     replace = streams.last
 
     assert_empty appends(streams), "a refusal is the app's paragraph, not prose arriving"
@@ -488,7 +487,7 @@ class NarrationJobTest < ActiveJob::TestCase
     create(:item, :lying, location: playthrough.current_location, name: "ward stamp")
 
     replace = play(playthrough, "pick up the cellar key",
-                   { "intent" => "take", "target" => "nothing" }).last.to_html
+                   read_as("intent" => "take", "target" => "nothing")).last.to_html
 
     assert_match "did not resolve to anything lying here", replace
     assert_match "Lying here: ward stamp.", replace
@@ -526,7 +525,7 @@ class NarrationJobTest < ActiveJob::TestCase
     playthrough = create(:playthrough, :started)
 
     html = play(playthrough, "go down to the cellar",
-                { "intent" => "move", "target" => "nothing" }).last.to_html
+                read_as("intent" => "move", "target" => "nothing")).last.to_html
     refusal = html.index("Nothing has changed")
 
     assert_operator refusal, :>, html.index('class="log"')
@@ -536,24 +535,18 @@ class NarrationJobTest < ActiveJob::TestCase
   # A ROUND OF A FIGHT, END TO END, THROUGH THE BROWSER'S OWN PATH AND FOR NO
   # MODEL CALL.
   #
-  # `BaseAgent.new` is replaced by something that RAISES for the length of the
-  # turn -- the guard `EngineSweep` uses -- so this is not "we did not notice a
-  # call", it is "a call would have failed the test". The line the panel's
-  # button posts is slashed, so `Playthrough::Grammar` reads it and the
-  # classifier is never reached; `Playthrough::Turn#strike_at` writes a
-  # `Playthrough::Blow` and calls no narrator; the riposte answers in the same
-  # turn. NOTHING IS STREAMED -- there is no prose to stream -- and the panel
+  # No reply is declared, so this is not "we did not notice a call", it is "a
+  # call would have failed the test". The line the panel's button posts is
+  # slashed, so the engine's grammar reads it and the classifier is never
+  # reached; the engine writes a `Playthrough::Blow` and calls no narrator; the
+  # riposte answers in the same turn. NOTHING IS STREAMED -- there is no prose to stream -- and the panel
   # arrives on the ordinary end-of-turn `#turn_log` replace, which is the whole
   # of the Turbo story here.
   test "a button's line plays a whole round with no model call, and the panel comes back with it" do
     playthrough = fighting_playthrough
     opening = playthrough.current_scene
-    exploded = ->(*) { raise "a round of a fight must make no model call" }
-
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, exploded) do
-        NarrationJob.perform_now(playthrough.id, "/attack Marek Sollen")
-      end
+      replying { NarrationJob.perform_now(playthrough.id, "/attack Marek Sollen") }
     end
 
     assert_empty appends(streams), "an engine-only round streams no prose"
@@ -590,13 +583,10 @@ class NarrationJobTest < ActiveJob::TestCase
     # Down to one hit point, so the next blow of any die ends it whatever the
     # face -- `Roll`'s seed is built out of row ids and no fixture may depend on
     # one.
-    Playthrough::Turn.new(playthrough).harm!(monster, monster.max_hp - 1)
-    exploded = ->(*) { raise "closing a fight must make no model call" }
+    Playthrough::Vitals.instantiate!(playthrough, monster).update!(hp_current: 1)
 
     streams = capture_turbo_stream_broadcasts(playthrough) do
-      BaseAgent.stub(:new, exploded) do
-        NarrationJob.perform_now(playthrough.id, "/attack Marek Sollen")
-      end
+      replying { NarrationJob.perform_now(playthrough.id, "/attack Marek Sollen") }
     end
 
     replace = streams.last.to_html
