@@ -47,7 +47,7 @@ class Playthrough::Vitals::SnapshotTest < ActiveSupport::TestCase
   # to full. `find_or_create_by!` reads rather than writes, which is what makes
   # the snapshot safe at the top of every turn.
   test "walking back into a room does not heal anybody in it" do
-    Playthrough::Turn.new(game).harm!(@rowe, 5)
+    wound!(game, @rowe, 5)
 
     Playthrough::Vitals::Snapshot.new(game).of_the_room!(@office)
 

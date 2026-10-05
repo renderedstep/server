@@ -112,7 +112,7 @@ class Item::SnapshotTest < ActiveSupport::TestCase
   test "a room the party has emptied is not refurnished on the way back in" do
     create(:item, :lying, location: @office, name: "ward stamp")
     playthrough = playing
-    Playthrough::Turn.new(playthrough).carry!(playthrough.items_lying_in(@office).sole)
+    carried!(playthrough, playthrough.items_lying_in(@office).sole)
 
     assert_no_difference -> { Item.count } do
       Item::Snapshot.new(playthrough).of_the_room!(@office)

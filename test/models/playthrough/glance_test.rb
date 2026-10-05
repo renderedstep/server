@@ -142,7 +142,7 @@ class Playthrough::GlanceTest < ActiveSupport::TestCase
 
   test "a fight in progress keeps the foe as a target of attack and throw" do
     @rowe.update!(hostile: true)
-    Playthrough::Turn.new(@playthrough).harm!(@rowe, 1)
+    wound!(@playthrough, @rowe, 1)
     assert_includes verb(:attack).targets.map(&:id), @rowe.id
     assert_includes verb(:throw).aims.map(&:name), "Halkett Rowe"
     assert glance.people.first.foe
@@ -232,7 +232,7 @@ class Playthrough::GlanceTest < ActiveSupport::TestCase
   # panel draws is the same rows, in the same order.
   test "the engine's panels are the rows the Ruby read-out reads" do
     @rowe.update!(hostile: true)
-    Playthrough::Turn.new(@playthrough).harm!(@rowe, 1)
+    wound!(@playthrough, @rowe, 1)
     @playthrough.vitals.find_by!(character: @rowe).update!(provoked_at: @playthrough.story_now)
     g = glance
     assert_equal [ true ], g.people.map(&:provoked)

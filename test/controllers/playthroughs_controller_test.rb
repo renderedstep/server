@@ -528,7 +528,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
 
     post playthroughs_path, params: { story_id: story.id }
     first = story.playthroughs.last
-    Playthrough::Turn.new(first).send(:carry!, stamp)
+    carried!(first, stamp)
     assert_equal [ "ward stamp" ], first.carried.pluck(:name)
 
     post playthroughs_path, params: { story_id: story.id }
@@ -967,7 +967,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
   test "killing the last foe takes the panel away" do
     playthrough = fighting_playthrough
     monster = playthrough.story.characters.find_by(fullname: "Marek Sollen")
-    Playthrough::Turn.new(playthrough).harm!(monster, 99)
+    wound!(playthrough, monster, 99)
 
     get playthrough_path(playthrough)
 
@@ -979,7 +979,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
   # existed.
   test "a dead playthrough shows the death notice and no panel" do
     playthrough = fighting_playthrough
-    Playthrough::Turn.new(playthrough).harm!(playthrough.character, 99)
+    wound!(playthrough, playthrough.character, 99)
 
     get playthrough_path(playthrough)
 
@@ -994,7 +994,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
   test "the panel prints the blows of the round just fought" do
     playthrough = fighting_playthrough
     monster = playthrough.story.characters.find_by(fullname: "Marek Sollen")
-    Playthrough::Turn.new(playthrough).strike!(playthrough.character, monster, round: 1)
+    blow!(playthrough, playthrough.character, monster, damage: 4)
 
     get playthrough_path(playthrough)
 
@@ -1009,10 +1009,6 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  # A game the player has died in, through the engine's own writer rather than
-  # by setting the column: `Playthrough::Turn#harm!` is where the ending is
-  # written, and a test that wrote `ended_at` by hand would not notice if it
-  # stopped being.
   # A GAME THAT REACHED THE END OF ITS STORY: the rows `Playthrough::Arc#conclude!`
   # writes in one transaction -- the reached outcome, the closing `Scene` the
   # narrator has already rendered in place, the chain head pointed at it, and
@@ -1040,7 +1036,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
     hero = create(:character, :protagonist, story: story, level: 1, hit_die: 6)
     playthrough = create(:playthrough, story: story, character: hero, current_location: room,
                                        current_scene: create(:scene, story: story, location: room))
-    Playthrough::Turn.new(playthrough).harm!(hero, 99)
+    wound!(playthrough, hero, 99)
     playthrough
   end
 

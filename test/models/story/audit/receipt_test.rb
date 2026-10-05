@@ -154,9 +154,8 @@ class Story::Audit::ReceiptTest < ActiveSupport::TestCase
     destination = create(:location, story: story)
     person = create(:character, story: story, location: destination, fullname: "Maren Vosk")
     key = lying_here(game, destination, name: "brass key")
-    turn = Playthrough::Turn.new(game)
-    turn.harm!(person, person.max_hp)
-    turn.carry!(key)
+    wound!(game, person, person.max_hp)
+    carried!(game, key)
 
     scene = BaseAgent.stub(:new, FakeAgent.new("description" => "You come in.", "summary" => "Arrived.")) do
       Scene::Generator.new(destination, playthrough: game).generate!
@@ -177,10 +176,9 @@ class Story::Audit::ReceiptTest < ActiveSupport::TestCase
     destination = create(:location, story: story)
     maren = create(:character, story: story, location: destination, fullname: "Maren Vosk")
     rowe = create(:character, story: story, location: destination, fullname: "Halkett Rowe")
-    turn = Playthrough::Turn.new(game)
-    turn.harm!(maren, maren.max_hp - 1)
-    turn.strike!(game.character, maren, round: 1, damage: 1)
-    turn.harm!(rowe, rowe.max_hp)
+    wound!(game, maren, maren.max_hp - 1)
+    blow!(game, game.character, maren, damage: 1)
+    wound!(game, rowe, rowe.max_hp)
 
     scene = BaseAgent.stub(:new, FakeAgent.new("description" => "You come in.", "summary" => "Arrived.")) do
       Scene::Generator.new(destination, playthrough: game).generate!
@@ -191,19 +189,11 @@ class Story::Audit::ReceiptTest < ActiveSupport::TestCase
     assert_equal [ "Maren Vosk", "Halkett Rowe" ], receipt.dead
   end
 
+  # The two sentences the engine writes for a person who did nothing and for
+  # an action it refused (`dialogue::receipt`).
   test "the NPC receipts for no effect and a refused effect both read as nothing moved" do
-    story = create(:story)
-    here = create(:location, story: story)
-    game = create(:playthrough, :started, story: story, current_location: here)
-    maren = create(:character, story: story, location: here, fullname: "Maren")
-
-    none = Playthrough::NpcAction.new(game, maren).apply!(Playthrough::NpcAction::NONE)
-    refused = Playthrough::NpcAction.new(game, maren).apply!("give:0")
-
-    assert_equal UNCHANGED, none.fact
-    assert_equal "rejected", refused.status
-    assert Receipt.new(none.fact).possessions_unchanged?
-    assert Receipt.new(refused.fact).possessions_unchanged?
+    assert Receipt.new(UNCHANGED).possessions_unchanged?
+    assert Receipt.new(REFUSED).possessions_unchanged?
   end
 
   test "a receipt that moved a possession, or says nothing a check reads, states nothing" do
@@ -387,7 +377,7 @@ class Story::Audit::ReceiptTest < ActiveSupport::TestCase
     game = create(:playthrough, :started, story: story)
     destination = create(:location, story: story)
     person = create(:character, story: story, location: destination, fullname: "Maren Vosk")
-    Playthrough::Turn.new(game).harm!(person, person.max_hp)
+    wound!(game, person, person.max_hp)
     answer = { "description" => prose("arrival-before", "dead_resident:2"), "summary" => "Iri arrives." }
 
     BaseAgent.stub(:new, FakeAgent.new(answer)) { Scene::Generator.new(destination, playthrough: game).generate! }

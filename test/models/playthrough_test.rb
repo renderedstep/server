@@ -430,7 +430,7 @@ class PlaythroughTest < ActiveSupport::TestCase
 
     first = create(:playthrough, story: story, character: protagonist, current_location: room)
     second = create(:playthrough, story: story, character: protagonist, current_location: room)
-    Playthrough::Turn.new(first).carry!(first.items_lying_in(room).sole)
+    carried!(first, first.items_lying_in(room).sole)
 
     assert_equal [ "Ward Office 12 daybook", "ward stamp" ], first.carried.pluck(:name).sort
     assert_equal [ "Ward Office 12 daybook" ], second.carried.pluck(:name)

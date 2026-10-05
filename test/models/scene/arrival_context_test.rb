@@ -10,7 +10,7 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
     here = lying_here(@game, @game.current_location, name: "origin coin")
     there = lying_here(@game, @destination, name: "destination key")
     carried = lying_here(@game, @destination, name: "old ledger")
-    Playthrough::Turn.new(@game).carry!(carried)
+    carried!(@game, carried)
     context = Scene::ArrivalContext.new(@game, location: @destination)
 
     assert_equal [ there ], context.floor
@@ -22,7 +22,7 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
 
   test "a killed resident remains a dead body and cannot join the living arrival cast" do
     person = create(:character, story: @game.story, location: @destination)
-    Playthrough::Turn.new(@game).harm!(person, person.max_hp)
+    wound!(@game, person, person.max_hp)
     context = Scene::ArrivalContext.new(@game, location: @destination)
 
     assert_equal [ person ], context.dead
@@ -33,9 +33,8 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
 
   test "a body killed by a blow is told with who struck it and how long before the party walks in" do
     person = create(:character, story: @game.story, location: @destination, fullname: "Maren Vosk")
-    turn = Playthrough::Turn.new(@game)
-    turn.harm!(person, person.max_hp - 1)
-    blow = turn.strike!(@game.character, person, round: 1, damage: 1)
+    wound!(@game, person, person.max_hp - 1)
+    blow = blow!(@game, @game.character, person, damage: 1)
     context = Scene::ArrivalContext.new(@game, location: @destination, at: blow.story_timestamp + 20.minutes)
 
     assert_includes context.facts,
@@ -57,7 +56,7 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
   end
 
   test "facts state wounds and a saved crossing without inventing harm" do
-    Playthrough::Turn.new(@game).harm!(@game.character, 1)
+    wound!(@game, @game.character, 1)
     toll = create(:playthrough_toll, :saved, playthrough: @game, location: @destination)
     context = Scene::ArrivalContext.new(@game, location: @destination)
 
@@ -80,7 +79,7 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
   test "a relocated dead NPC is a body only in the room where this game left them" do
     person = create(:character, story: @game.story, location: @game.current_location)
     create(:playthrough_npc_state, playthrough: @game, character: person, location: @destination)
-    Playthrough::Turn.new(@game).harm!(person, person.max_hp)
+    wound!(@game, person, person.max_hp)
 
     assert_includes Scene::ArrivalContext.new(@game, location: @destination).dead, person
     assert_not_includes Scene::ArrivalContext.new(@game, location: @game.current_location).dead, person
@@ -90,8 +89,8 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
   test "another game still arrives to the original resident and floor item" do
     person = create(:character, story: @game.story, location: @destination)
     item = lying_here(@game, @destination, name: "brass key")
-    Playthrough::Turn.new(@game).harm!(person, person.max_hp)
-    Playthrough::Turn.new(@game).carry!(item)
+    wound!(@game, person, person.max_hp)
+    carried!(@game, item)
     other = create(:playthrough, story: @game.story, character: @game.character, current_location: @game.current_location)
     Playthrough::Snapshot.new(other).of_the_room!(@destination)
     context = Scene::ArrivalContext.new(other, location: @destination)

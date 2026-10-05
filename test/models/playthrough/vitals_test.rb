@@ -38,7 +38,7 @@ class Playthrough::VitalsTest < ActiveSupport::TestCase
   # `find_or_create_by!`, so the second call reads rather than writes. It is the
   # rule the snapshot at the top of every turn depends on entirely.
   test "instantiating a body that has already been hurt reads it rather than healing it" do
-    Playthrough::Turn.new(@game).harm!(@rowe, 3)
+    wound!(@game, @rowe, 3)
 
     assert_equal 5, Playthrough::Vitals.instantiate!(@game, @rowe).hp_current
   end
@@ -117,21 +117,19 @@ class Playthrough::VitalsTest < ActiveSupport::TestCase
   # One threshold and not a table of them, so the boundary is worth pinning:
   # half the maximum or worse is "badly hurt", and one more than half is not.
   test "badly hurt is half the maximum or worse" do
-    turn = Playthrough::Turn.new(@game)
-
-    assert_equal "hurt (5 of 8)", turn.harm!(@rowe, 3).in_words
-    assert_equal "badly hurt (4 of 8)", turn.harm!(@rowe, 1).in_words
-    assert_equal "badly hurt (3 of 8)", turn.harm!(@rowe, 1).in_words
+    assert_equal "hurt (5 of 8)", wound!(@game, @rowe, 3).in_words
+    assert_equal "badly hurt (4 of 8)", wound!(@game, @rowe, 1).in_words
+    assert_equal "badly hurt (3 of 8)", wound!(@game, @rowe, 1).in_words
   end
 
   test "a condition reads as a sentence for a prompt" do
     assert_equal "Halkett Rowe is unhurt.", @game.vitals_for(@rowe).to_s
     assert_equal "Halkett Rowe is badly hurt (1 of 8).",
-                 Playthrough::Turn.new(@game).harm!(@rowe, 7) && @game.vitals_for(@rowe).to_s
+                 wound!(@game, @rowe, 7) && @game.vitals_for(@rowe).to_s
   end
 
   test "zero is dead and says so" do
-    condition = Playthrough::Turn.new(@game).harm!(@rowe, 8)
+    condition = wound!(@game, @rowe, 8)
 
     assert condition.dead?
     assert_equal "dead", condition.in_words
@@ -144,14 +142,14 @@ class Playthrough::VitalsTest < ActiveSupport::TestCase
   test "one game's wound is invisible to another game of the same world" do
     other = create(:playthrough, story: @story, character: @vance, current_location: @room)
 
-    Playthrough::Turn.new(@game).harm!(@rowe, 5)
+    wound!(@game, @rowe, 5)
 
     assert_equal 3, @game.vitals_for(@rowe).hp
     assert_equal 8, other.vitals_for(@rowe).hp
   end
 
   test "hurting somebody does not touch the world's stat block" do
-    Playthrough::Turn.new(@game).harm!(@rowe, 5)
+    wound!(@game, @rowe, 5)
 
     assert_equal [ 1, 8 ], [ @rowe.reload.level, @rowe.hit_die ]
   end

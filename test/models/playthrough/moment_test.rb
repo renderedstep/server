@@ -25,7 +25,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
   end
 
   test "the narrator is told the numbers when the player is hurt" do
-    Playthrough::Turn.new(@playthrough).harm!(@protagonist, 3)
+    wound!(@playthrough, @protagonist, 3)
 
     assert_match(/Iri Calder is hurt \(5 of 8\)\./, moment.narration_context)
   end
@@ -48,7 +48,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "a hurt bystander is stated with the numbers" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran")
-    Playthrough::Turn.new(@playthrough).harm!(neb, 3)
+    wound!(@playthrough, neb, 3)
 
     assert_match(/Neb Halloran is hurt \(5 of 8\)\./, moment.narration_context)
   end
@@ -67,7 +67,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "a body this game has killed is not among the people the narrator is told are here" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran")
-    Playthrough::Turn.new(@playthrough).harm!(neb, neb.max_hp)
+    wound!(@playthrough, neb, neb.max_hp)
 
     context = moment.narration_context
 
@@ -85,10 +85,9 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "a body killed in a fight that has closed still names who killed it, and when" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", nickname: "Neb")
-    turn = Playthrough::Turn.new(@playthrough)
-    turn.harm!(neb, neb.max_hp - 1)
-    turn.strike!(@protagonist, neb, round: 1)
-    Playthrough::Fight.new(@playthrough).close!
+    wound!(@playthrough, neb, neb.max_hp - 1)
+    blow!(@playthrough, @protagonist, neb, damage: 3)
+    fight_closed!(@playthrough)
     later = @playthrough.reload.current_scene
     @playthrough.update!(current_scene: create(:scene, story: @story, location: @here, previous_scene: later,
                                                        story_timestamp: later.story_timestamp + 15.minutes))
@@ -102,7 +101,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "a body with no killing blow on record is told dead and nothing more" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", nickname: nil)
-    Playthrough::Turn.new(@playthrough).harm!(neb, neb.max_hp)
+    wound!(@playthrough, neb, neb.max_hp)
 
     assert_match(/Dead here: Neb Halloran\. They cannot speak or act\./, moment.narration_context)
   end
@@ -110,7 +109,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
   test "the living and the dead are told apart" do
     create(:character, story: @story, location: @here, fullname: "Tamsin Gale", nickname: nil)
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", nickname: nil)
-    Playthrough::Turn.new(@playthrough).harm!(neb, neb.max_hp)
+    wound!(@playthrough, neb, neb.max_hp)
 
     assert_match(/Also here: Tamsin Gale\. Nobody else is alive here\.\n\nDead here: Neb Halloran\./, moment.narration_context)
   end
@@ -128,7 +127,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "the narrator is told the damage, who is alive, and that the numbers do not change" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", level: 3, hit_die: 8)
-    Playthrough::Turn.new(@playthrough).strike!(@protagonist, neb, round: 1)
+    blow!(@playthrough, @protagonist, neb, damage: 3)
 
     context = moment.narration_context
 
@@ -141,9 +140,8 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
 
   test "a killing blow says so outright" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran")
-    turn = Playthrough::Turn.new(@playthrough)
-    turn.harm!(neb, neb.max_hp - 1)
-    turn.strike!(@protagonist, neb, round: 1)
+    wound!(@playthrough, neb, neb.max_hp - 1)
+    blow!(@playthrough, @protagonist, neb, damage: 3)
 
     assert_match(/Neb Halloran is dead: that was the blow that killed them\./, moment.narration_context)
   end
@@ -153,10 +151,9 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
   # the narrator write the same exchange twice.
   test "a closed fight is not told to the narrator a second time" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", level: 3, hit_die: 8)
-    turn = Playthrough::Turn.new(@playthrough)
-    turn.strike!(@protagonist, neb, round: 1)
-    turn.stand_in!(create(:location, story: @story, name: "The Stair"))
-    Playthrough::Fight.new(@playthrough).close!
+    blow!(@playthrough, @protagonist, neb, damage: 3)
+    @playthrough.update!(current_location: create(:location, story: @story, name: "The Stair"))
+    fight_closed!(@playthrough)
 
     assert_no_match(/Blows landed/, moment.narration_context)
   end
@@ -226,7 +223,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
   # sentences, so the prose can say who did which.
   test "a blow and a toll are told apart" do
     neb = create(:character, story: @story, location: @here, fullname: "Neb Halloran", level: 3, hit_die: 8)
-    Playthrough::Turn.new(@playthrough).strike!(@protagonist, neb, round: 1)
+    blow!(@playthrough, @protagonist, neb, damage: 3)
     create(:playthrough_toll, playthrough: @playthrough, character: @protagonist, location: @here)
 
     context = moment.narration_context
@@ -246,7 +243,7 @@ class Playthrough::MomentTest < ActiveSupport::TestCase
   # A character prompt is a different register and a much tighter budget, and a
   # body is not something one person in a room knows a number for.
   test "a character is told nothing about the player's hit points" do
-    Playthrough::Turn.new(@playthrough).harm!(@protagonist, 3)
+    wound!(@playthrough, @protagonist, 3)
     somebody = create(:character, story: @story, location: @here, fullname: "Maren Vosk")
 
     assert_no_match(/Iri Calder is (?:hurt|badly hurt)|Iri Calder.*hit point/, moment.character_context(somebody))

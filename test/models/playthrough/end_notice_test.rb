@@ -246,6 +246,6 @@ class Playthrough::EndNoticeTest < ActiveSupport::TestCase
   # (`Playthrough::Vitals`), so a death is that row taken to zero and not a
   # second one.
   def kill!
-    Playthrough::Turn.new(@game).harm!(@vance, @vance.max_hp)
+    wound!(@game, @vance, @vance.max_hp)
   end
 end

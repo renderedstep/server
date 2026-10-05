@@ -84,6 +84,7 @@ require_relative "support/forkable_world"
 require_relative "support/protocol_v1"
 require_relative "support/engine_moment"
 require_relative "support/plays_on_rust"
+require_relative "support/engine_records"
 
 module ActiveSupport
   class TestCase

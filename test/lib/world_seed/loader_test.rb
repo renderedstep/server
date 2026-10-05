@@ -481,7 +481,7 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     played = create(:playthrough, story: story, character: story.protagonist, current_location: closet)
     template = closet.items.templates.find_by(name: "A Private Index")
     copy = played.items_lying_in(closet).find_by(name: "A Private Index")
-    Playthrough::Turn.new(played).send(:carry!, copy)
+    carried!(played, copy)
 
     WorldSeed::Loader.new(document).load!
 

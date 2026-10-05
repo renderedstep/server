@@ -33,7 +33,7 @@ class SystemOneNoulCriteriaTest < ActiveSupport::TestCase
   end
 
   test "the volition request's Noul questions each carry a true and a false criterion" do
-    Playthrough::Volition.new(@game, @clerk, location: @room).apply!(Playthrough::Volition::WAIT)
+    create(:playthrough_volition, :waited, playthrough: @game, character: @clerk, location: @room, decided_by: "die")
     request = Playthrough::Requests.build(:volition, playthrough: @game.id, characters: [ @clerk.id ],
                                                      location: @room.id, line: "read the docket")
 
