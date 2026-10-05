@@ -130,17 +130,13 @@ test/models/playthrough/adversarial_flow_test.rb:
   a failed conversation render retains the validated gift and completes the turn:
     pins: when the interaction narrator fails, a validated give is still applied,
       the scene is engine-authored and chained, and the template is untouched
-    open: 'no browser talk step with a failing narration exists (failed-rendering-still-completes-a-turn
-      covers a take and a move only) -- add a browser step ''/talk Maren'' with a
-      character reply engine_action give:<key id> and fail: interaction-narration,
-      expecting carrying [brass key], note completed'
+    by:
+    - rust tests/talk.rs::a_failed_narration_keeps_the_gift_and_completes_the_line
   an invented action cannot transfer an item from an absent character:
     pins: an NPC choice giving an item held by someone not present is rejected and
       moves nothing
-    open: 'Rust apply_npc rejects tokens not in npc_choices_offering, but no walk
-      tries one -- add a step to npc-promises-have-consequences: ''talk to Maren''
-      with npc_action ''give:<item she does not hold>'' expecting refused true, carrying
-      unchanged'
+    by:
+    - rust tests/talk.rs::an_action_that_was_never_offered_is_rejected_and_moves_nothing
   redelivery of a failed-render arrival neither pays the crossing twice nor adds a scene:
     pins: redelivering a failed-render arrival token returns the same scene, pays
       no second toll and adds no scene
@@ -279,10 +275,8 @@ test/models/playthrough/classifier_test.rb:
   an attack that resolved to nobody is counted, offering the cast that was here:
     pins: an unresolved attack writes one Drift row with action attack and the cast's
       names offered
-    open: 'Rust record_drift (src/turn/told/classify.rs) is unasserted for attack;
-      only a talk drift is counted (saying-where-you-are-going-is-not-going#telling-nobody-is-a-talk-that-reaches-for-nobody).
-      Port: a Rust test in tests/engine.rs that reads a turn with a classifier reply
-      {attack, nothing} and checks the playthrough_drifts row''s action and offered'
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   an action never resolves against a set that is not its own:
     pins: examine/take/other naming an exit resolve no record
     by:
@@ -462,14 +456,12 @@ test/models/playthrough/classifier_test.rb:
   a move that resolved to nothing is counted, with what was on offer:
     pins: an unresolved move writes a Drift row with action, command, offered exit
       names, location and playthrough
-    open: 'Rust record_drift writes these columns but nothing reads them; no sweep
-      has a move drift. Port: a Rust test in tests/engine.rs (gate world, classifier
-      reply {move, nothing}) reading the playthrough_drifts row; a sweep step can
-      only add drifts 1'
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   the drift points at the narration the player had just read:
     pins: the Drift row's scene is the playthrough's current scene
-    open: 'Rust record_drift takes scene_id from current_scene_id (filed_row), unasserted.
-      Port: the Rust drift-row test above also checks scene_id'
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   a talk that resolved to nobody is counted, offering the cast that was here:
     pins: an unresolved talk writes one Drift row with action talk and the cast offered
     by:
@@ -478,12 +470,12 @@ test/models/playthrough/classifier_test.rb:
       System One path); action and offered names unasserted
   a take that resolved to nothing is counted, offering what was lying here:
     pins: an unresolved take writes a Drift row with action take and lying names
-    open: 'no Rust check. Port: browser step in two-readers-of-one-typed-line with
-      classifier reply {take, nothing}, expect refused + drifts 1, plus the Rust drift-row
-      test for offered'
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   a drop that resolved to nothing is counted, offering what the player holds:
     pins: an unresolved drop writes a Drift row with action drop and carried names
-    open: no Rust check; same port as the take drift
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   a resolved move counts no drift:
     pins: a resolved move writes no Drift row
     by:
@@ -578,9 +570,8 @@ test/models/playthrough/classifier_test.rb:
     - vector classifier_intent
   a line that named two things is counted, with both halves on the row:
     pins: one Overreach row with action, command, acted, unacted, location and scene
-    open: 'Rust record_overreach (src/turn/told/classify.rs) is never asserted. Port:
-      a Rust test in tests/engine.rs with classifier reply {take, X, also_named: Y}
-      reading the playthrough_overreaches row'
+    by:
+    - rust tests/rows.rs::a_line_that_named_two_things_is_counted_with_both_halves_by_the_names_a_player_would_type
   a line that named one thing is counted as nothing:
     pins: also_named nothing writes no Overreach row
     by:
@@ -589,13 +580,12 @@ test/models/playthrough/classifier_test.rb:
       record_overreach off; the row count is unasserted
   a reach that found nothing is counted as drift and not as an overreach:
     pins: take nothing + also_named writes one Drift and no Overreach row
-    open: 'the predicate is in classifier_intent (office [take, nothing, ward stamp]
-      unresolved); no Rust check on take drift rows or overreach rows. Port: in the
-      Rust drift/overreach row test'
+    by:
+    - rust tests/rows.rs::a_reach_that_found_nothing_is_counted_with_what_was_on_offer_and_the_paragraph_just_read
   a person is counted by the name a player would have typed:
     pins: Overreach acted/unacted carry the people's fullnames
-    open: 'Rust record_overreach writes Record::label(); unasserted. Port: in the
-      Rust overreach-row test, with two people'
+    by:
+    - rust tests/rows.rs::a_line_that_named_two_things_is_counted_with_both_halves_by_the_names_a_player_would_type
   the second name is drawn from the same closed enum as the target:
     pins: also_named's enum equals target's and includes nothing
     by:
@@ -627,9 +617,8 @@ test/models/playthrough/death_test.rb:
     - sweep death-ends-a-playthrough#a-harm-that-would-overshoot-stops-at-zero
   the ending is stamped on the story's clock:
     pins: ended_at is the story clock (story_now), not the wall clock
-    open: 'no dump key carries ended_at (dead is a boolean); Rust harm -> end_game(self.story_now())
-      -- add a tests/engine.rs case: harm to death, assert playthroughs.ended_at equals
-      the story clock'
+    by:
+    - rust tests/bodies.rs::a_player_killed_ends_the_game_on_the_storys_clock
   the moment a game ended is never re-dated:
     pins: Playthrough#end! does not overwrite an existing ended_at (death reached
       with harm!)
@@ -650,9 +639,9 @@ test/models/playthrough/death_test.rb:
     - sweep a-fight-the-player-wins#patched-up-1
   there is nothing to harm on somebody with no stat block:
     pins: harm!/mend! on a character with no stat block return nil and write nothing
-    open: 'no checked-in or sweep world has a statless character; Rust harm/mend return
-      None when vitals_row is None -- add a Rust test (or a sweep world with a statless
-      person and an ''attack'' step expecting blows: 0)'
+    by:
+    - rust tests/bodies.rs::a_player_with_no_stat_block_has_no_body_to_harm_mend_or_swing
+    - rust tests/bodies.rs::somebody_with_no_stat_block_cannot_be_struck_and_a_thing_thrown_at_them_lands
   a line typed into a dead playthrough makes no model call:
     pins: on the browser path a dead game's line is refused (kind dead) before the
       classifier is built
@@ -689,11 +678,8 @@ test/models/playthrough/drained_turn_test.rb:
   each drained line classifies against its own conversation:
     pins: two lines drained by one job each get their own one-shot classifier conversation
       [user, assistant]
-    open: 'no walked drain needs the classifier (an-earlier-line-still-goes-first
-      uses slashed lines). Rust builds a fresh Agent per classify (Turn::classify,
-      src/turn/told/classify.rs). Port: accepted_first with an unslashed line plus
-      classifier replies for both lines in two-readers-of-one-typed-line, and a records
-      file to pin each request has no history'
+    by:
+    - rust tests/rows.rs::two_lines_played_by_one_delivery_are_each_read_with_no_earlier_exchange
   a drained line survives the retention cap the line before it applied:
     pins: with Chat::KEEP_TURNS = 0 the second drained line still completes
     obsolete: 'ruby-only plumbing: Playthrough#prune_conversations! is Ruby and the
@@ -833,9 +819,8 @@ test/models/playthrough/fleeing_journey_test.rb:
   an older game whose last closing scene is elsewhere still uses its actual departure:
     pins: a legacy game whose current scene is a fight closing in another room still
       departs from its current location for time and prompt
-    open: legacy state no sweep can reach; Rust arrival.rs lead_in/origin -- add a
-      Rust test that sets current_scene to a closing scene in another room and checks
-      the arrival story_timestamp and 'The player has come from <current room>.'
+    by:
+    - rust tests/bodies.rs::a_game_whose_closing_scene_is_in_another_room_departs_from_where_it_stands
 test/models/playthrough/foes_test.rb:
   a foe is somebody hostile, present, and alive in this game:
     pins: Playthrough#foes_in returns the hostile character standing in the room
@@ -901,18 +886,16 @@ test/models/playthrough/hazards_test.rb:
     - sweep a-one-way-hazard-on-a-door#out-across-the-wet-side-of-the-rock
   an every_turn room is free to walk into and costs to stay in:
     pins: an every_turn room charges nothing on arrival and one toll per played line
-    open: 'no walked world has an every_turn hazard (silent/airless); port: a sweep
-      world under lib/engine_sweep/worlds with an airless room, a step arriving (hazards
-      0) and a played line there (hazards 1) -- Mechanics::standing(room, "every_turn")'
+    by:
+    - rust tests/hazards.rs::an_every_turn_room_is_free_to_walk_into_and_charges_each_line_played_in_it
   an on_arrival room is free to stay in:
     pins: a played line in an on_arrival room writes no toll
     by:
     - sweep a-one-way-hazard-on-a-door#and-standing-at-the-post-is-free
   a hazard the catalogue has no entry for costs nothing:
     pins: an unknown hazard key rolls nothing
-    open: 'no Rust check; port: a Rust test opening a world and update_columns-style
-      SQL setting a room hazard ''haunted'' then a move expecting no playthrough_tolls
-      row (ROOM_HAZARDS lookup in Mechanics::standing)'
+    by:
+    - rust tests/hazards.rs::a_hazard_the_catalogue_has_no_entry_for_costs_nothing
   half a hazard is refused by the record:
     pins: Location validation refuses a hazard without its die and vice versa
     stays: not-loop
@@ -924,18 +907,16 @@ test/models/playthrough/hazards_test.rb:
     - sweep a-one-way-hazard-on-a-door#and-in-again-costs-again
   a party that was nowhere pays no doorway:
     pins: arriving from nil pays no doorway hazard
-    obsolete: ruby-only plumbing guard; Rust equivalent is walked(from=None) yielding
-      no edge in Mechanics::on_arrival, unreachable from a walk
+    obsolete: no turn can reach it on the engine -- a game standing nowhere has no
+      way out, so every move is refused before an arrival is played
   a hazardous door into a hazardous room is two tolls in that order:
     pins: doorway toll then room toll on one arrival
-    open: 'no walked world has a hazardous doorway into an on_arrival hazard room;
-      port: a sweep world (or a Salt Assizes copy under lib/engine_sweep/worlds) with
-      drop into a flooded room, expecting hazards 2 and the golden note order drop
-      then flooded (Mechanics::on_arrival)'
+    by:
+    - rust tests/hazards.rs::a_hazardous_door_into_a_hazardous_room_is_two_tolls_doorway_first
   a hazard with no save is never saved against:
     pins: a save-less hazard (airless) always lands its die
-    open: no walked world has airless; covered by the every_turn world port (take_toll
-      save None -> saved false)
+    by:
+    - rust tests/hazards.rs::an_every_turn_room_is_free_to_walk_into_and_charges_each_line_played_in_it
   a body with no abilities does not save:
     pins: a protagonist with no abilities never saves a toll
     by:
@@ -973,9 +954,8 @@ test/models/playthrough/hazards_test.rb:
       an every_turn room, which is not walked (every_turn world port)
   a hazard can take the last hit point and end the game:
     pins: a toll that reaches 0 hp kills and ends the playthrough
-    open: 'no walk dies of a hazard; port: a step in a-one-way-hazard-on-a-door after
-      ''harm 17'' crossing the drop, expecting dead true (write_toll -> Mechanics::harm
-      -> end_game), or the every_turn world with a large die'
+    by:
+    - rust tests/hazards.rs::a_toll_that_takes_the_last_hit_point_ends_the_game
   a game that is already over pays nothing:
     pins: an ended game writes no toll
     by:
@@ -985,21 +965,20 @@ test/models/playthrough/hazards_test.rb:
       refused, hazards 0 (take_toll over() guard)'
   a doorway that kills stops the room from charging:
     pins: once a doorway toll kills, the room toll is not paid
-    open: needs the door-into-hazard-room world with a fragile player; expect hazards
-      1 and dead true (take_toll over() guard)
+    by:
+    - rust tests/hazards.rs::a_doorway_that_kills_leaves_the_room_nothing_to_charge
   a body with no stat block pays no toll:
     pins: a protagonist without a stat block writes no toll
-    open: 'no walked world has a stat-less protagonist in a hazard; port: Rust test
-      with such a protagonist crossing a hazard, expecting no playthrough_tolls row
-      (Mechanics::harm returns None, write_toll writes nothing)'
+    by:
+    - rust tests/hazards.rs::a_body_with_no_stat_block_and_a_game_with_no_body_pay_no_toll
   a playthrough with no protagonist pays nothing:
     pins: no protagonist, no toll
-    obsolete: ruby-only plumbing guard; Rust equivalent is the player() None return
-      in Mechanics::take_toll, unreachable from a walk
+    by:
+    - rust tests/hazards.rs::a_body_with_no_stat_block_and_a_game_with_no_body_pay_no_toll
   nowhere costs nothing:
     pins: nil locations pay nothing
-    obsolete: ruby-only plumbing guard; Rust takes a Row, so there is no nil room
-      to pass
+    obsolete: no turn can reach it on the engine -- the room hazard takes a room row,
+      and a game standing nowhere writes no toll
 test/models/playthrough/mechanics_physical_test.rb:
   consumption heals once and preserves the spent copy on a later snapshot:
     pins: drinking a healing draught heals HEALING_POINTS once, spends the copy, keeps
@@ -1012,10 +991,8 @@ test/models/playthrough/mechanics_physical_test.rb:
   burning destroys only the combustible copy and keeps the tool:
     pins: "/burn X with tinderbox marks the combustible copy burned and keeps the
       firestarter"
-    open: 'gap -- no sweep burns anything; port: a script on a world with a combustible
-      item and a firestarter (the grammar vector ''physical'' world has an oily rag
-      and a tinderbox), ''/burn ... with tinderbox'' expecting here without it and
-      carrying [tinderbox]'
+    by:
+    - rust tests/bodies.rs::burning_takes_a_carried_firestarter_and_a_combustible_thing_and_keeps_the_tool
   unlocking opens both directions for this game and permits a separate round trip:
     pins: unlock opens the keyed doorway both ways for this game only; the key is
       kept; the barrier column stays keyed
@@ -1038,9 +1015,8 @@ test/models/playthrough/mechanics_physical_test.rb:
   an offer leaves custody unchanged and follows the same world response as talk:
     pins: offline /offer is refused as prose, custody unchanged, and the room still
       takes its every_turn toll
-    open: 'gap -- no offline offer is walked (an-offer-taken-through-the-models is
-      browser); port: an offline ''/offer X to Y'' step in the every_turn world expecting
-      refused, offers ''talking is prose'', carrying unchanged, hazards 1'
+    by:
+    - rust tests/hazards.rs::an_offer_with_no_model_is_refused_as_prose_and_the_room_still_charges
   a failed physical attempt prints its outcome even when the world has no response:
     pins: a failed force is neither change nor refusal and its note says 'The way
       remains closed'
@@ -1118,10 +1094,8 @@ test/models/playthrough/mechanics_test.rb:
   the offline mode says so rather than writing the words a readable thing lacks:
     pins: a readable item with no stored words is refused offline ('the records do
       not hold the words yet'), inscription stays nil
-    open: 'gap -- Rust turn.rs recite implements it; port: an offline ''read sealed
-      letter'' step before the first browser step of a-letter-read-for-the-first-time
-      expecting refused, offers ''do not hold the words yet'', inscription {sealed
-      letter: false}'
+    by:
+    - rust tests/bodies.rs::a_readable_thing_with_no_words_yet_is_refused_offline_and_left_blank
   reading nothing in particular asks against both sets at once:
     pins: bare 'read' is refused listing both lying and carried things
     by:
@@ -1340,8 +1314,8 @@ test/models/playthrough/mechanics_test.rb:
       and the served turn'
   the arrival scene records the person the room was born with:
     pins: the arrival Scene's cast includes the person created at realization
-    open: 'gap -- no dump key or Rust test reads characters_scenes; port: a Rust test
-      (tests/engine.rs) that a realized-with-people arrival writes them into characters_scenes'
+    by:
+    - record unfinished-realization-resumes-on-entry#retry-finishes-only-the-missing-phase
   the read-out offers exactly what the classifier would offer a model:
     pins: Mechanics#state and Classifier closed sets agree; no run
     stays: not-loop
@@ -1507,9 +1481,8 @@ test/models/playthrough/mechanics_test.rb:
       is ruby-only; Rust has only the offline turn and the served turn'
   there is nothing to harm on a protagonist with no stat block:
     pins: harm on a statless protagonist is refused 'no stat block'
-    open: 'gap -- turn.rs wound() implements it; port: a sweep world in lib/engine_sweep/worlds
-      with a protagonist given no stats, step ''harm 2'' expecting refused, offers
-      ''no stat block'''
+    by:
+    - rust tests/bodies.rs::a_player_with_no_stat_block_has_no_body_to_harm_mend_or_swing
   the read-out carries the world's own numbers for the player:
     pins: read-out sheet row prints level, hit die and abilities (Mechanics::State)
     by:
@@ -1547,8 +1520,8 @@ test/models/playthrough/mechanics_test.rb:
     - sweep a-check-against-an-ability#a-check-it-cannot-win-is-refused-and-not-rolled
   there is nothing to check on a protagonist with no abilities:
     pins: check on a protagonist without abilities is refused 'no abilities'
-    open: 'gap -- turn.rs attempt() implements it; port: the statless-protagonist
-      sweep world, step ''check will'' expecting refused, offers ''no abilities'''
+    by:
+    - rust tests/bodies.rs::a_player_with_no_abilities_can_neither_be_checked_nor_throw
   stats and check are not classified even when a model is there:
     pins: stats and check strength make no model call in classifier mode
     by:
@@ -1650,9 +1623,8 @@ test/models/playthrough/mechanics_test.rb:
       the Ruby test''s every_turn (airless) trigger on a talk is not walked'
   standing in an every_turn room costs a toll a turn:
     pins: a talk in an airless room writes one toll per turn
-    open: 'gap -- no checked-in or sweep world has an every_turn hazard (airless/silent);
-      port: a world in lib/engine_sweep/worlds with an airless room and steps ''talk
-      to X'' twice expecting hazards 1 each (turn.rs standing(room, "every_turn"))'
+    by:
+    - rust tests/hazards.rs::an_every_turn_room_is_free_to_walk_into_and_charges_each_line_played_in_it
   an on_arrival room charges the arrival and not the staying:
     pins: a flooded room charges the arrival once and not the next turn
     by:
@@ -1660,8 +1632,8 @@ test/models/playthrough/mechanics_test.rb:
     - sweep a-one-way-hazard-on-a-door#and-standing-at-the-post-is-free
   a read-out pays no toll:
     pins: look in an every_turn room pays nothing
-    open: 'gap -- needs the every_turn world above; port: a ''look'' step there expecting
-      hazards 0'
+    by:
+    - rust tests/hazards.rs::an_every_turn_room_is_free_to_walk_into_and_charges_each_line_played_in_it
   a refused line pays no toll:
     pins: a refused take in an every_turn room pays nothing
     by:
@@ -1670,8 +1642,8 @@ test/models/playthrough/mechanics_test.rb:
       be 0 anyway -- port: a refused step in the every_turn world'
   an engine-view line pays no toll:
     pins: stats in an every_turn room pays nothing
-    open: 'gap -- needs the every_turn world; port: a ''stats'' step there expecting
-      hazards 0'
+    by:
+    - rust tests/hazards.rs::an_every_turn_room_is_free_to_walk_into_and_charges_each_line_played_in_it
   a hazard opens no fight:
     pins: a toll writes no blow and no fight is on
     by:
@@ -1718,8 +1690,8 @@ test/models/playthrough/mechanics_test.rb:
     partial: case 'unplayable castless throw' pins the text; the turn is not walked
   a throw by a body with no abilities says which backfill rolls them:
     pins: throw by a body with no abilities is refused naming rake game:backfill_stat_blocks
-    open: 'gap -- turn.rs throw_it implements it; port: the statless-protagonist sweep
-      world, step ''throw X at Y'' expecting refused, offers ''backfill_stat_blocks'''
+    by:
+    - rust tests/bodies.rs::a_player_with_no_abilities_can_neither_be_checked_nor_throw
   the offline help says what a throw is:
     pins: offline help lists 'throw <thing> at <name|exit>'
     by:
@@ -1737,16 +1709,17 @@ test/models/playthrough/npc_action_test.rb:
       again expecting refused true (Mechanics::apply_npc offered check)'
   a game with no protagonist offers no gift and still publishes the rest of the set:
     pins: with no protagonist no give is offered and follow is phrased with 'the player'
-    open: 'no Rust check builds dialogue choices for a protagonist-less game; port:
-      a dialogue_requests vector case with playthroughs.character_id null (Mechanics::npc_choices_offering
-      party fallback)'
+    by:
+    - rust tests/talk.rs::a_game_with_no_protagonist_offers_no_gift
   foreign items unknown choices and absent or dead speakers cannot act:
     pins: foreign items, unknown tokens, an absent speaker and a dead speaker are
       rejected; absent/dead get only none
-    open: 'npc-promises only walks accepted choices; port: steps in a script on A
-      Conversation at the Gate with npc_action ''teleport'' and a give of another
-      person''s item, expecting refused true, plus a step after killing Maren (Mechanics::apply_npc
-      / npc_choices_offering present check)'
+    by:
+    - rust tests/talk.rs::an_action_that_was_never_offered_is_rejected_and_moves_nothing
+    - rust tests/talk.rs::somebody_absent_or_dead_is_offered_nothing_and_cannot_be_talked_into_acting
+    partial: an absent or dead speaker is refused by the grammar before any action
+      is applied, so the engine holds that they are offered nothing and cannot be
+      talked to, not that an action of theirs is rejected
   a follower travels through the turn writer and stays after changing their mind:
     pins: follow carries the NPC with the party in this game; stop_following leaves
       them behind; world row unmoved
@@ -1762,10 +1735,8 @@ test/models/playthrough/npc_action_test.rb:
   a relocated follower keeps their inventory and snapshots new possessions once:
     pins: a follower keeps its held copies after relocation, and a template newly
       given to them is copied once
-    open: 'npc-promises'' Maren follows empty-handed after the gift; port: a script
-      where a follower who still holds something is walked to another room twice with
-      here/carrying of a later give asserted, or a Rust test over Mechanics::snapshot_room
-      idempotence'
+    by:
+    - rust tests/talk.rs::a_follower_keeps_what_they_hold_and_a_new_possession_is_copied_once
   a ceasefire stops natural and provoked hostility until a new player blow:
     pins: ceasefire removes a natural or provoked foe and stops ripostes; a new player
       blow restores hostility; the world flag never moves
@@ -1776,21 +1747,18 @@ test/models/playthrough/npc_action_test.rb:
   dead followers stay at the place they died:
     pins: a follower killed in a room stays there with their things spilled when the
       party moves on
-    open: 'no walk kills a follower; port: a script on A Conversation at the Gate:
-      follow, go to Courtyard, harm the follower to 0 (or a fight), go to Market,
-      expecting present [] and the key in Courtyard''s here (Mechanics::harm / keep_npc_body
-      / spill)'
+    by:
+    - rust tests/talk.rs::a_follower_killed_on_the_way_stays_where_they_fell
   a legacy companion's body no longer follows the party after death:
     pins: a dead is_companion character stays in the room they died in with their
       things
-    open: 'no world has an is_companion character; port: a sweep world under lib/engine_sweep/worlds
-      with a companion, killed then left behind (Mechanics::keep_npc_body)'
+    by:
+    - rust tests/talk.rs::a_dead_companion_stays_where_they_fell
   a legacy companion can agree to stay on the first conversation:
     pins: an is_companion with no state is offered stop_following, not follow, and
       staying leaves them behind
-    open: 'no world has an is_companion character; port: same companion world with
-      a talk step npc_action stop_following then a move expecting present [] (npc_choices_offering
-      is_companion fallback)'
+    by:
+    - rust tests/talk.rs::a_companion_is_offered_to_stay_and_stays_behind
 test/models/playthrough/physical_action_test.rb:
   drinking heals once and leaves a spent copy which cannot respawn:
     pins: "/drink heals HEALING_POINTS once, marks the copy consumed and gone, leaves
@@ -1812,11 +1780,8 @@ test/models/playthrough/physical_action_test.rb:
     pins: burn is applied only with a carried firestarter and combustible target;
       it marks the target burned, keeps the tool and other items, rejects a repeat,
       leaves the template intact
-    open: 'no sweep world carries a firestarter; Rust Room::physical_actions burn
-      branch and apply_physical ''burn'' are unwalked -- add a world under lib/engine_sweep/worlds
-      with a tinderbox and a combustible note and a script: ''/burn note with tinderbox''
-      (carrying keeps tinderbox, not note), a repeat refused, a second player still
-      has the note'
+    by:
+    - rust tests/bodies.rs::burning_takes_a_carried_firestarter_and_a_combustible_thing_and_keeps_the_tool
   a stale or foreign physical choice writes nothing:
     pins: apply! rejects a choice from another game or one no longer offered (item
       put down) and writes nothing
@@ -1905,10 +1870,8 @@ test/models/playthrough/physical_action_test.rb:
   failed consumption persistence rolls back the healing and its receipt:
     pins: an error inside the physical_effect journal step rolls back the heal, the
       disposition and the journal entry
-    open: Rust told.rs commit() savepoint/rollback_to is untested for a failing body;
-      src/engine.rs::an_error_inside_a_turn_keeps_nothing covers only the whole-turn
-      transaction -- add a Rust test that fails inside commit('physical_effect') and
-      asserts hp, disposition and the journal unchanged
+    by:
+    - rust tests/bodies.rs::a_step_that_fails_inside_its_commit_keeps_neither_the_healing_nor_its_receipt
 test/models/playthrough/riposte_test.rb:
   an ordinary room answers nothing:
     pins: a non-hostile person throws no blow
@@ -1923,8 +1886,8 @@ test/models/playthrough/riposte_test.rb:
       in ''answered:'' notes (Mechanics::riposte)'
   they act in id order:
     pins: foes strike in id order
-    open: 'needs two foes in one room; same two-foe world port, with the golden''s
-      answered: note order pinning id order (game.foes_in ordering in Mechanics::riposte)'
+    by:
+    - rust tests/bodies.rs::every_foe_in_the_room_strikes_back_in_id_order
   a foe this game has killed does not act:
     pins: a dead foe throws no riposte
     by:
@@ -1997,9 +1960,8 @@ test/models/playthrough/turn_check_test.rb:
     - sweep a-check-against-an-ability#past-impossible-is-still-impossible
   somebody with no abilities cannot be checked:
     pins: a body with no abilities has no check
-    open: Rust check_ability returns None unless all three abilities are set; no world
-      or test exercises it -- add a tests/engine.rs case nulling the player's abilities
-      and typing 'check will'
+    by:
+    - rust tests/bodies.rs::a_player_with_no_abilities_can_neither_be_checked_nor_throw
   nobody at all is nil rather than a raise:
     pins: checking nil returns nil
     obsolete: ruby-only plumbing (nil argument); Rust check takes a &Row
@@ -2116,9 +2078,9 @@ test/models/playthrough/turn_conversations_test.rb:
   the loop prunes the one-shot conversations older than the ceiling:
     pins: with TA_CHAT_KEEP_TURNS set, each turn deletes one-shot chats older than
       the cap and leaves scenes alone
-    open: 'Not ported: the Rust engine ignores TA_CHAT_KEEP_TURNS and never calls
-      prune_conversations!. Either port the opt-in cap (a turn step after attribution)
-      or decide to drop the feature with the Ruby loop'
+    open: the engine never prunes conversations, so TA_CHAT_KEEP_TURNS has no effect
+      on a turn the engine plays; the opt-in cap is either ported to the engine or
+      dropped with the Ruby loop
 test/models/playthrough/turn_ending_test.rb:
   the last beat is taken, and the turn answers with the ending in words:
     pins: the concluding turn asks classifier, then its own prose, then the ending;
@@ -2139,11 +2101,8 @@ test/models/playthrough/turn_ending_test.rb:
   the turn's own prose survives the ending that follows it:
     pins: the closing scene is a second Scene whose previous_scene is the turn's own
       scene, with its own prose and resolved_action intact
-    obsolete: 'In Rust, run_arc writes the closing scene and tell_ending updates only
-      that row (told.rs), so the turn''s scene is untouched by construction, but nothing
-      asserts it (the checks.json audit only counts scenes). Port: a Rust test after
-      the a-room-written-while-the-arc-waits tower step selecting the closing scene''s
-      previous_scene and its description/resolved_action'
+    by:
+    - rust tests/rows.rs::an_ending_is_written_over_its_own_closing_scene_and_the_engines_sentence_outlives_it
   a refused ending call still ends the game with the engine's own sentence:
     pins: when the ending call fails, the closing scene keeps the outcome summary
       (resolved_action conclude), the game is over and that scene is current
@@ -2181,10 +2140,8 @@ test/models/playthrough/turn_exchange_agency_test.rb:
   an unsupported action produces a rejected fact and no invented state:
     pins: an engine_action that was not offered (give:<bogus>) is rejected; the narrator
       is told 'The proposed action was rejected' and nothing moves
-    open: 'The rejection branch of src/turn.rs::apply_npc is untested, and the replay
-      does not enforce the enum. Port: a browser step in an-offer-taken-through-the-models
-      with engine_action ''give:999'', an interaction-narration prompt_includes ''The
-      proposed action was rejected'', and carrying unchanged'
+    by:
+    - rust tests/talk.rs::an_action_that_was_never_offered_is_rejected_and_moves_nothing
   a failed narrator discards its streamed fragments and keeps only the applied fact:
     pins: when the interaction narrator fails (crisis), streamed fragments are dropped,
       the fallback ('You speak with X. <fact>') is published once with a safety notice,
@@ -2208,10 +2165,8 @@ test/models/playthrough/turn_exchange_agency_test.rb:
     pins: a required field that sanitizes to blank (emoji only) fails the exchange
       before the gift applies; no Scene, Interaction or npc_state is written and the
       narrator is not asked
-    open: "talk.rs::reaction_fields sanitizes, then checks REQUIRED for blank, inside
-      'character_answer', before 'character_effect'; untested. Port: a browser step
-      whose character reply has pre_feeling '\U0001F642' and give:<key>, with no narrator
-      reply; expect carrying unchanged and the turn failed"
+    by:
+    - rust tests/talk.rs::a_required_field_sanitized_to_blank_fails_before_its_gift_applies
 test/models/playthrough/turn_exchange_test.rb:
   the character pass asks under the interaction schema, with the engine's instructions:
     pins: the character call carries Interaction::Schema with the offered engine_action
@@ -2257,36 +2212,30 @@ test/models/playthrough/turn_exchange_test.rb:
   the reaction is keyed as Interaction::Schema names its fields:
     pins: reaction keys equal Interaction::Schema.required_properties and build a
       valid Interaction
-    obsolete: Ruby-only plumbing. Rust uses talk.rs::REACTION/REQUIRED, which must
-      match the schema the request_identity vector pins ('schema Interaction::Schema').
-      No test ties the two together; a Rust unit test could assert REACTION names
-      equal schemas::interaction() properties minus engine_action
+    by:
+    - rust tests/talk.rs::a_kept_reaction_holds_every_field_the_schema_names_sanitized
   a field the model omitted fails the exchange rather than being kept blank:
     pins: a reaction with a required field missing is rejected (RecordInvalid), not
       kept blank
-    open: 'talk.rs::reaction_fields returns Err(''Validation failed: <field> can''t
-      be blank''), so verify rejects and the next model is asked; untested. Port:
-      a Rust unit test on reaction_fields (needs pub(crate)), or a Live turn test
-      with a reply missing ''action'' showing a second model is asked'
+    by:
+    - rust tests/talk.rs::a_reaction_with_a_field_left_out_fails_before_the_narrator_is_asked
+    partial: the line fails on the replayed reply; asking the next model in the rotation
+      is the live client's, and no test drives a live rotation past a reply with a
+      field left out
   the character's fields go through the sanitizer:
     pins: emoji and trailing quote/brace debris are stripped from reaction fields
       before they are kept
-    open: 'dialogue::sanitize (src/dialogue.rs) has no Rust test and no vector. Port:
-      unit tests in dialogue.rs: ''surprised, wary \u{1F30A}'' -> ''surprised, wary''
-      and ''Say something.\u{201D}}'' -> ''Say something.'''
+    by:
+    - rust tests/talk.rs::a_kept_reaction_holds_every_field_the_schema_names_sanitized
   a field truncated at its cap fails the exchange before the narrator is asked:
     pins: a reaction field that arrives at its maxLength fails the character call,
       and the narrator is never asked
-    open: 'The cap check is in talk.rs::reaction_fields. truncated-character-prose-keeps-the-person.yml
-      covers location people caps, not reactions. Port: a browser step with a character
-      reply whose pre_feeling is 120 chars and no interaction-narration reply; the
-      replay rejects any narrator call and the step expects the turn to fail'
+    by:
+    - rust tests/talk.rs::every_reaction_field_at_its_schema_cap_fails_before_the_narrator_is_asked
   every one of the reaction's fields is checked against its own cap:
     pins: each Interaction::Schema field is guarded at its own maxLength
-    open: 'talk.rs::REACTION hard-codes caps (320/120/480/120/320/320) with nothing
-      tying them to the schema''s maxLength (request_identity ''schema Interaction::Schema'').
-      Port: a Rust unit test that, for every REACTION field, feeds a value at the
-      cap from schemas::interaction() and expects reaction_fields to return Err'
+    by:
+    - rust tests/talk.rs::every_reaction_field_at_its_schema_cap_fails_before_the_narrator_is_asked
   a truncated character sheet costs a call, and the next model writes the turn:
     pins: a character answer cut at a cap is rejected inside the ask and the next
       model is asked; the narrator is paid once
@@ -2304,9 +2253,8 @@ test/models/playthrough/turn_exchange_test.rb:
       exercised through talk_to; same port as above with every answer capped
   a block publishes only the verified narration:
     pins: a talk publishes the final narration once, as a single chunk
-    open: 'talk.rs asks the narrator with a no-op chunk sink and calls on_chunk once
-      with the kept narration; untested. Port: a Rust talk test that collects on_chunk
-      and asserts exactly [narration]'
+    by:
+    - rust tests/talk.rs::a_talk_publishes_its_kept_narration_once
   the narrator prompt asks for second person prose about the character:
     pins: the engine's interaction-narration request (Requests.build) asks for second
       person and 'One or two short paragraphs'; also pinned by dialogue_requests vector
@@ -2369,8 +2317,8 @@ test/models/playthrough/turn_hazard_test.rb:
     - sweep a-one-way-hazard-on-a-door#and-climbing-back-out-is-free
   an every_turn room charges a line that did something else entirely:
     pins: a non-move line in an every_turn room writes a toll
-    open: 'no every_turn world is walked; port: the airless world with a browser /take
-      step expecting hazards 1 (told.rs standing(room, "every_turn"))'
+    by:
+    - rust tests/hazards.rs::an_every_turn_toll_is_told_by_the_next_paragraph_and_claimed_by_it
   a refused line pays no toll:
     pins: a refused line in an every_turn room writes no toll
     by:
@@ -2385,19 +2333,16 @@ test/models/playthrough/turn_hazard_test.rb:
       with no hazard; port: a post-death step in the airless world'
   an every_turn toll is told by the next turn and claimed by it:
     pins: an every_turn toll is untold after its turn and claimed by the next paragraph
-    open: 'no every_turn world; port: two browser steps in the airless world with
-      prompt_includes of the toll fact on the second narration and prompt_excludes
-      on a third (told.rs claim_tolls)'
+    by:
+    - rust tests/hazards.rs::an_every_turn_toll_is_told_by_the_next_paragraph_and_claimed_by_it
   an arrival's toll is claimed by the arrival scene:
     pins: the arrival scene claims its own on-arrival toll
-    open: 'hazard-notices-survive-quiet-arrival pins the shown receipt only; port:
-      add prompt_includes ''drop on the way from Market into Courtyard'' to its arrival
-      reply and a following browser narration step with prompt_excludes of it (told.rs
-      claim_tolls with Told.tolls)'
+    by:
+    - rust tests/hazards.rs::an_arrivals_toll_is_told_and_claimed_by_the_arrival
   an attack turn leaves a toll untold for the next paragraph:
     pins: an attack turn writes no scene, so the every_turn toll stays untold
-    open: 'no every_turn world; port: an /attack browser step in an airless room with
-      a foe, then a narration step whose prompt_includes the toll fact'
+    by:
+    - rust tests/hazards.rs::an_attack_turn_leaves_its_toll_for_the_next_paragraph
   a hazard costs no model call:
     pins: paying tolls on a move makes no model call beyond the arrival narration
     by:
@@ -2444,14 +2389,12 @@ test/models/playthrough/turn_narration_test.rb:
       after a narrated turn; add both to the engine.rs SELECT
   persists the exact engine fact the prose was written against:
     pins: the scene stores the engine fact the narrator was given, in scenes.engine_fact
-    open: 'src/turn/told.rs::narrate writes engine_fact, but nothing asserts it. a_submitted_line_is_told
-      only checks that the fact is in the prompt (prompt_includes ''picked the red
-      coin up''). Smallest port: also SELECT engine_fact in tests/engine.rs::a_submitted_line_is_told_and_a_second_delivery_plays_nothing'
+    by:
+    - rust tests/rows.rs::a_played_line_keeps_what_was_typed_the_fact_it_was_told_from_and_the_scene_before_it
   a turn with no engine fact stores none:
     pins: a plain narrated turn (no effect) leaves scenes.engine_fact NULL
-    open: 'told.rs::narrate writes NULL when fact is None; nothing tests it. Port:
-      a Rust test that submits an unslashed ''look around'' through a Replay [classifier,
-      narration] and asserts engine_fact IS NULL'
+    by:
+    - rust tests/rows.rs::a_played_line_keeps_what_was_typed_the_fact_it_was_told_from_and_the_scene_before_it
   asks unschema'd -- streaming and structured output are incompatible:
     pins: the narrator call carries no schema
     by:
@@ -2467,9 +2410,8 @@ test/models/playthrough/turn_narration_test.rb:
     - vector moment
   chains each turn onto the previous one:
     pins: each new Scene's previous_scene is the scene that was current before it
-    open: 'src/turn.rs::write_scene sets previous_scene_id from current_scene_id;
-      nothing asserts it (goldens dump no scenes, and moment-vector records are inputs).
-      Port: a Rust test in tests/engine.rs that submits two lines and checks scenes.previous_scene_id'
+    by:
+    - rust tests/rows.rs::a_played_line_keeps_what_was_typed_the_fact_it_was_told_from_and_the_scene_before_it
   does not persist partial narration when the consumer blows up mid-stream:
     pins: when the stream consumer raises mid-narration, no Scene is kept and current_scene
       stays nil
@@ -2482,10 +2424,8 @@ test/models/playthrough/turn_narration_test.rb:
       or errors partway, asserting no scene row'
   blank rendering fails before the turn can advance without a scene:
     pins: a blank narration with no engine fallback raises and writes no Scene
-    open: 'told.rs::narrate returns Err(Rejected(''Narration was blank'')) when there
-      is no fallback; untested. Port: a Rust turn test (or a browser step on an ''other''
-      line) with narration content '''' that asserts no scene was written and the
-      command failed'
+    by:
+    - rust tests/rows.rs::a_blank_paragraph_with_no_words_of_the_engines_to_fall_back_on_fails_the_line_and_writes_no_scene
   saves nothing when the model refused and the rotation ran out:
     pins: an exhausted refusal rotation keeps no Scene (Ruby still streamed the refusal
       to the player)
@@ -2561,14 +2501,13 @@ test/models/playthrough/turn_no_protagonist_test.rb:
       -> Refusal::unplayable'
   a refused take writes no Scene and does not move the story's clock:
     pins: the refused take writes no Scene and leaves the story clock unchanged
-    open: 'told.rs::play_serially returns Played::Refused before any scene is written,
-      but no castless turn is ever played. Port: the same tests/engine.rs test also
-      asserts the scenes count and the story clock before and after'
+    by:
+    - rust tests/no_player.rs::a_take_with_nobody_to_take_it_is_refused_and_leaves_no_scene_and_no_story_time
   a refused take records no transition, because there was no turn:
     pins: no scene with resolved_action 'take' (acted_on nil) is written for the refused
       line
-    open: 'Same gap and same port as above: assert no scenes row with resolved_action
-      ''take'' after the castless ''/take'''
+    by:
+    - rust tests/no_player.rs::a_take_with_nobody_to_take_it_is_refused_and_leaves_no_scene_and_no_story_time
   a throw is refused with nobody to throw it:
     pins: with no protagonist a throw is refused :unplayable ('nobody here to throw
       anything'), the item stays carried and no blows are written
@@ -2592,11 +2531,8 @@ test/models/playthrough/turn_no_protagonist_test.rb:
   a take that resolved to nothing is still refused as drift and not as a missing player:
     pins: an unresolved 'take the sky' is refused for the reading ('no thing lying
       here called') before the missing protagonist is considered
-    open: 'turn.rs::refusal_for checks intent.refused() before Refusal::unplayable,
-      but no test exercises that order (refusal vector ''for'' cases never use the
-      castless world). Port: a step in the castless tests/engine.rs test, ''take the
-      sky'', asserting the offer text has ''no thing lying here called'' and not ''no
-      player character'''
+    by:
+    - rust tests/no_player.rs::a_take_that_named_nothing_is_refused_for_its_reading_before_the_missing_player
   the mechanics mode refuses the take in the engine's own words:
     pins: the offline (no-model) mode refuses the castless take with the same 'no
       player character yet' sentence and the item stays put
@@ -2696,9 +2632,8 @@ test/models/playthrough/turn_recovery_test.rb:
       (''Narration was blank''). Port: step with narration content '''''
   an item fallback leaves environmental facts untold when its prose never included them:
     pins: an engine-fallback take scene does not claim a pending toll
-    open: 'Turn::claim_tolls (src/turn/told.rs) is untested. Port: tests/engine.rs
-      on the gate world: insert an unclaimed playthrough_tolls row, submit ''/take
-      red coin'' with narration unavailable, assert scene_id still NULL'
+    by:
+    - rust tests/rows.rs::a_take_told_in_the_engines_own_words_leaves_a_toll_its_words_never_told
   a partial stream without a committed action cannot leave a scene behind on failure:
     pins: a narration whose consumer raises mid-stream leaves no scene
     by:
@@ -2721,10 +2656,8 @@ test/models/playthrough/turn_recovery_test.rb:
   a crisis pickup completes its state and preserves the app notice on redelivery:
     pins: a crisis narration on a take completes with an engine scene and safety notice,
       and a redelivery keeps the notice
-    open: 'Rust crisis path (src/turn/told.rs, error_kind ''crisis'') is untested
-      at turn level and Replay has no crisis reply. Port: tests/engine.rs Scripted
-      transport answering crisis prose to ''/take red coin'', assert engine_fallback
-      scene, safety_notice, and a second submit with the same token reports it again'
+    by:
+    - rust tests/rows.rs::a_crisis_answer_to_a_take_is_told_in_the_engines_words_and_the_notice_is_kept_for_a_redelivery
   'interruption after #{checkpoint} finishes one pickup and one enemy reply':
     pins: a pickup stopped after any journal checkpoint (take, narrated, scene_facts,
       told_tolls, riposte, room_hazard, arc, fight_closed) finishes on redelivery
@@ -2756,11 +2689,8 @@ test/models/playthrough/turn_recovery_test.rb:
   a resumed conversation reuses its decision and preserves the applied gift receipt:
     pins: a talk stopped after character_effect resumes with the stored decision (no
       second character call) and the gift applied once
-    open: 'speech resumes are covered (a-killed-worker-does-not-speak-twice), a talk
-      decision is not. Port: step with interrupt_after character_effect on a give
-      (e.g. an-offer-taken-through-the-models or A Conversation at the Gate), then
-      the same token with only interaction-narration declared; Rust: Turn::talk in
-      src/turn/told/talk.rs'
+    by:
+    - rust tests/talk.rs::a_talk_stopped_after_its_effect_resumes_with_the_stored_decision
   a setup notice survives interruption and completed redelivery without provider details:
     pins: with no model configured a take completes with a setup notice that survives
       interruption and redelivery and keeps provider details out of the journal
@@ -2833,9 +2763,11 @@ test/models/playthrough/turn_routing_test.rb:
     - sweep a-letter-read-for-the-first-time#the-second-reading-reads-the-record
   a grammar-resolved turn files no classifier messages under it:
     pins: no classifier-purpose message is attributed to a grammar-answered scene
-    open: 'src/turn/told.rs attributes the classifier agent only when resolved_by
-      is in classify::MODEL_PATHS; untested -- add a tests/engine.rs case: slashed
-      submit, then assert no messages of a classifier chat carry that scene_id'
+    by:
+    - rust tests/engine.rs::a_submitted_line_is_told_and_a_second_delivery_plays_nothing
+    partial: the engine asks no classifier at all for a slashed line (the replay declares
+      the narration alone and fails on any other call), so there is no classifier
+      conversation to file; no test reads messages.scene_id on a live route
   an ordinary sentence goes to the classifier untouched:
     pins: a free sentence is read by the classifier (with the line in its prompt)
       and acted on, resolved_by model
@@ -2933,10 +2865,8 @@ test/models/playthrough/turn_routing_test.rb:
       + narration, expect blows 0'
   a classifier-resolved attack strikes rather than talking:
     pins: a classifier answer of attack strikes (one call, blows both ways, no conversation)
-    open: 'classifier_intent pins only the intent build; the told.rs dispatch (speaker
-      + action attack -> m.attack) is unwalked -- add a browser step ''go for him''
-      with a classifier {intent: attack, target: <foe>} reply only, expect blows 2
-      and changed false'
+    by:
+    - rust tests/rows.rs::an_attack_the_classifier_placed_strikes_both_ways_and_holds_no_conversation
   the same resolved person read as a talk holds a conversation instead:
     pins: a model-read talk at a person holds a conversation and the player strikes
       nothing
@@ -3052,9 +2982,8 @@ test/models/playthrough/turn_strike_test.rb:
       a player: second ''look'' with foes [] after the attack'
   the mark keeps the moment the fight started:
     pins: provoked_at is set on the first blow and not moved by later ones
-    open: Rust provoke() only writes provoked_at when it is null, but nothing reads
-      it -- add a Rust test reading playthrough_vitals.provoked_at across two attacks
-      (offline the clock is frozen, so advance it between them)
+    by:
+    - rust tests/bodies.rs::the_mark_a_blow_leaves_keeps_the_moment_the_fight_started
   a killed body drops this game's copies on the floor of the room it is standing in:
     pins: a killed NPC's held copies lie in its room in this game; the world's template
       stays held
@@ -3063,9 +2992,9 @@ test/models/playthrough/turn_strike_test.rb:
     - golden a-fight-the-player-wins#the-fight-is-over-and-the-body-let-go-of-what-it-held
   spilling a body nobody has met writes nothing:
     pins: spill of a body with no game copies is a no-op
-    open: Rust spill() iterates game().items_held_by, empty before first contact;
-      untested and unreachable from a walk (a kill needs contact) -- a Rust unit test
-      would pin it
+    obsolete: no turn can reach it on the engine -- every line copies the room (and
+      what its people hold) before anything else, and a blow lands only in that room,
+      so a body that can be killed always has its game copies
   the player dying does not empty the party's hands:
     pins: the protagonist's death ends the game but leaves the inventory carried
     by:
@@ -3073,13 +3002,12 @@ test/models/playthrough/turn_strike_test.rb:
     - sweep death-ends-a-playthrough#a-take-is-refused-and-the-floor-is-untouched
   a body with no stat block cannot be struck:
     pins: striking a body with no stat block writes no blow
-    open: Rust strike() returns None when harm finds no vitals row; no sweep world
-      has a stat-blockless person -- add a tests/engine.rs case nulling a person's
-      level/hit_die then attacking, asserting no playthrough_blows row
+    by:
+    - rust tests/bodies.rs::somebody_with_no_stat_block_cannot_be_struck_and_a_thing_thrown_at_them_lands
   an attacker with no stat block has no die to hit with:
     pins: an attacker with no stat block strikes nothing
-    open: Rust strike() returns None when !stat_block(attacker); untested -- same
-      tests/engine.rs case with the player's sheet nulled
+    by:
+    - rust tests/bodies.rs::a_player_with_no_stat_block_has_no_body_to_harm_mend_or_swing
   a blow needs a room, because a fight happens somewhere:
     pins: a playthrough with no current location strikes nothing
     obsolete: ruby-only plumbing; Rust strike() takes the room row as an argument,
@@ -3233,10 +3161,8 @@ test/models/playthrough/turn_test.rb:
   a crisis response after a character decision keeps safe facts and the notice:
     pins: a crisis narration after a decision keeps the engine-authored scene, the
       interaction and the safety notice
-    open: 'Rust handles it (src/turn/told/talk.rs failure.crisis -> safety) but nothing
-      tests it at the turn level, and Replay has no crisis reply. Port: tests/engine.rs
-      test on the gate world with Scripted transport answering a crisis-resource line
-      to the talk narration; assert engine_fallback scene, one interaction, turned.safety_notice'
+    by:
+    - rust tests/rows.rs::a_crisis_answer_after_the_person_decided_keeps_their_side_and_the_notice
   an exhausted narrator refusal after a decision completes with safe facts:
     pins: a narrator refusal after a decision still completes with an engine-authored
       scene and the interaction
@@ -3387,10 +3313,8 @@ test/models/playthrough/turn_test.rb:
     - rust tests/parity.rs::the_sweep_agrees_with_its_goldens
   a dropping turn records what the player typed:
     pins: a drop scene stores the typed line
-    open: 'no records file holds a drop scene (recorded drops are offline and write
-      no scene). Port: create tmp/engine/parity/records/two-readers-of-one-typed-line.json
-      ({steps: []}) and parity --write, which pins step 2''s scene typed ''put the
-      coin back down'''
+    by:
+    - rust tests/rows.rs::a_played_line_keeps_what_was_typed_the_fact_it_was_told_from_and_the_scene_before_it
   a narrated turn records what the player typed:
     pins: a narrated (examine) scene stores the typed line
     by:
@@ -3560,15 +3484,13 @@ test/models/playthrough/turn_test.rb:
       ''picked the sealed letter up'' and the words'
   taking a readable thing with no words on record writes none:
     pins: a take of an unwritten readable makes no inscription call and quotes nothing
-    open: 'no browser take of an unwritten readable. Port: in a-letter-read-for-the-first-time,
-      a first step ''/take sealed letter'' with only a narration reply (prompt_excludes
-      ''word for word''); the replay rejects an inscription call'
+    by:
+    - rust tests/rows.rs::taking_a_readable_thing_with_no_words_on_record_asks_for_none_and_quotes_none
   an unclassifiable turn is narrated with no fact and no label:
     pins: an other->nothing narration prompt has no ALREADY fact and no 'looking more
       closely' label
-    open: 'no walked ''other'' turn. Port: browser step with classifier {intent: other,
-      target: nothing} and narration prompt_excludes [''ALREADY happened'', ''looking
-      more closely'']'
+    by:
+    - rust tests/rows.rs::a_played_line_keeps_what_was_typed_the_fact_it_was_told_from_and_the_scene_before_it
 test/models/playthrough/turn_throw_test.rb:
   an immovable thing is refused, no die is thrown and no row moves:
     pins: throwing an immovable thing rolls nothing, moves nothing, hurts and provokes
@@ -3622,10 +3544,8 @@ test/models/playthrough/turn_throw_test.rb:
   a hit on somebody with no stat block lands the thing and writes no blow:
     pins: a throw hit on a body with no stat block still lands the thing and records
       no blow
-    open: no sweep world has a person without a stat block; throw_it's 'there is no
-      stat block to hurt' arm is untested -- add a tests/engine.rs ropewalk case nulling
-      Wat Coyle's level/hit_die, strength 25, asserting the float is here and playthrough_blows
-      is empty
+    by:
+    - rust tests/bodies.rs::somebody_with_no_stat_block_cannot_be_struck_and_a_thing_thrown_at_them_lands
   a throw through a doorway leaves the thing lying in the next room:
     pins: a passed throw at a way out lays this game's copy in the next room, no blow,
       party stays
@@ -3669,9 +3589,8 @@ test/models/playthrough/turn_throw_test.rb:
       is plumbing
   a body with no abilities has no strength to throw with:
     pins: a thrower with no abilities cannot throw
-    open: throw_it's 'has no abilities, so there is no strength to throw with' refusal
-      is untested and no world has such a protagonist -- add a tests/engine.rs case
-      nulling the player's abilities, then /throw
+    by:
+    - rust tests/bodies.rs::a_player_with_no_abilities_can_neither_be_checked_nor_throw
   a throw with nothing to aim at is not a throw:
     pins: a throw with no aim does nothing
     by:
@@ -3804,10 +3723,8 @@ test/models/playthrough/volition_test.rb:
     - vector volition_request
   a thing that does not move for anybody is not offered to anybody:
     pins: an immovable item lying in the room is never offered as a take
-    open: 'no vector case asks a live game in a room with an immovable thing (the-unrecorded-hour-two-bodies
-      6 has the filing press but the game is over, so only wait is offered); port:
-      add a volition_request case after one-act-per-line step 1 (Ward Office 12, filing
-      press lying) -- volition::throwable filter in volition::acts'
+    by:
+    - rust tests/volition_offers.rs::a_thing_that_does_not_move_is_offered_to_nobody
   the world's own template is not offered -- only this game's copy is:
     pins: only the playthrough copy of an item, never the world template, is offered
     by:
@@ -3836,9 +3753,8 @@ test/models/playthrough/volition_test.rb:
     - vector volition_request
   somebody who is not in the room is offered nothing but waiting:
     pins: a character not present in the location gets only wait
-    open: no vector case asks about somebody absent (two-bodies 6 is wait-only because
-      the game ended); add a volition_request case asking about Grenn Ollivar at the
-      Bell in a-fight-the-player-wins 3 (volition::acts present check)
+    by:
+    - rust tests/volition_offers.rs::somebody_absent_is_offered_only_waiting
   a walk writes this game's whereabouts and never the world's:
     pins: an applied move moves the NPC in this game only; characters.location_id
       is untouched
@@ -3847,9 +3763,8 @@ test/models/playthrough/volition_test.rb:
     - golden a-one-way-hazard-on-a-door#down-through-the-hatch
   a walk ends any travel agreement:
     pins: an applied move sets the NPC's following flag false
-    open: 'no walk has a follower then walk out on its own; port: Rust test in tests/volition_typed.rs
-      pressuring a following Bell into move:<landing> and asserting playthrough_npc_states.following
-      = 0 (Mechanics::apply_volition move arm)'
+    by:
+    - rust tests/volition_offers.rs::a_walk_ends_a_travel_agreement
   taking moves this game's copy into their hands:
     pins: an applied take puts the copy in the NPC's hands and off the floor
     by:
@@ -3866,15 +3781,12 @@ test/models/playthrough/volition_test.rb:
     - golden the-unrecorded-hour#take-with-an-article
   a token that was offered and is no longer available is rejected and moves nothing:
     pins: apply rebuilds the set and rejects a stale token without moving anything
-    open: 'no Rust test or walk writes a rejected volition; port: tests/volition_typed.rs
-      with two people where the first takes the receipt and System One answers the
-      same take for the second, asserting status rejected and the item still with
-      the first (Mechanics::apply_volition offered check)'
+    by:
+    - rust tests/volition_offers.rs::a_pick_no_longer_on_offer_is_rejected_moves_nothing_and_is_recorded
   a row with a negative id is named, offered and acted on like any other:
     pins: tokens with negative row ids are built, offered, accepted and applied
-    open: 'no Rust check uses negative ids for acts; port: a volition_request case
-      staged with negative ids, or a src/volition.rs unit test over volition::choices
-      plus an apply on move:-N (target.parse::<i64>)'
+    by:
+    - rust tests/volition_offers.rs::a_negative_row_id_is_offered_and_walked_like_any_other
   a token the set never held is rejected:
     pins: a token never in the set (attack:N) is rejected
     by:
@@ -3884,8 +3796,8 @@ test/models/playthrough/volition_test.rb:
       token is unasserted -- same port as the stale-token gap
   a rejected pick is still on the record, so the tally is honest:
     pins: a rejected pick writes a row with status rejected
-    open: no Rust check writes or reads a rejected volition row; covered by the stale-token
-      port above (Mechanics::record_volition rejected arm)
+    by:
+    - rust tests/volition_offers.rs::a_pick_no_longer_on_offer_is_rejected_moves_nothing_and_is_recorded
   every outcome writes exactly one row, carrying the engine's own sentence:
     pins: an applied move writes one row whose fact names the person and the destination,
       filed in the room
@@ -4009,16 +3921,13 @@ test/models/scene/ending_test.rb:
   a rendered ending is labelled as narration and an unrendered one stays the engine's:
     pins: the narrated closing scene gets resolved_action NARRATED_ENDING ('ending');
       a fallback keeps 'conclude'
-    open: 'told.rs::tell_ending sets resolved_action NARRATED_ENDING; no sweep key
-      or Rust test reads it. Port: a Rust test (or an extension of the ending scripts''
-      checks) selecting resolved_action after the narrated step and after the failed
-      one'
+    by:
+    - rust tests/rows.rs::an_ending_is_written_over_its_own_closing_scene_and_the_engines_sentence_outlives_it
   the engine's sentence survives the paragraph that replaced it:
     pins: after a narrated ending, scene.summary, engine_fact and the recap line are
       still the outcome's sentence
-    obsolete: 'tell_ending updates only description and resolved_action, so this holds
-      by construction, but nothing asserts it. Port: the same Rust test also selects
-      summary and engine_fact of the narrated closing scene'
+    by:
+    - rust tests/rows.rs::an_ending_is_written_over_its_own_closing_scene_and_the_engines_sentence_outlives_it
   it streams the ending the way a turn streams:
     pins: the ending prose streams to the block in several chunks
     by:
@@ -4066,9 +3975,8 @@ test/models/scene/ending_test.rb:
     - sweep an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
   an answer with nothing in it leaves the engine's sentence standing:
     pins: a blank ending answer is not kept; the outcome summary stands
-    open: 'tell_ending filters is_blank, but no step replays a blank ending. Port:
-      add a player to an-ending-kept-when-the-narrator-fails whose ending content
-      is ''   '', expecting ending_words = the outcome sentence'
+    by:
+    - rust tests/rows.rs::an_ending_is_written_over_its_own_closing_scene_and_the_engines_sentence_outlives_it
   a paragraph cut in half is not kept:
     pins: an ending paragraph that stops mid-sentence is discarded; the summary stands
       (resolved_action conclude)
@@ -4188,9 +4096,8 @@ test/models/world_mechanic_test.rb:
       count is not
   catch_up_story! runs every mechanic the story has:
     pins: every mechanic of a story (nightly and hourly) is caught up and stamped
-    open: no world has two mechanics; turn.rs catch_up_world loops all of them --
-      add a Rust test inserting a second (hourly) mechanic into the Lunar Cartographer
-      copy and asserting both last_run_at
+    by:
+    - rust tests/bodies.rs::every_mechanic_a_story_has_is_caught_up
   a story with no mechanics catches up to nothing:
     pins: a story with no mechanics and no schedule catches up to an empty list
     by:
