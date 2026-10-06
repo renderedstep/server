@@ -4,7 +4,7 @@ require "rake"
 class PlayersTasksTest < ActiveSupport::TestCase
   setup do
     Rails.application.load_tasks unless Rake::Task.task_defined?("players:invite")
-    %w[players:invite players:revoke players:limit].each { |name| Rake::Task[name].reenable }
+    %w[players:invite players:reissue players:revoke players:limit].each { |name| Rake::Task[name].reenable }
   end
 
   def run_task(name, *args)
@@ -27,6 +27,22 @@ class PlayersTasksTest < ActiveSupport::TestCase
     run_task("players:revoke", "Ada")
     assert_nil Player.authenticate(token)
     assert Player.exists?(name: "Ada")
+  end
+
+  test "reissue prints a new token once, retires the old one and keeps the player" do
+    old = run_task("players:invite", "Ada").lines.map(&:strip).reject(&:empty?).last
+    player = Player.find_by!(name: "Ada")
+    run_task("players:revoke", "Ada")
+
+    token = run_task("players:reissue", "Ada").lines.map(&:strip).reject(&:empty?).last
+
+    assert_nil Player.authenticate(old)
+    assert_equal player, Player.authenticate(token)
+    assert_equal 1, Player.where(name: "Ada").count
+  end
+
+  test "reissue refuses a name nobody was invited under" do
+    assert_raises(SystemExit) { capture_io { Rake::Task["players:reissue"].invoke("Nobody") } }
   end
 
   test "limit sets the monthly limit and refuses a nonsense amount" do

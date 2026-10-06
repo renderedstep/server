@@ -134,7 +134,8 @@ address `ta` is configured with (`engine_url = "http://127.0.0.1:3100"`). It
 stops first if the engine extension is not built, and warns if it is older than
 the pinned engine, since `ta` plays every turn through it and would otherwise
 see only a 500. `ta` also needs a player token from `rake players:invite[name]`
-below, stored once with `ta login`. An explicit `PORT` still wins over `--ta`.
+below, stored once with `ta login`; `rake players:reissue[name]` prints a
+replacement for a lost one, to store the same way. An explicit `PORT` still wins over `--ta`.
 
 Why two: **a turn is a `NarrationJob`, not a request.** The browser posts the
 command, gets an acknowledgement back immediately (a fresh submission token;
@@ -208,6 +209,7 @@ before it accepts a turn:
 
 ```bash
 rake players:invite[ada]          # prints ada's token once; LIMIT_USD=2 to change the default of $1
+rake players:reissue[ada]         # a new token for ada, printed once; the old one stops working
 rake players:limit[ada,2.50]      # dollars a calendar month
 rake players:revoke[ada]          # the token stops working; games and receipts are kept
 ```
