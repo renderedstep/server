@@ -30,6 +30,19 @@ class PlayerTest < ActiveSupport::TestCase
     assert Player.exists?(player.id)
   end
 
+  test "reissue replaces the token, lifts a revocation and keeps the row" do
+    player, old = Player.invite!("Ada", monthly_limit_usd: BigDecimal("2.5"))
+    player.revoke!
+
+    token = player.reissue!
+
+    assert_nil Player.authenticate(old)
+    assert_equal player, Player.authenticate(token)
+    assert_equal Player.digest(token), player.reload.token_digest
+    assert_not player.revoked?
+    assert_equal BigDecimal("2.5"), player.monthly_limit_usd
+  end
+
   test "the comparison is constant time" do
     player, token = Player.invite!("Ada")
     compared = []

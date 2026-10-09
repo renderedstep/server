@@ -13,7 +13,8 @@
 # `Player::Allowance` before a turn is accepted and before a call through the
 # model relay (`Relay`) is forwarded -- the same token opens both. Revoking
 # keeps the row and its receipts -- spend already metered must stay on the
-# books -- and stops the token authenticating.
+# books -- and stops the token authenticating; `rake players:reissue[name]`
+# replaces a lost or revoked token on the same row.
 class Player < ApplicationRecord
   DEFAULT_MONTHLY_LIMIT_USD = BigDecimal("1")
 
@@ -36,6 +37,15 @@ class Player < ApplicationRecord
     token = SecureRandom.urlsafe_base64(32)
     player = create!(name: name, token_digest: digest(token), monthly_limit_usd: monthly_limit_usd)
     [ player, token ]
+  end
+
+  # A fresh token for a player who already has one, returned here and nowhere
+  # else, as `invite!` returns the first. The old token stops working and a
+  # revocation is lifted; the player, their games, receipts and limit are kept.
+  def reissue!
+    token = SecureRandom.urlsafe_base64(32)
+    update!(token_digest: self.class.digest(token), revoked_at: nil)
+    token
   end
 
   # The active player a presented token belongs to, or nil. The row is found by

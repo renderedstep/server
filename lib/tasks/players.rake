@@ -15,6 +15,16 @@ namespace :players do
     puts "  #{token}"
   end
 
+  desc "Replace a player's token and print the new one ONCE: rake players:reissue[name]. Games, receipts and limit are kept."
+  task :reissue, [ :name ] => :environment do |_task, args|
+    player = Player.find_by(name: args[:name].to_s.strip) or abort "No player named #{args[:name].inspect}."
+    token = player.reissue!
+    puts "Reissued #{player.name}'s token; the old one no longer authenticates."
+    puts "Their token, shown this once and stored nowhere -- send it to them privately:"
+    puts
+    puts "  #{token}"
+  end
+
   desc "Revoke a player's token: rake players:revoke[name]. Their games and receipts are kept."
   task :revoke, [ :name ] => :environment do |_task, args|
     player = Player.find_by(name: args[:name].to_s.strip) or abort "No player named #{args[:name].inspect}."
