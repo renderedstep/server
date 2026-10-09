@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'generators/ruby_llm/upgrade/legacy_content_sql'
+require_relative 'support/ruby_llm_legacy_content_sql'
 
 class BackfillRubyLlmV2Data < ActiveRecord::Migration[8.1]
   disable_ddl_transaction!
