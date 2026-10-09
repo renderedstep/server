@@ -65,7 +65,7 @@ end
 
 
 
-gem "ruby_llm", "~> 2.0"
+gem "ruby_llm", "~> 2.1"
 # RubyLLM 2 uses Schematist itself, but this application still loads the legacy
 # schema extension whose DSL and provider envelope its existing schema classes
 # were written against. Keep that compatibility layer on 0.x until those
