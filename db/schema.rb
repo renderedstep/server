@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_023507) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -426,6 +426,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_023507) do
     t.index ["scene_id"], name: "index_playthrough_overreaches_on_scene_id"
   end
 
+  create_table "playthrough_paragraphs", force: :cascade do |t|
+    t.integer "playthrough_id", null: false
+    t.integer "scene_id", null: false
+    t.string "author", default: "player", null: false
+    t.text "text", null: false
+    t.json "audit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playthrough_id"], name: "index_playthrough_paragraphs_on_playthrough_id"
+    t.index ["scene_id", "author"], name: "index_playthrough_paragraphs_on_scene_id_and_author", unique: true
+  end
+
   create_table "playthrough_passages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "location_connection_id", null: false
@@ -526,6 +538,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_023507) do
     t.integer "story_id", null: false
     t.string "token", null: false
     t.datetime "updated_at", null: false
+    t.string "mode", default: "narrated", null: false
     t.index ["character_id"], name: "index_playthroughs_on_character_id"
     t.index ["current_location_id"], name: "index_playthroughs_on_current_location_id"
     t.index ["current_scene_id"], name: "index_playthroughs_on_current_scene_id"
@@ -855,6 +868,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_023507) do
   add_foreign_key "playthrough_overreaches", "locations"
   add_foreign_key "playthrough_overreaches", "playthroughs"
   add_foreign_key "playthrough_overreaches", "scenes"
+  add_foreign_key "playthrough_paragraphs", "playthroughs"
+  add_foreign_key "playthrough_paragraphs", "scenes"
   add_foreign_key "playthrough_passages", "items", column: "opened_by_item_id", on_delete: :nullify
   add_foreign_key "playthrough_passages", "location_connections", on_delete: :cascade
   add_foreign_key "playthrough_passages", "playthroughs", on_delete: :cascade

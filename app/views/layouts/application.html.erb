@@ -44,10 +44,16 @@
       .story { border: 1px solid #262b31; padding: .75rem 1rem; margin-bottom: .75rem; }
       .story p { color: #8b939b; margin: .25rem 0 .75rem; }
       form { display: flex; gap: .5rem; }
-      input[type=text] {
+      input[type=text], textarea {
         flex: 1; background: #0e1013; color: #cfd3d8; border: 1px solid #333b44;
         padding: .5rem .6rem; font: inherit;
       }
+      /* A GAME THE PLAYER NARRATES: the mode choice beside Play, and the
+         paragraph box on the facts card. Layout only, out of what is here. */
+      .play-mode { flex-wrap: wrap; align-items: center; }
+      .play-mode label { color: #8b939b; }
+      .paragraph-box { flex-direction: column; align-items: flex-start; margin: .5rem 0 0; }
+      .paragraph-box textarea { width: 100%; box-sizing: border-box; resize: vertical; }
       /* `form.submit` renders an input, `button_to` a button; one house style. */
       button, input[type=submit] {
         background: #262b31; color: #cfd3d8; border: 1px solid #3a424b;

@@ -53,7 +53,11 @@ class Playthrough::RustEngine::Turn
     return mine.outcome if mine&.overtaken?
 
     began.call(line) unless mine&.completed?
-    answer = Playthrough::RustEngine.submit(playthrough, line, request_token) { |chunk| deliver.call(chunk) }
+    answer = if acting?(line)
+      Playthrough::RustEngine.act(playthrough, request_token) { |chunk| deliver.call(chunk) }
+    else
+      Playthrough::RustEngine.submit(playthrough, line, request_token) { |chunk| deliver.call(chunk) }
+    end
     playthrough.reload
     raise Playthrough::RustEngine.exception_for(answer["error"]) if answer["error"]
 
@@ -62,6 +66,10 @@ class Playthrough::RustEngine::Turn
     finished.call(outcome)
     outcome
   end
+
+  # THE PLAYER LET THE GAME ACT, which only a game the player narrates reads as
+  # "choose for me"; anywhere else the line is typed like any other.
+  def acting?(line) = line == Playthrough::RustEngine::ACT_LINE && playthrough.player_narrates?
 
   # A consumer receives progress and does not own the turn, as in
   # `Playthrough::Turn#observer`.

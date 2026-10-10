@@ -59,12 +59,28 @@ class Playthrough::Session
   # the panel off the same rows; a front end without one is told this.
   Round = Data.define(:blows, :sentence)
 
+  # WHAT THE PLAYER WRITES A CHOSEN TURN'S PARAGRAPH FROM, in a game they
+  # narrate, in the engine's own player-facing words (`Engine::facts_card`):
+  # `act` is what the protagonist did, `found` what an arrival found, one fact
+  # a line, `people` what the people there did, `tolls` what the world took,
+  # `wounds` who was hit, and `ending` the story's closing words where the turn
+  # ended it. `scene` is the turn's scene, the one the paragraph is for.
+  FactsCard = Data.define(:scene, :act, :found, :people, :tolls, :wounds, :ending) do
+    def self.from(document)
+      new(scene: document.fetch("scene"), act: document.fetch("act"), found: document.fetch("found"),
+          people: document.fetch("people"), tolls: document.fetch("tolls"), wounds: document.fetch("wounds"),
+          ending: document["ending"])
+    end
+  end
+
   # STARTING A GAME, which is the protagonist's arrival in the story's first
   # realized room. A story that has neither cannot be played, and the answer is
   # a refusal with the remedy, never an invented room or an invented person.
   # `player` files the game under whoever may play it over the API; the
-  # browser starts games that belong to nobody.
-  def self.begin!(story, player: nil)
+  # browser starts games that belong to nobody. `mode` is how the game is told
+  # (`Playthrough::MODES`), chosen here and kept for good; narrated unless the
+  # player chose otherwise.
+  def self.begin!(story, player: nil, mode: "narrated")
     location = opening_location(story)
     return Start.new(playthrough: nil, refusal: no_opening_location_message(story)) if location.nil?
 
@@ -92,6 +108,7 @@ class Playthrough::Session
     playthrough = Playthrough.create!(
       story: story,
       player: player,
+      mode: mode,
       character: story.protagonist,
       current_location: location,
       current_scene: opening_scene(story, location)
@@ -176,6 +193,54 @@ class Playthrough::Session
     return Playthrough::Command.accept!(playthrough, line, token) if playthrough.player.nil?
 
     playthrough.player.allowance.admit! { Playthrough::Command.accept!(playthrough, line, token) }
+  end
+
+  # LETTING THE GAME ACT, in a game the player narrates: a submission like a
+  # typed line's, accepted in order and paid for the same way, whose line is
+  # the engine's (`Playthrough::RustEngine::ACT_LINE`). A front end plays it
+  # with `#play` exactly as it plays a typed line; the engine picks the act.
+  # Answers nil, having written nothing, in a game told any other way.
+  def act!(request_token = nil)
+    return nil unless playthrough.player_narrates?
+
+    accept!(Playthrough::RustEngine::ACT_LINE, request_token)
+  end
+
+  # THE TURN WAITING FOR THE PLAYER'S PARAGRAPH, as a `Scene`, or nil: the
+  # latest turn the game chose, until a paragraph is written for it. Reads only.
+  def waiting
+    return nil unless playthrough.player_narrates?
+
+    id = glance.waiting
+    playthrough.story.scenes.find_by(id: id) if id
+  end
+
+  # THE FACTS CARD for a scene a turn the game chose was answered with, or nil
+  # for any other scene; see `FactsCard`. Reads only.
+  def facts_card(scene)
+    return nil unless playthrough.player_narrates?
+
+    document = Playthrough::RustEngine.facts_card(playthrough, scene)
+    FactsCard.from(document) if document
+  end
+
+  # HERE IS MY PARAGRAPH, for a scene the game chose: kept beside the scene by
+  # the engine, which refuses any other scene (`not_chosen`) and any game told
+  # another way (`wrong_mode`), then checked against the turn's facts by
+  # `Story::Audit`'s own checks and the finding kept on the row as a note. The
+  # check never refuses anything; the paragraph is kept as written. A second
+  # paragraph for the scene replaces the first and is checked again. Answers
+  # the `Playthrough::Paragraph`, or nil for nothing written.
+  def write_paragraph!(scene, text)
+    text = text.to_s.strip
+    return nil if text.empty?
+
+    id = Playthrough::RustEngine.write_paragraph(playthrough, scene, text)
+    paragraph = Playthrough::Paragraph.find(id)
+    flags = Story::Audit.paragraph(scene, text)
+    paragraph.update!(audit: { "flags" => flags.map { |flag| { "code" => flag.code.to_s, "headline" => flag.headline,
+                                                               "evidence" => flag.evidence_line } } })
+    paragraph
   end
 
   # Plays a line through the one loop. `on_start` receives the line as the turn

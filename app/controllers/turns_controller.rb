@@ -60,4 +60,29 @@ class TurnsController < ApplicationController
     # binds here too, and nothing was written.
     head :payment_required
   end
+
+  # LETTING THE GAME ACT, in a game the player narrates: accepted and handed to
+  # the job exactly as a typed line is (`#create`), with the engine's own line
+  # (`Playthrough::Session#act!`) -- so the job, the broadcast, the token and
+  # the order are all `#create`'s. A game told any other way takes nothing.
+  def act
+    playthrough = Playthrough.find(params[:playthrough_id])
+    submission = Playthrough::Session.new(playthrough).act!(params[:request_token])
+    if submission.nil?
+      redirect_to playthrough_path(playthrough)
+      return
+    end
+
+    NarrationJob.perform_later(playthrough.id, submission.command, submission.request_token)
+    @request_token = SecureRandom.uuid
+
+    respond_to do |format|
+      format.turbo_stream { render :create }
+      format.html { redirect_to playthrough_path(playthrough, anchor: "bottom") }
+    end
+  rescue ActiveRecord::RecordInvalid
+    head :conflict
+  rescue Player::Allowance::LimitReached
+    head :payment_required
+  end
 end

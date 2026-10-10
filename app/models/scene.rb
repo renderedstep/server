@@ -189,6 +189,12 @@ class Scene < ApplicationRecord
   # judgement OF this prose and means nothing once the prose is gone.
   has_many :feedbacks, class_name: "Playthrough::Feedback", dependent: :destroy,
                        inverse_of: :scene
+  # WHAT THE PLAYER WROTE FOR THIS TURN, in a game they narrate. Destroyed with
+  # the scene, as the verdicts are and for their reason: a paragraph is written
+  # FROM this turn's facts and means nothing once the turn is gone. See
+  # `Playthrough::Paragraph`.
+  has_many :paragraphs, class_name: "Playthrough::Paragraph", dependent: :destroy,
+                        inverse_of: :scene
   # Every message exchanged with a model on this turn -- the prompts that were
   # sent, the answers that came back, what they cost and which model wrote them.
   # Nullified rather than destroyed: a message belongs to its `Chat` first, and

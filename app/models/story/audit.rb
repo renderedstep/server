@@ -355,6 +355,31 @@ class Story::Audit
     @scene_scope = scenes
   end
 
+  # THE PLAYER'S PARAGRAPH, READ BY THE SAME CHECKS AS A NARRATION, for a game
+  # the player narrates (`Playthrough::Paragraph`). Every check here reads a
+  # turn's `description` as the prose about that turn, so the paragraph is put
+  # in the scene's place -- in memory, on a read-only copy, never saved -- and
+  # the scene is audited alone. Answers the flags about that one passage that
+  # say the prose and the records disagree (`CONTRADICTIONS`) or that the
+  # passage breaks a rule the app states (`DEFECTS`); drift, limits and pacing
+  # are about what the player typed and how the game went, not about these
+  # words, and are left out.
+  #
+  # A NOTE, NEVER A GATE. Nothing is refused on what this answers: the player
+  # is shown it beside their paragraph and the paragraph is kept as written.
+  #
+  # A TURN THAT CLOSED THE STORY is answered with the closing scene, which is
+  # the engine's own words and never audited (`#scenes`); the paragraph is read
+  # against the act before it, as the facts card is.
+  def self.paragraph(scene, text)
+    acted = scene.engine_authored? && scene.previous_scene ? scene.previous_scene : scene
+    read = Scene.includes(:location, :characters, :interactions, previous_scene: :location).find(acted.id)
+    read.description = text
+    read.readonly!
+    audit = new(acted.story, scenes: [ read ])
+    audit.flags.select { |flag| flag.scene&.id == read.id && (flag.contradiction? || flag.defect?) }
+  end
+
   # Every story in the database, oldest first, each with its audit -- the same
   # shape `Story::Doctor.all` has, for the same reason.
   def self.all(scope = Story.all)
@@ -389,11 +414,17 @@ class Story::Audit
   # which is every story in every frozen corpus.
   def excluded = all_scenes.count(&:engine_authored?)
 
+  # `scenes:` may also be a list of loaded scenes, read as they stand -- which
+  # is how `.paragraph` hands over a scene whose prose is not the stored one.
   def all_scenes
-    @all_scenes ||= (@scene_scope || story.scenes)
-                     .includes(:location, :characters, :interactions, previous_scene: :location)
-                     .order(:story_timestamp, :id)
-                     .to_a
+    @all_scenes ||= if @scene_scope.is_a?(Array)
+      @scene_scope
+    else
+      (@scene_scope || story.scenes)
+        .includes(:location, :characters, :interactions, previous_scene: :location)
+        .order(:story_timestamp, :id)
+        .to_a
+    end
   end
 
   def flags

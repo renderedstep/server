@@ -1,0 +1,40 @@
+<%# locals: (playthrough:) %>
+<%# THE FACTS CARD AND THE PARAGRAPH BOX, for the turn waiting for the
+    player's paragraph in a game they narrate (`Playthrough::Session#waiting`).
+
+    THE CARD IS THE ENGINE'S OWN WORDS, read off the records
+    (`Playthrough::Session#facts_card`): what the protagonist did, what the
+    arrival found, what the people there did, what the world took, who was hit,
+    and the closing words where the turn ended the story. No model wrote any of
+    it and none of it is the narrator's instruction-laden fact sentences. It is
+    drawn on `.sheet`, the frame the battle panel already uses -- the engine's
+    records rendered rather than narrated, which is what this is -- with no new
+    colours.
+
+    THE BOX keeps the player's words beside the turn and has them checked
+    against its facts; the note the check leaves is shown under the paragraph
+    in the log (`turns/_turn`). Nothing a player writes here is read by the
+    game. %>
+<% session = Playthrough::Session.new(playthrough) %>
+<% if (scene = session.waiting) && (card = session.facts_card(scene)) %>
+  <div class="sheet facts-card" id="<%= dom_id(scene, :facts) %>">
+    <h2>What happened</h2>
+    <p class="sheet-lead"><%= card.act %></p>
+    <% card.found.each do |fact| %>
+      <p class="sheet-note"><%= fact %></p>
+    <% end %>
+    <% (card.people + card.tolls + card.wounds).each do |fact| %>
+      <p class="sheet-note"><%= fact %></p>
+    <% end %>
+    <% if card.ending %>
+      <p class="sheet-lead"><%= card.ending %></p>
+    <% end %>
+    <p class="sheet-prompt">Your paragraph</p>
+    <%= form_with url: playthrough_paragraphs_path(playthrough), class: "paragraph-box" do |form| %>
+      <%= form.hidden_field :scene_id, value: scene.id %>
+      <%= form.text_area :text, rows: 4, placeholder: "write what happened, as you would tell it",
+                                aria: { label: "your paragraph" } %>
+      <%= form.submit "Keep my paragraph" %>
+    <% end %>
+  </div>
+<% end %>

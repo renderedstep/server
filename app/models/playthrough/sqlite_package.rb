@@ -33,6 +33,7 @@ class Playthrough::SqlitePackage
     playthrough_feedbacks
     playthrough_npc_states
     playthrough_overreaches
+    playthrough_paragraphs
     playthrough_passages
     playthrough_tolls
     playthrough_visits
