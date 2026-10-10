@@ -206,6 +206,7 @@ class Story::Scoreboard::Capture
 
   def feedbacks
     @feedbacks ||= Playthrough::Feedback
+                   .on_model_prose
                    .joins(playthrough: :story)
                    .where(playthroughs: { story_id: capturable_stories.map(&:id) })
                    .includes(:scene, playthrough: :story)

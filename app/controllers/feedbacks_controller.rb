@@ -74,7 +74,8 @@ class FeedbacksController < ApplicationController
           helpers.dom_id(@scene, :verdict),
           partial: "feedbacks/verdict",
           locals: { playthrough: @playthrough, scene: @scene,
-                    feedback: @playthrough.feedbacks.find_by(scene: @scene) }
+                    feedback: @playthrough.feedbacks.find_by(scene: @scene),
+                    on_paragraph: @playthrough.paragraphs.exists?(scene: @scene) }
         )
       end
       format.html { redirect_to playthrough_path(@playthrough, anchor: "bottom") }

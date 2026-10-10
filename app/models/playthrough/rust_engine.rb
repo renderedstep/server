@@ -225,15 +225,19 @@ module Playthrough::RustEngine
   end
 
   # KEEPS THE PLAYER'S PARAGRAPH for a scene the game chose
-  # (`Engine::write_paragraph`), on the engine's own connection, and answers
-  # the row's id. A second paragraph for the scene replaces the first and
-  # clears its audit. A scene the game did not choose, or a game told another
-  # way, is refused in the engine's words (`not_chosen`, `wrong_mode`).
-  def self.write_paragraph(playthrough, scene, text)
+  # (`Engine::write_paragraph_with_consent`), on the engine's own connection,
+  # and answers the row's id. The engine copies onto the row the requests a
+  # narrator would have been sent for the turn and their prompt digest, and
+  # keeps `consent` (`Playthrough::Paragraph::CONSENTS`). A second paragraph
+  # for the scene replaces the first and clears its audit. A scene the game did
+  # not choose, or a game told another way, is refused in the engine's words
+  # (`not_chosen`, `wrong_mode`), and a consent word it does not know as
+  # `unsupported`.
+  def self.write_paragraph(playthrough, scene, text, consent:)
     unplayable = self.unplayable
     raise unplayable if unplayable
 
-    answer = JSON.parse(extension.write_paragraph(database, playthrough.id, scene.id, text))
+    answer = JSON.parse(extension.write_paragraph(database, playthrough.id, scene.id, text, consent.to_s))
     raise exception_for(answer["error"]) if answer["error"]
 
     answer["paragraph"]

@@ -163,6 +163,30 @@ class Playthrough::FeedbackTest < ActiveSupport::TestCase
     assert_equal 2, feedback.answering_model_ids.size, "the turn as a whole did rotate, and that is still recorded"
   end
 
+  # A TURN THE PLAYER WROTE A PARAGRAPH FOR is judged by the paragraph, and no
+  # model wrote it: the verdict is the player's, and the narrator's readers
+  # leave it out.
+  test "a verdict on a turn with the player's paragraph judges the paragraph" do
+    @playthrough.update!(mode: "player_narrates")
+    create(:playthrough_paragraph, playthrough: @playthrough, scene: @turn)
+
+    feedback = Playthrough::Feedback.record(playthrough: @playthrough, scene: @turn, verdict: "good")
+
+    assert_predicate feedback, :player?
+    assert_equal "player", feedback.prose_purpose
+    assert_nil feedback.prose_model
+    assert_nil feedback.prose_prompt_digest
+    assert_not_predicate feedback, :receipts_kept?
+    assert_not_includes Playthrough::Feedback.on_model_prose, feedback
+  end
+
+  test "a verdict on a model's prose stays among the narrator's verdicts" do
+    feedback = Playthrough::Feedback.record(playthrough: @playthrough, scene: @turn, verdict: "weak")
+
+    assert_not_predicate feedback, :player?
+    assert_includes Playthrough::Feedback.on_model_prose, feedback
+  end
+
   # --- amending -------------------------------------------------------------
 
   test "record amends the verdict on the same row rather than adding a second" do

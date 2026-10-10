@@ -46,6 +46,7 @@ use renderedstep_engine::model::{
     Unavailable, Verify,
 };
 use renderedstep_engine::moment::{Direction, Handled, Moment};
+use renderedstep_engine::narrates::Consent;
 use renderedstep_engine::outcome::{Outcome, State};
 use renderedstep_engine::playthrough::{Game, Mode};
 use renderedstep_engine::records::Records;
@@ -75,7 +76,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("submit_fixed", function!(submit_fixed, 6))?;
     module.define_module_function("act", function!(act, 5))?;
     module.define_module_function("facts_card", function!(facts_card, 3))?;
-    module.define_module_function("write_paragraph", function!(write_paragraph, 4))?;
+    module.define_module_function("write_paragraph", function!(write_paragraph, 5))?;
     module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
     Ok(())
@@ -198,22 +199,31 @@ fn facts_card(database: String, playthrough: i64, scene: i64) -> Result<String, 
     Ok(answer.to_string())
 }
 
-/// `RenderedStep.write_paragraph(database, playthrough_id, scene_id, text)`:
-/// keeps the player's paragraph for a scene the game chose
-/// (`Engine::write_paragraph`), as `{"paragraph": id}`. A second write for
-/// the same scene replaces the words and clears the audit.
+/// `RenderedStep.write_paragraph(database, playthrough_id, scene_id, text,
+/// consent)`: keeps the player's paragraph for a scene the game chose
+/// (`Engine::write_paragraph_with_consent`), as `{"paragraph": id}`, beside
+/// the requests a narrator would have been sent for the turn. `consent` is
+/// what the paragraph may be used for (`narrates::Consent`, `none` or
+/// `owner`); a word the engine does not know is refused as unsupported. A
+/// second write for the same scene replaces the words and clears the audit.
 fn write_paragraph(
     database: String,
     playthrough: i64,
     scene: i64,
     text: String,
+    consent: String,
 ) -> Result<String, RubyError> {
     let answer = without_gvl(|| {
+        let Some(consent) = Consent::parse(&consent) else {
+            return failed(&engine::Error::Unsupported(format!(
+                "a paragraph kept for {consent:?}"
+            )));
+        };
         let mut engine = match Engine::open(Path::new(&database)) {
             Ok(engine) => engine,
             Err(error) => return failed(&error),
         };
-        match engine.write_paragraph(playthrough, scene, &text) {
+        match engine.write_paragraph_with_consent(playthrough, scene, &text, consent) {
             Ok(paragraph) => json!({ "paragraph": paragraph }),
             Err(error) => failed(&error),
         }

@@ -85,6 +85,14 @@ class Playthrough::Feedback < ApplicationRecord
   # message ids rather than off this array.
   PROSE_PURPOSES = %w[narration interaction-narration arrival].freeze
 
+  # THE PROSE NO MODEL WROTE: in a game the player narrates, a turn the player
+  # kept a paragraph for (`Playthrough::Paragraph`) is judged by that
+  # paragraph, so the verdict is frozen as the player's. No model and no prompt
+  # wrote it, so `prose_model` and `prose_prompt_digest` stay nil; the request
+  # it stands in for, and that request's digest, are on the paragraph's own
+  # row. Kept apart from `PROSE_PURPOSES` because none of those calls was made.
+  PLAYER = "player".freeze
+
   belongs_to :playthrough
   belongs_to :scene
 
@@ -94,6 +102,9 @@ class Playthrough::Feedback < ApplicationRecord
 
   scope :in_story_order, -> { joins(:scene).order("scenes.story_timestamp", "scenes.id") }
   scope :for_verdict, ->(verdict) { where(verdict: verdict.to_s) }
+  # Every verdict on prose a model wrote, leaving out the player's paragraphs:
+  # what a reader of the narrator's verdicts means (`Story::Scoreboard::Capture`).
+  scope :on_model_prose, -> { where.not(prose_purpose: PLAYER).or(where(prose_purpose: nil)) }
 
   # RECORDS OR AMENDS THE VERDICT ON ONE TURN, and freezes the turn's provenance
   # the first time.
@@ -106,9 +117,17 @@ class Playthrough::Feedback < ApplicationRecord
   # `note` is left ALONE when it is not supplied, so clicking a different
   # verdict does not silently throw away the reason he typed for the old one.
   # Passing an empty string is how a note is cleared.
+  #
+  # A TURN WITH THE PLAYER'S PARAGRAPH is judged by the paragraph, and its
+  # provenance is the player's (`PLAYER`) rather than the turn's receipts.
+  # `Playthrough::Session#write_paragraph!` clears a verdict when the words it
+  # judged change, so a verdict never outlives the paragraph it was given on.
   def self.record(playthrough:, scene:, verdict:, note: nil)
     feedback = find_or_initialize_by(playthrough: playthrough, scene: scene)
-    feedback.assign_attributes(provenance_for(scene)) unless feedback.persisted?
+    unless feedback.persisted?
+      written = playthrough.paragraphs.exists?(scene: scene)
+      feedback.assign_attributes(written ? player_provenance : provenance_for(scene))
+    end
     feedback.verdict = verdict.to_s
     feedback.note = note.to_s.strip.presence unless note.nil?
     feedback.save!
@@ -156,6 +175,13 @@ class Playthrough::Feedback < ApplicationRecord
     }
   end
 
+  # A PARAGRAPH THE PLAYER WROTE: nothing was called, so there is nothing to
+  # count and no model to name.
+  def self.player_provenance
+    { prose_model: nil, prose_purpose: PLAYER, prose_prompt_digest: nil, prose_models: "",
+      answering_models: "", input_tokens: 0, output_tokens: 0 }
+  end
+
   # A joined list rather than a JSON column, the way `Playthrough::Drift#offered`
   # keeps the set that was on the table: this is read by a person and grouped in
   # Ruby, and `#answering_model_ids` is the inverse.
@@ -169,6 +195,9 @@ class Playthrough::Feedback < ApplicationRecord
   # already been pruned, or the `Scene` was written by something other than the
   # loop -- and that is reported rather than shown as a turn that cost nothing.
   def receipts_kept? = prose_model.present? || answering_models.present?
+
+  # Whether this judges a paragraph the player wrote rather than a model's prose.
+  def player? = prose_purpose == PLAYER
 
   # Every model that answered anything on the turn, as the list it was.
   def answering_model_ids

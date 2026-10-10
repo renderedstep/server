@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_220000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -436,6 +436,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
     t.json "audit"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "consent", default: "none", null: false
+    t.json "requests"
+    t.string "prompt_digest"
     t.index ["playthrough_id"], name: "index_playthrough_paragraphs_on_playthrough_id"
     t.index ["scene_id", "author"], name: "index_playthrough_paragraphs_on_scene_id_and_author", unique: true
   end

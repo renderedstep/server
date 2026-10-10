@@ -240,12 +240,21 @@ class Playthrough::Session
   # check never refuses anything; the paragraph is kept as written. A second
   # paragraph for the scene replaces the first and is checked again. Answers
   # the `Playthrough::Paragraph`, or nil for nothing written.
+  #
+  # The engine keeps beside it the request a narrator would have been sent for
+  # the turn, and the consent this picks: the owner's in a game no invited
+  # player plays, nothing in any other (`Playthrough::Paragraph.consent_for`).
+  # A verdict already on the turn judged other words -- the engine's, or a
+  # paragraph since rewritten -- so it is cleared when the words change.
   def write_paragraph!(scene, text)
     text = text.to_s.strip
     return nil if text.empty?
 
-    id = Playthrough::RustEngine.write_paragraph(playthrough, scene, text)
+    before = playthrough.paragraphs.find_by(scene: scene)&.text
+    id = Playthrough::RustEngine.write_paragraph(playthrough, scene, text,
+                                                 consent: Playthrough::Paragraph.consent_for(playthrough))
     paragraph = Playthrough::Paragraph.find(id)
+    playthrough.feedbacks.where(scene: scene).destroy_all unless before == text
     flags = Story::Audit.paragraph(scene, text)
     paragraph.update!(audit: { "flags" => flags.map { |flag| { "code" => flag.code.to_s, "headline" => flag.headline,
                                                                "evidence" => flag.evidence_line } } })
