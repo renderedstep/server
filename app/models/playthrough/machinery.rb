@@ -109,8 +109,10 @@ class Playthrough::Machinery
   def cast = @cast ||= scene.characters.to_a
 
   # (3) WHAT IS LYING IN THE ROOM, in this game. NOW: an `Item` row says where
-  # a thing is, not where it was.
-  def lying_here = @lying_here ||= playthrough.items_lying_in(scene.location).to_a
+  # a thing is, not where it was. In a game the player narrates, only what it
+  # has noticed there (`Playthrough#items_noticed_in`): the panel is not the
+  # place an unnoticed thing is given away.
+  def lying_here = @lying_here ||= playthrough.items_noticed_in(scene.location).to_a
 
   # (4) WHAT THE PARTY IS CARRYING, in this game. NOW, for the same reason.
   def carried = @carried ||= playthrough.carried.to_a

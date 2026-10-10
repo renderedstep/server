@@ -14,6 +14,13 @@ require "test_helper"
 # never in it, the check leaves a note and refuses nothing, and once the
 # paragraph is kept nothing waits.
 #
+# AND TO WHAT THE GAME HAS NOTICED (`items.noticed_at`, the engine's record):
+# the panels list only noticed things, the count of what a look would show
+# matches the records, the look is offered exactly while there is something
+# for it, nothing noticed is ever forgotten, nothing lying in a hollow or a
+# closed fixture is noticed, the card names nothing unnoticed and nothing the
+# turn did not notice, and the doctor finds nothing wrong with the record.
+#
 # THE SAME PICKS ON EVERY RUN. The engine's die is seeded off story time and
 # the submission's id, and a row's id on the scratch copy is whatever the
 # tests before this one left the table's sequence at. So each walk starts the
@@ -84,6 +91,7 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
       assert_equal "player_narrates", session.glance.mode
       assert_nil session.waiting, "nothing waits before the game has acted"
       assert_nil session.facts_card(opening), "the opening is not a turn the game chose"
+      noticed = holds_the_noticed_record(game, session, Set.new, "the opening")
 
       turns.times do |turn|
         break if game.reload.over?
@@ -102,6 +110,16 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
         assert card.act.present?, "turn #{turn}: the card says what the protagonist did"
         assert_equal scene.id, card.scene
         cards << card
+        before = noticed
+        noticed = holds_the_noticed_record(game, session, noticed, "turn #{turn}")
+        newly = Item.where(id: (noticed - before).to_a).pluck(:name)
+        assert (card.noticed - newly).empty?, "turn #{turn}: the card names #{(card.noticed - newly).inspect}, " \
+                                              "which this turn did not notice"
+        unnoticed = game.items_lying_in(game.current_location).where(noticed_at: nil).pluck(:name)
+        seen = Item.where(id: noticed.to_a).pluck(:name)
+        unnoticed.reject { |name| seen.any? { |other| other.include?(name) } }.each do |name|
+          assert_not_includes card.found.join(" "), name, "turn #{turn}: the card names #{name.inspect}, unnoticed"
+        end
 
         # Clean words first, then a rewrite the check has something to say
         # about: a third person for the player, cut off mid-sentence. The
@@ -126,6 +144,28 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
 
       Walked.new(game: game.reload, cards: cards, actions: actions)
     end
+  end
+
+  # THE NOTICED RECORD BETWEEN TURNS, held to the engine's promises; answers
+  # the ids of every thing this game has noticed, which only ever grows.
+  def holds_the_noticed_record(game, session, before, where)
+    glance = session.glance
+    room = game.reload.current_location
+    stamped = Item.of_playthrough(game).where.not(noticed_at: nil)
+    noticed = stamped.pluck(:id).to_set
+
+    assert before.subset?(noticed), "#{where}: nothing noticed is ever forgotten"
+    assert (glance.lying_here + glance.fixtures).all?(&:noticed_at), "#{where}: the panels list only noticed things"
+    assert glance.carrying.all?(&:noticed_at), "#{where}: what the player carries is always noticed"
+    assert_predicate stamped.where(how: "in").where.not(within_id: nil), :none?, "#{where}: nothing concealed is noticed"
+    in_sight = game.items_lying_in(room).where(noticed_at: nil).reject { |item| item.within_id && item.how == "in" }
+    assert_equal in_sight.size, glance.counts.unnoticed, "#{where}: the count of what a look would show"
+    look = glance.verb(:examine).targets.find(&:look?)
+    room_left = game.items_lying_in(room).where.not(noticed_at: nil).count < Item::Kit::MAX_VISIBLE_PER_ROOM
+    assert_equal in_sight.any? && room_left, !look.nil?, "#{where}: a look is offered exactly while it would show something"
+    assert_empty Story::Doctor.new(game.story).findings.select { |finding| finding.code == :noticed_record_inconsistent },
+                 "#{where}: the doctor finds the record consistent"
+    noticed
   end
 
   # LETTING THE GAME ACT, the way a front end does: accepted, then played.

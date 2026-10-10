@@ -169,6 +169,16 @@ class Playthrough < ApplicationRecord
     Item.of_playthrough(self).lying_in(location).order(:id)
   end
 
+  # WHAT THE PLAYER HAS NOTICED LYING IN A ROOM: in a game the player narrates,
+  # the things this game has stamped (`items.noticed_at`, which only the
+  # engine writes); in any other game, everything `#items_lying_in` holds. The
+  # engine's `Game::items_noticed_in`, read here for the panels the browser
+  # draws off the records rather than off the glance.
+  def items_noticed_in(location)
+    lying = items_lying_in(location)
+    player_narrates? ? lying.where.not(noticed_at: nil) : lying
+  end
+
   # WHAT THE OTHER PEOPLE IN THIS ROOM DID THAT NO PARAGRAPH HAS CARRIED YET.
   #
   # `#items_lying_in`'s shape and the ONE reader of it: a closed set read off

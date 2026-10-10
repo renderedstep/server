@@ -47,7 +47,7 @@ use renderedstep_engine::model::{
 };
 use renderedstep_engine::moment::{Direction, Handled, Moment};
 use renderedstep_engine::outcome::{Outcome, State};
-use renderedstep_engine::playthrough::Game;
+use renderedstep_engine::playthrough::{Game, Mode};
 use renderedstep_engine::records::Records;
 use renderedstep_engine::room::{Record, Room};
 use renderedstep_engine::store::SCHEMA_VERSION;
@@ -76,6 +76,8 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("act", function!(act, 5))?;
     module.define_module_function("facts_card", function!(facts_card, 3))?;
     module.define_module_function("write_paragraph", function!(write_paragraph, 4))?;
+    module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
+    module.define_module_function("start", function!(start, 3))?;
     Ok(())
 }
 
@@ -188,6 +190,7 @@ fn facts_card(database: String, playthrough: i64, scene: i64) -> Result<String, 
                 "tolls": card.tolls,
                 "wounds": card.wounds,
                 "ending": card.ending,
+                "noticed": card.noticed,
             })) }),
             Err(error) => failed(&error),
         }
@@ -212,6 +215,54 @@ fn write_paragraph(
         };
         match engine.write_paragraph(playthrough, scene, &text) {
             Ok(paragraph) => json!({ "paragraph": paragraph }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.start(database, story_id, mode)`: starts a game of a story
+/// told in `mode` (`Engine::start_in`) -- the protagonist in the lowest-id
+/// written room at the opening scene, this game's copies of what they carry
+/// and of that room, and, in a game the player narrates, what walking into
+/// that room notices -- as `{"playthrough": id}`. A mode the engine does not
+/// know is refused as unsupported.
+fn start(database: String, story: i64, mode: String) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let Some(mode) = Mode::parse(&mode) else {
+            return failed(&engine::Error::Unsupported(format!("a game told {mode:?}")));
+        };
+        let mut engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.start_in(story, mode) {
+            Ok(playthrough) => json!({ "playthrough": playthrough }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.noticed_findings(database, story_id)`: what the doctor
+/// reports about the noticed records of a story's games
+/// (`Engine::noticed_findings`), as `{"findings": [...]}`, each with its
+/// code, severity, message, remedy and the table and id of its row. Reads
+/// only.
+fn noticed_findings(database: String, story: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.noticed_findings(story) {
+            Ok(findings) => json!({ "findings": findings.iter().map(|finding| json!({
+                "code": finding.code,
+                "severity": finding.severity,
+                "message": finding.message,
+                "remedy": finding.remedy,
+                "subject": { "table": finding.subject.0, "id": finding.subject.1 },
+            })).collect::<Vec<_>>() }),
             Err(error) => failed(&error),
         }
     });
@@ -1070,13 +1121,18 @@ fn report_json(report: &Report) -> Value {
 }
 
 fn thing_json(thing: &glanced::Thing) -> Value {
-    json!({ "id": thing.id, "name": thing.name, "on": thing.on })
+    json!({ "id": thing.id, "name": thing.name, "on": thing.on, "noticed_at": thing.noticed_at })
 }
 
 fn glance_json(glance: &Glance) -> Value {
     let target = |target: &glanced::Target| match &target.token {
         Some(token) => json!({
             "name": target.name, "token": token, "kind": target.kind, "line": target.line,
+        }),
+        // A look around the room (`examine` in a game the player narrates)
+        // is no record and no attempt: its kind and its line, by name.
+        None if target.kind.is_some() => json!({
+            "id": target.id, "name": target.name, "kind": target.kind, "line": target.line,
         }),
         None => json!({ "id": target.id, "name": target.name }),
     };
@@ -1095,10 +1151,14 @@ fn glance_json(glance: &Glance) -> Value {
             .map(|fixture| json!({
                 "id": fixture.id, "name": fixture.name, "holds": fixture.holds,
                 "state": fixture.state, "searched": fixture.searched, "on": fixture.on,
+                "noticed_at": fixture.noticed_at,
             }))
             .collect::<Vec<_>>(),
         "lying_here": glance.lying_here.iter().map(thing_json).collect::<Vec<_>>(),
-        "counts": json!({ "visible": glance.counts.visible, "unsearched": glance.counts.unsearched }),
+        "counts": json!({
+            "visible": glance.counts.visible, "unsearched": glance.counts.unsearched,
+            "unnoticed": glance.counts.unnoticed,
+        }),
         "carrying": glance.carrying.iter().map(thing_json).collect::<Vec<_>>(),
         "condition": glance.condition,
         "sheet": glance.sheet,

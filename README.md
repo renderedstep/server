@@ -146,7 +146,12 @@ words, and a card of what happened sits over a box for your paragraph. Your
 paragraph is kept beside the turn (`Playthrough::Paragraph`), checked against
 the turn's facts by `Story::Audit`'s own checks and shown with what they found,
 and never read by the game: no prompt and no rule sees it. On a world whose
-rooms are written, that mode asks no model at all.
+rooms are written, that mode asks no model at all. In that mode the room is
+revealed in steps, by the engine's record of what the game has noticed
+(`items.noticed_at`): walking in shows the people, the ways out, the fixed
+pieces and a rolled few loose things; a look shows the rest of what is in plain
+sight; each turn spent in the room notices one more. The panels and the card
+list only what is noticed, and a line naming anything else is refused.
 
 Why two: **a turn is a `NarrationJob`, not a request.** The browser posts the
 command, gets an acknowledgement back immediately (a fresh submission token;

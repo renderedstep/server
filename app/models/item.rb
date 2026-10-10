@@ -509,7 +509,12 @@ class Item < ApplicationRecord
   # illegal by coming along: a template carrying a position is lying in a room
   # (`#a_position_needs_a_floor`), and its copy lies in that same room. From
   # then on the copy moves on its own and the template never does.
-  NOT_COPIED = (PLACES.map(&:to_s) + %w[id playthrough_id template_id created_at updated_at]).freeze
+  #
+  # `noticed_at` IS ON IT FOR THE REASON `playthrough_id` IS: it is one game's
+  # record of having noticed its own copy (a game the player narrates; the
+  # engine's `noticed.rs` writes it), so a world's row never carries one and a
+  # copy never inherits one -- a fresh copy is a thing this game has not seen.
+  NOT_COPIED = (PLACES.map(&:to_s) + %w[id playthrough_id template_id noticed_at created_at updated_at]).freeze
 
   private
 

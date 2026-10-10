@@ -176,6 +176,38 @@ module Playthrough::RustEngine
     ActiveRecord::Base.connection.clear_query_cache
   end
 
+  # STARTING A GAME ON THE ENGINE (`Engine::start_in`), told in `mode`: the
+  # playthrough row, this game's copies of what the party carries and of the
+  # opening room, and -- in a game the player narrates -- what walking into that
+  # room notices, which is the engine's first tier and runs nowhere else.
+  # Answers the new playthrough's id. `Playthrough::Session.begin!` is the
+  # caller, for a game the player narrates; a narrated game starts in Ruby.
+  def self.start(story, mode)
+    unplayable = self.unplayable
+    raise unplayable if unplayable
+
+    answer = JSON.parse(extension.start(database, story.id, mode))
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["playthrough"]
+  ensure
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
+  # WHAT THE DOCTOR REPORTS ABOUT A STORY'S NOTICED RECORDS, in the engine's
+  # words (`Engine::noticed_findings`): each a hash of `code`, `severity`,
+  # `message`, `remedy` and `subject` (the row's `table` and `id`). The record
+  # is the engine's, so its checks are; `Story::Doctor#noticed_records` is the
+  # one caller. Reads only.
+  def self.noticed_findings(story)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.noticed_findings(file, story.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["findings"]
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 

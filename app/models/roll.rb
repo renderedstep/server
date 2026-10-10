@@ -155,6 +155,11 @@ module Roll
   # a game the player narrates (`playthroughs.mode`), rolled nowhere in this
   # app. Named so no die of this app's is ever given the number.
   CHOICE = 14
+  # 15 IS THE RUST ENGINE'S TOO: what a game the player narrates notices of a
+  # room -- how many loose things on the way in, and which one more on a turn
+  # spent there (`items.noticed_at`). Rolled nowhere in this app; named for
+  # the reason `CHOICE` is.
+  NOTICE = 15
 
   # THE SEED, FROM FIVE INTEGERS AND NOTHING ELSE. Public because it is the part
   # worth asserting on its own: `RollTest` pins that the same inputs give the

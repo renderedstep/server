@@ -78,7 +78,8 @@ class Story::Doctor
       *geometry,
       *vitals_rows,
       *arc,
-      *event_stream
+      *event_stream,
+      *noticed_records
     ]
   end
 
@@ -2742,6 +2743,57 @@ class Story::Doctor
               "#{room.name} has danger #{room.danger.inspect}, which is not one of "               "#{Location::DANGERS.keys.join(", ")}, so nothing born in it can be one of this world's monsters",
               :manual, subject: room)
     end
+  end
+
+  # ------------------------------------------------------------------------
+  # WHAT A GAME THE PLAYER NARRATES HAS NOTICED (`items.noticed_at`,
+  # `playthrough_npc_states.noticed_at`), and the record is the ENGINE'S: it is
+  # the only writer, and every tier that stamps a row is a rule of its
+  # (`noticed.rs`). So the checks are its too -- `Engine::noticed_findings`,
+  # asked through `Playthrough::RustEngine.noticed_findings` -- rather than a
+  # second copy of those rules here, which would be a second answer waiting to
+  # disagree. One code, `noticed_record_inconsistent`:
+  #
+  #   - a stamp on the world's own row, which no game noticed            safe
+  #   - a stamp in a narrated game, which never notices anything         safe
+  #   - a stamp later than its game's own clock                          manual
+  #   - between turns of a game the player narrates, a fixed piece of
+  #     the room it stands in, or a thing it carries, left unnoticed     manual
+  #
+  # The two `safe` ones are cleared by `Story::Repair`: a stamp nothing could
+  # have written is no record of anything. The `manual` ones are not -- which
+  # moment to stamp, or whether to, is not on record.
+  #
+  # NOTHING IS ASKED OF A STORY WITH NOTHING TO CHECK: no game told the other
+  # way round and no stamp anywhere is every story that exists before the mode
+  # does, and none of them pays for a read of the engine. A story that needs
+  # the read on an install without the extension says so rather than passing.
+  def noticed_records
+    return [] unless noticed_anything?
+
+    Playthrough::RustEngine.noticed_findings(story).map do |found|
+      subject = noticed_subject(found.fetch("subject"))
+      finding(found.fetch("code").to_sym, found.fetch("severity").to_sym, found.fetch("message"),
+              found.fetch("remedy").to_sym, subject: subject)
+    end
+  rescue Playthrough::RustEngine::EngineError => e
+    raise unless e.kind == "not_built"
+
+    [ finding(:noticed_record_inconsistent, :warning,
+              "this story has a game the player narrates, and what it has noticed could not be checked: #{e.message}",
+              :manual) ]
+  end
+
+  def noticed_anything?
+    story.playthroughs.exists?(mode: "player_narrates") ||
+      story_items.where.not(noticed_at: nil).exists? ||
+      Playthrough::NpcState.where(playthrough_id: story.playthroughs.select(:id)).where.not(noticed_at: nil).exists?
+  end
+
+  # The engine names a finding's row by table and id; the repair acts on it.
+  def noticed_subject(subject)
+    model = { "items" => Item, "playthrough_npc_states" => Playthrough::NpcState }.fetch(subject.fetch("table"))
+    model.find_by(id: subject.fetch("id"))
   end
 
   # ------------------------------------------------------------------------

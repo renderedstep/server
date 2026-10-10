@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_180000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -123,6 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
     t.integer "within_id"
     t.string "how"
     t.string "kit_key"
+    t.datetime "noticed_at"
     t.index ["character_id"], name: "index_items_on_character_id"
     t.index ["location_id", "character_id"], name: "index_items_on_location_id_and_character_id"
     t.index ["location_id"], name: "index_items_on_location_id"
@@ -402,6 +403,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_120000) do
     t.integer "peace_after_blow_id", default: 0, null: false
     t.integer "playthrough_id", null: false
     t.datetime "updated_at", null: false
+    t.datetime "noticed_at"
     t.index ["character_id"], name: "index_playthrough_npc_states_on_character_id"
     t.index ["location_id"], name: "index_playthrough_npc_states_on_location_id"
     t.index ["playthrough_id", "character_id"], name: "idx_on_playthrough_id_character_id_008ae03862", unique: true
