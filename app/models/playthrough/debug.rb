@@ -369,9 +369,11 @@ class Playthrough::Debug
   #
   # A row keyed nil is honest and stays in: those are turns judged after their
   # receipts had already gone, or an opening arrival that was generated when the
-  # world was built. Dropping them would quietly shrink the denominator.
+  # world was built. Dropping them would quietly shrink the denominator. A
+  # verdict on the player's own paragraph is its own row, `player`, and never
+  # one of those.
   def feedback_by_model
-    feedback.group_by(&:prose_model).transform_values do |rows|
+    feedback.group_by { |row| row.player? ? Playthrough::Feedback::PLAYER : row.prose_model }.transform_values do |rows|
       rows.group_by(&:verdict).transform_values(&:size)
     end
   end

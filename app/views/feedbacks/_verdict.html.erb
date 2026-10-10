@@ -1,4 +1,4 @@
-<%# locals: (playthrough:, scene:, feedback:) %>
+<%# locals: (playthrough:, scene:, feedback:, on_paragraph: false) %>
 <%# THE INSTRUMENT, as small as it can be and still be one click.
 
     A `<footer>` and NOT a `<div>`, which is load-bearing rather than semantic
@@ -24,9 +24,15 @@
     replaces the whole of `#turn_log` when it does. The window is small -- taking
     the next turn means leaving this box for the command input -- and closing it
     would mean either holding draft state in JavaScript or narrowing what the
-    broadcast replaces, both of which cost more than they save. %>
+    broadcast replaces, both of which cost more than they save.
+
+    ON A TURN THE PLAYER WROTE A PARAGRAPH FOR, in a game they narrate, the
+    same three buttons judge the paragraph (`Playthrough::Feedback::PLAYER`),
+    and `on_paragraph` says so to a screen reader; nothing else about them
+    changes. %>
 <footer class="verdict" id="<%= dom_id(scene, :verdict) %>">
-  <%= form_with url: playthrough_feedbacks_path(playthrough), class: "marks" do |form| %>
+  <%= form_with url: playthrough_feedbacks_path(playthrough), class: "marks",
+                html: { aria: { label: on_paragraph ? "your verdict on your paragraph" : "your verdict on this turn" } } do |form| %>
     <%= form.hidden_field :scene_id, value: scene.id, id: nil %>
     <% Playthrough::Feedback::VERDICTS.each do |verdict| %>
       <%# The label IS the value: `name: "verdict"` puts the button's own value

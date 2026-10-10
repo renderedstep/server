@@ -60,10 +60,12 @@
         FeedbacksController for why they share a gate.
 
         `verdicts` is one query for the whole log (`Playthrough#feedback_by_scene`),
-        not a lookup per entry: the log is the entire playthrough. %>
+        not a lookup per entry: the log is the entire playthrough. Under the
+        player's paragraph it judges the paragraph (`Playthrough::Feedback.record`). %>
     <% if playthrough && Playthrough::Debug.enabled? %>
       <%= render "feedbacks/verdict", playthrough: playthrough, scene: turn,
-                                      feedback: local_assigns.fetch(:verdicts, {})[turn.id] %>
+                                      feedback: local_assigns.fetch(:verdicts, {})[turn.id],
+                                      on_paragraph: paragraphs.key?(turn.id) %>
     <% end %>
   </div>
 

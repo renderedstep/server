@@ -152,6 +152,15 @@ revealed in steps, by the engine's record of what the game has noticed
 pieces and a rolled few loose things; a look shows the rest of what is in plain
 sight; each turn spent in the room notices one more. The panels and the card
 list only what is noticed, and a line naming anything else is refused.
+Beside each paragraph the engine keeps the request a narrator would have been
+sent for that turn, built and never sent, with its prompt digest. A paragraph
+written in the browser is the owner's and may go into the owner's private set;
+one written in an invited player's game is kept for that game alone. The verdict
+buttons under a paragraph judge the paragraph. `rake
+'eval:paragraphs[/path/outside/the/checkout/set.yml]'` writes that set, in the
+prompt bench's case shape, to a file outside the repository and asks no model.
+It refuses any path inside the checkout, `db/eval/` included. Never check the
+file in.
 
 Why two: **a turn is a `NarrationJob`, not a request.** The browser posts the
 command, gets an acknowledgement back immediately (a fresh submission token;

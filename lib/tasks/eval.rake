@@ -37,6 +37,13 @@
 #
 #   rake eval:realization_alignment  the checks against his verdicts, offline and free
 #
+# AND ONE THAT ASKS NO MODEL AND WRITES OUTSIDE THE REPOSITORY: the owner's own
+# paragraphs from games they narrate, each beside the request a narrator would
+# have been sent for its turn, as a private reference set in the prompt bench's
+# case shape. `Playthrough::Paragraph::Export` has the design:
+#
+#   rake eval:paragraphs[path]  write the set to a path outside this checkout
+#
 # GENERATION SPENDS MONEY AND MUST NEVER RUN IN CI. It needs `OPENROUTER_API_KEY`
 # and refuses to start without one; scoring needs nothing at all. `EVALUATION.md`
 # is the protocol.
@@ -170,6 +177,15 @@ namespace :eval do
   desc "Feed fixed facts to one turn and score the prose. REPS=4 MODELS=a,b SET=<name> CORPUS=main|ending|branches|speech SAMPLE=12 YES=1"
   task prompt: :environment do
     PromptTasks.run!
+  end
+
+  desc "Write the owner's own paragraphs, each beside the request it stands in for, to a private file OUTSIDE " \
+       "the repository -- offline, no model call. Usage: rake 'eval:paragraphs[/path/outside/set.yml]'"
+  task :paragraphs, [ :path ] => :environment do |_task, args|
+    count = Playthrough::Paragraph::Export.new(args[:path]).write!
+    puts "Wrote #{count} #{"paragraph".pluralize(count)} to #{File.expand_path(args[:path])} -- private; never check it in."
+  rescue Playthrough::Paragraph::Export::Refused => error
+    abort "Not written: #{error.message}."
   end
 
   desc "Score a stored prompt bench set again -- offline, no model call, no key. Usage: rake eval:prompt_score SET=<name>"

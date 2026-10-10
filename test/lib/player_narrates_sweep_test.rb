@@ -14,6 +14,13 @@ require "test_helper"
 # never in it, the check leaves a note and refuses nothing, and once the
 # paragraph is kept nothing waits.
 #
+# AND TO WHAT IS KEPT BESIDE THE PARAGRAPH: the request a narrator would have
+# been sent for the turn, built and never sent -- the narrator's for an act,
+# the arrival writer's for a walk, then the ending's on the turn that closed
+# the story -- its digest as `Playthrough::PromptVersion` computes one, none of
+# the player's words in it, and the owner's consent in a game nobody was
+# invited to. A walk ends by writing the owner's set outside the repository.
+#
 # AND TO WHAT THE GAME HAS NOTICED (`items.noticed_at`, the engine's record):
 # the panels list only noticed things, the count of what a look would show
 # matches the records, the look is offered exactly while there is something
@@ -38,6 +45,27 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
     closing = walked.cards.last
     assert closing.ending.present?, "the turn that ended the story should carry its closing words on its card"
     assert_includes walked.actions, "move"
+    purposes = walked.game.paragraphs.flat_map { |paragraph| paragraph.would_ask.pluck("purpose") }
+    assert_includes purposes, "arrival"
+    assert_includes purposes, "narration"
+    assert_equal "ending", walked.game.paragraphs.max_by(&:id).would_ask.last["purpose"],
+                 "the turn that closed the story stands in for the ending's request too"
+
+    Dir.mktmpdir("paragraph-export") do |outside|
+      path = File.join(outside, "set.yml")
+      assert_equal walked.cards.size, Playthrough::Paragraph::Export.new(path).write!
+      assert_equal walked.cards.size, Eval::Prompt::Corpus.load(path).size
+    end
+  end
+
+  # AN INVITED PLAYER'S GAME keeps its paragraphs for itself: the same request
+  # beside each, and no consent to be in anybody's set.
+  test "an invited player's paragraphs are kept for their game alone" do
+    walked = walk("lib/engine_sweep/worlds/the-furnished-rooms.yml", turns: 3, player: create(:player))
+
+    assert_equal %w[none], walked.game.paragraphs.map(&:consent).uniq
+    assert walked.game.paragraphs.all? { |paragraph| paragraph.requests.present? }
+    assert_empty Playthrough::Paragraph.eligible.where(playthrough: walked.game)
   end
 
   test "The Furnished Rooms, a world with no arc and no pursuit, is walked without a model" do
@@ -78,10 +106,10 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence")
   end
 
-  def walk(world, turns:)
+  def walk(world, turns:, player: nil)
     EngineSweep.without_a_model do
       story = WorldSeed::Loader.load_file(Rails.root.join(world))
-      game = Playthrough::Session.begin!(story, mode: "player_narrates").playthrough
+      game = Playthrough::Session.begin!(story, player: player, mode: "player_narrates").playthrough
       session = Playthrough::Session.new(game)
       protagonist = story.protagonist.fullname
       opening = game.current_scene
@@ -132,6 +160,7 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
         assert_equal %w[third_person_protagonist truncated_prose], rewritten.notes.map(&:code).sort,
                      "turn #{turn}: the check should note what is wrong with the rewrite"
         assert_equal "#{protagonist} stands there and", rewritten.reload.text
+        holds_the_captured_request(rewritten, acted, game, "turn #{turn}")
 
         assert_equal engine_words, scene.reload.description, "turn #{turn}: the paragraph is never written into the scene"
         assert_nil session.waiting, "turn #{turn}: once the paragraph is kept nothing waits"
@@ -144,6 +173,29 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
 
       Walked.new(game: game.reload, cards: cards, actions: actions)
     end
+  end
+
+  # WHAT IS KEPT BESIDE A PARAGRAPH, held to the engine's promises.
+  def holds_the_captured_request(paragraph, acted, game, where)
+    asked = paragraph.would_ask
+    purposes = asked.pluck("purpose")
+    act = acted.resolved_action == "move" ? "arrival" : "narration"
+    assert_includes [ [ act ], [ act, "ending" ] ], purposes, "#{where}: the requests stand in for the turn's passes"
+    assert_equal purposes.include?("ending"), game.reload.over?, "#{where}: an ending's request only on the turn that closed the story"
+
+    asked.each do |kept|
+      system = kept.dig("request", "system")
+      digest = kept["purpose"] == "narration" ? Playthrough::PromptVersion.narration : Playthrough::PromptVersion.of(system)
+      assert_equal digest, kept["prompt_digest"], "#{where}: the #{kept["purpose"]} digest is computed as the app computes one"
+      assert_not_includes kept["request"].to_json, paragraph.text, "#{where}: the player's words are in no request"
+    end
+    assert_equal asked.first["prompt_digest"], paragraph.prompt_digest, "#{where}: the row's digest is the act's"
+    if act == "narration"
+      assert_equal Playthrough::PromptVersion.narrator_instructions.strip, asked.first.dig("request", "system").strip,
+                   "#{where}: the narrator's instructions as they stand"
+      assert_includes asked.first.dig("request", "user"), "The player types: #{acted.typed}", "#{where}: the engine's act as the line"
+    end
+    assert_equal Playthrough::Paragraph.consent_for(game), paragraph.consent, "#{where}: the consent the game's owner allows"
   end
 
   # THE NOTICED RECORD BETWEEN TURNS, held to the engine's promises; answers

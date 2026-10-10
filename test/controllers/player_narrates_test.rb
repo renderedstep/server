@@ -113,6 +113,35 @@ class PlayerNarratesControllerTest < ActionDispatch::IntegrationTest
     assert_empty game.paragraphs
   end
 
+  # THE EXISTING VERDICT BUTTONS JUDGE THE PLAYER'S PARAGRAPH: the same three
+  # buttons under it, the same request, and a verdict frozen as the player's.
+  # A rewrite clears it, because it judged other words.
+  test "the verdict buttons under a kept paragraph judge the paragraph" do
+    game = begin_narrating
+    scene = act(game)
+    post playthrough_paragraphs_path(game), params: { scene_id: scene.id, text: "You take it and turn it over." }
+    paragraph = game.paragraphs.sole
+
+    assert_equal "owner", paragraph.consent, "the browser's game is the owner's"
+    assert_equal paragraph.act_request["prompt_digest"], paragraph.prompt_digest
+
+    get playthrough_path(game)
+    assert_select "##{ActionView::RecordIdentifier.dom_id(scene, :verdict)} form.marks[aria-label=?] input[name=verdict]",
+                  "your verdict on your paragraph", count: Playthrough::Feedback::VERDICTS.size
+
+    post playthrough_feedbacks_path(game), params: { scene_id: scene.id, verdict: "good" }, as: :turbo_stream
+    assert_response :success
+    assert_match(/your verdict on your paragraph/, response.body)
+    feedback = game.feedbacks.find_by!(scene: scene)
+    assert_predicate feedback, :player?
+    assert_equal "good", feedback.verdict
+
+    Playthrough::Session.new(game).write_paragraph!(scene, "You take it and turn it over.")
+    assert game.feedbacks.exists?(scene: scene), "the same words keep their verdict"
+    Playthrough::Session.new(game).write_paragraph!(scene, "You pocket it.")
+    assert_not game.feedbacks.exists?(scene: scene), "a verdict on other words is cleared"
+  end
+
   # THE ROOM IS REVEALED IN STEPS (the engine's noticed record): the card
   # names what the turn noticed and nothing the game has not, and a line naming
   # a thing not yet noticed is answered with the engine's refusal where the
