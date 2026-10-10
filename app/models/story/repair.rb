@@ -91,6 +91,7 @@ class Story::Repair
     duplicate_items: { calls: 0, handler: :repair_duplicate_items },
     mobile_doorway_re_asserted: { calls: 0, handler: :repair_re_asserted_doorway },
     quest_target_missing: { calls: 0, handler: :repair_missing_quest_target },
+    noticed_record_inconsistent: { calls: 0, handler: :repair_impossible_notice },
     no_realized_location: { calls: 2, handler: :repair_no_realized_location },
     opening_location_is_a_stub: { calls: 2, handler: :repair_opening_location_stub },
     opening_has_no_exits: { calls: 1, handler: :repair_missing_exits },
@@ -517,6 +518,23 @@ class Story::Repair
   # playthrough, `Playthrough#over?`'s comment has been promising this repair
   # since the column landed, and `Playthrough#end!` is idempotent and dates the
   # end at the playthrough's own story clock.
+  # A NOTICED STAMP NOTHING COULD HAVE WRITTEN, cleared: on the world's own
+  # row, which no game notices, or in a narrated game, which never notices
+  # anything (`Story::Doctor#noticed_records`). Safe because no rule of the
+  # engine's writes either, so the stamp is no record of anything. Re-checked
+  # here before the row is touched; the doctor's `manual` findings under the
+  # same code never reach this (`#actionable?`).
+  def repair_impossible_notice(finding)
+    row = finding.subject
+    raise "nothing to clear: the row is gone" if row.nil?
+
+    world_row = row.is_a?(Item) && row.playthrough_id.nil?
+    raise "the stamp is in a game the player narrates, which may notice; left alone" unless world_row || !row.playthrough.player_narrates?
+
+    row.update_columns(noticed_at: nil)
+    "cleared the noticed stamp on #{row.class.name} ##{row.id}, which #{world_row ? "is the world's own row" : "is in a narrated game"}"
+  end
+
   def repair_unended_playthrough(finding)
     playthrough = finding.subject
     playthrough.end!

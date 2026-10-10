@@ -35,6 +35,9 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     assert_equal "database", JSON.parse(RenderedStep.act("/nonexistent/game.sqlite3", 1, "t", false, "{}")).dig("error", "kind")
     assert_equal "database", JSON.parse(RenderedStep.facts_card("/nonexistent/game.sqlite3", 1, 1)).dig("error", "kind")
     assert_equal "database", JSON.parse(RenderedStep.write_paragraph("/nonexistent/game.sqlite3", 1, 1, "x")).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.noticed_findings("/nonexistent/game.sqlite3", 1)).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.start("/nonexistent/game.sqlite3", 1, "player_narrates")).dig("error", "kind")
+    assert_equal "unsupported", JSON.parse(RenderedStep.start("/nonexistent/game.sqlite3", 1, "sung")).dig("error", "kind")
   end
 
   test "a script walked on the Rust engine passes every gate" do

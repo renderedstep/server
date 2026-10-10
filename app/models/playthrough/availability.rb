@@ -25,10 +25,17 @@ class Playthrough::Availability
   # ONE TARGET: a record by id and the name a player types for it, or, for
   # `use`, one whole attempt -- its `use:` token, its own word, and the line
   # that plays it (nil where no line the grammar reads plays this attempt rather
-  # than another one of the same name).
+  # than another one of the same name). In a game the player narrates,
+  # `examine` may also offer a look around the room: no id and no token, the
+  # room's name, kind `look` and the engine's line for it.
   Target = Data.define(:id, :name, :token, :kind, :line) do
     def initialize(id: nil, token: nil, kind: nil, line: nil, **rest) = super
+
+    def look? = kind == LOOK
   end
+
+  # The engine's word for a look around the room (`noticed::LOOK`).
+  LOOK = "look".freeze
 
   # ONE VERB. `targets` is the closed set, in the order the engine offers it;
   # `aims` is set only for `throw`, the one verb that names two records.

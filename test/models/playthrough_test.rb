@@ -426,7 +426,9 @@ class PlaythroughTest < ActiveSupport::TestCase
     ignored = Item::NOT_COPIED
 
     assert_equal original.attributes.except(*ignored), copy.attributes.except(*ignored)
-    assert_equal (Item::PLACES.map(&:to_s) + %w[playthrough_id template_id]).sort,
+    # `noticed_at` is one game's record of having noticed its own copy, so it is
+    # never the world's to hand down (`Item::NOT_COPIED`).
+    assert_equal (Item::PLACES.map(&:to_s) + %w[playthrough_id template_id noticed_at]).sort,
                  (ignored - %w[id created_at updated_at]).sort
     assert_nil copy.character_id
     assert_nil copy.location_id

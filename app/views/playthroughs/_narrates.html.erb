@@ -11,6 +11,13 @@
     records rendered rather than narrated, which is what this is -- with no new
     colours.
 
+    THE CARD NAMES ONLY WHAT THE GAME HAS NOTICED. The room is revealed in
+    steps (the engine's `noticed.rs`): the people, the ways out and the fixed
+    pieces on the way in, with a rolled few loose things; the rest of what is
+    in plain sight on a look, or one thing a turn spent in the room. What the
+    arrival found lists only noticed things, and `noticed` names what this turn
+    noticed for the first time, so nothing unnoticed is given away here.
+
     THE BOX keeps the player's words beside the turn and has them checked
     against its facts; the note the check leaves is shown under the paragraph
     in the log (`turns/_turn`). Nothing a player writes here is read by the
@@ -22,6 +29,9 @@
     <p class="sheet-lead"><%= card.act %></p>
     <% card.found.each do |fact| %>
       <p class="sheet-note"><%= fact %></p>
+    <% end %>
+    <% if card.noticed.any? %>
+      <p class="sheet-note">Noticed this turn: <%= card.noticed.join(", ") %>.</p>
     <% end %>
     <% (card.people + card.tolls + card.wounds).each do |fact| %>
       <p class="sheet-note"><%= fact %></p>

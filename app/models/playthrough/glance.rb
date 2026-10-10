@@ -16,20 +16,32 @@
 # separate reader of the same rows in Ruby, kept for the judges that compare
 # the two (`EngineSweep::Dump`).
 #
+# IN A GAME THE PLAYER NARRATES, THE PANELS ARE WHAT IT HAS NOTICED. The engine
+# keeps a record of what that game has noticed of each room (`items.noticed_at`,
+# `playthrough_npc_states.noticed_at`) and lists only that here: what is lying
+# here, what lies on each fixture, and every verb's targets. `examine` then
+# offers one target more, a look around the room (`Availability::Target#look?`),
+# for as long as a look would show something. A narrated game is never stamped
+# and every list in it is whole.
+#
 # It reads records only: it writes nothing, calls no model and rolls no die.
 # `Playthrough::Session#glance` is how a front end asks for it.
 class Playthrough::Glance
   Room = Data.define(:id, :name, :within)
   Exit = Data.define(:id, :name, :written, :open)
   Person = Data.define(:id, :name, :condition, :foe, :provoked)
-  # `on` is the fixture a thing lies on or in, by name, or nil.
-  Thing = Data.define(:id, :name, :on)
+  # `on` is the fixture a thing lies on or in, by name, or nil. `noticed_at` is
+  # the story time a game the player narrates noticed it, in the engine's
+  # seconds, and nil in any other game.
+  Thing = Data.define(:id, :name, :on, :noticed_at)
   # Something fixed in place: `holds` is one of `Item::HOLDS`, `state` and
-  # `searched` are nil for a fixture with no inside, and `on` is what lies on
-  # or in it, by name.
-  Fixture = Data.define(:id, :name, :holds, :state, :searched, :on)
-  # How much the room shows, and how many closed fixtures nobody has searched.
-  Counts = Data.define(:visible, :unsearched)
+  # `searched` are nil for a fixture with no inside, `on` is what lies on or in
+  # it, by name, and `noticed_at` is `Thing`'s.
+  Fixture = Data.define(:id, :name, :holds, :state, :searched, :on, :noticed_at)
+  # How much the room shows, how many closed fixtures nobody has searched, and,
+  # in a game the player narrates, how many things in plain sight it has not
+  # noticed yet -- what a look would show; 0 in any other game.
+  Counts = Data.define(:visible, :unsearched, :unnoticed)
 
   attr_reader :playthrough, :document
 

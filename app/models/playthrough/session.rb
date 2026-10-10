@@ -64,12 +64,16 @@ class Playthrough::Session
   # `act` is what the protagonist did, `found` what an arrival found, one fact
   # a line, `people` what the people there did, `tolls` what the world took,
   # `wounds` who was hit, and `ending` the story's closing words where the turn
-  # ended it. `scene` is the turn's scene, the one the paragraph is for.
-  FactsCard = Data.define(:scene, :act, :found, :people, :tolls, :wounds, :ending) do
+  # ended it. `noticed` names what the turn noticed for the first time -- on
+  # the way in, on a look, or on the time it spent in the room -- in the order
+  # it did; `found` lists only noticed things, so the card never names one the
+  # player has not noticed. `scene` is the turn's scene, the one the paragraph
+  # is for.
+  FactsCard = Data.define(:scene, :act, :found, :people, :tolls, :wounds, :ending, :noticed) do
     def self.from(document)
       new(scene: document.fetch("scene"), act: document.fetch("act"), found: document.fetch("found"),
           people: document.fetch("people"), tolls: document.fetch("tolls"), wounds: document.fetch("wounds"),
-          ending: document["ending"])
+          ending: document["ending"], noticed: document.fetch("noticed"))
     end
   end
 
@@ -105,14 +109,19 @@ class Playthrough::Session
     # the doctor's remedy for the worlds that already exist.
     return Start.new(playthrough: nil, refusal: no_protagonist_message(story)) if story.protagonist.nil?
 
-    playthrough = Playthrough.create!(
-      story: story,
-      player: player,
-      mode: mode,
-      character: story.protagonist,
-      current_location: location,
-      current_scene: opening_scene(story, location)
-    )
+    scene = opening_scene(story, location)
+    playthrough = if mode == "player_narrates"
+      started_by_the_engine(story, player: player, location: location, scene: scene)
+    else
+      Playthrough.create!(
+        story: story,
+        player: player,
+        mode: mode,
+        character: story.protagonist,
+        current_location: location,
+        current_scene: scene
+      )
+    end
 
     # THE PROTAGONIST ARRIVES NOW, and this is the only place that can say so.
     #
@@ -394,6 +403,35 @@ class Playthrough::Session
   # is nothing honest to start such a story at -- inventing a room would put
   # the player somewhere the story does not contain -- so `begin!` refuses with
   # an explanation instead.
+  # A GAME THE PLAYER NARRATES IS STARTED BY THE ENGINE (`RustEngine.start`),
+  # because walking into the opening room is the first thing such a game
+  # notices of it -- the people, the ways out, every fixed piece and a rolled
+  # few loose things (the engine's `noticed.rs`) -- and that tier is the
+  # engine's and runs at its start and nowhere else. A game this side created
+  # would open having noticed nothing, and the room would wait for a look to
+  # show even its furniture.
+  #
+  # The engine picks the room and the scene by the rules `.opening_location`
+  # and `.opening_scene` follow and copies the party and the room as
+  # `Playthrough#take_up_the_opening_snapshot` does, so the game is the one
+  # `Playthrough.create!` would have made; what is this side's is set after:
+  # the player it belongs to, a token from `has_secure_token` (the engine's
+  # own is not drawn from a secure source, and this is what binds a browser
+  # session to a game), and the scene where the story has no opening one.
+  def self.started_by_the_engine(story, player:, location:, scene:)
+    playthrough = Playthrough.find(Playthrough::RustEngine.start(story, "player_narrates"))
+    unless playthrough.current_location == location
+      raise Playthrough::RustEngine::EngineError.new(:unsupported, "the engine opened the game in " \
+                                                                   "#{playthrough.current_location&.name.inspect}, " \
+                                                                   "not #{location.name.inspect}")
+    end
+
+    playthrough.regenerate_token
+    playthrough.update!(player: player, current_scene: playthrough.current_scene || scene)
+    playthrough
+  end
+  private_class_method :started_by_the_engine
+
   def self.opening_location(story)
     story.locations.realized.order(:id).first
   end

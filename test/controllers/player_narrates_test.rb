@@ -113,6 +113,37 @@ class PlayerNarratesControllerTest < ActionDispatch::IntegrationTest
     assert_empty game.paragraphs
   end
 
+  # THE ROOM IS REVEALED IN STEPS (the engine's noticed record): the card
+  # names what the turn noticed and nothing the game has not, and a line naming
+  # a thing not yet noticed is answered with the engine's refusal where the
+  # turn would have been. The Furnished Rooms' study keeps a lump of coal in
+  # its scuttle, which no tier but a search notices.
+  test "the card names what the turn noticed, and a line naming an unnoticed thing is refused on the page" do
+    story = WorldSeed::Loader.load_file(Rails.root.join("lib/engine_sweep/worlds/the-furnished-rooms.yml"))
+    game = Playthrough::Session.begin!(story, mode: "player_narrates").playthrough
+    scene = act(game)
+    card = Playthrough::Session.new(game).facts_card(scene)
+
+    get playthrough_path(game)
+    assert_select ".facts-card", text: /lump of coal/, count: 0
+    if card.noticed.any?
+      assert_select ".facts-card .sheet-note", "Noticed this turn: #{card.noticed.join(", ")}."
+    else
+      assert_select ".facts-card .sheet-note", text: /Noticed this turn/, count: 0
+    end
+
+    perform_enqueued_jobs(only: NarrationJob) do
+      post playthrough_turns_path(game), params: { command: "take the lump of coal", request_token: "coal-1" },
+                                         as: :turbo_stream
+    end
+    assert_predicate game.items.find_by!(name: "lump of coal"), :lying?
+
+    get playthrough_path(game)
+    assert_select "p.command", "> take the lump of coal"
+    assert_select ".notice p", /You have not noticed anything here by that name\. Look around the room first/
+    assert_select ".notice p", text: /lump of coal/, count: 0
+  end
+
   private
 
   def begin_narrating = Playthrough::Session.begin!(@story, mode: "player_narrates").playthrough
