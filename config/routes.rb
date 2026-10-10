@@ -40,7 +40,15 @@ Rails.application.routes.draw do
     # NarrationJob, so there is no streaming endpoint to route to any more.
     resources :turns, only: [ :create ] do
       post :acknowledge_interruption, on: :collection
+      # LETTING THE GAME ACT, in a game the player narrates: a turn like a
+      # typed one, whose act the engine picks. See `TurnsController#act`.
+      post :act, on: :collection
     end
+
+    # HERE IS MY PARAGRAPH, in a game the player narrates: kept beside the
+    # turn the game chose and checked against its facts. See
+    # `ParagraphsController`.
+    resources :paragraphs, only: [ :create ]
 
     # THE CAPTAIN'S VERDICT ON ONE TURN, addressed by the turn rather than by a
     # row id -- there is at most one per (playthrough, scene), so recording and

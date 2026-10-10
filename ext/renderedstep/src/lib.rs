@@ -64,6 +64,7 @@ use std::ptr;
 fn init(ruby: &Ruby) -> Result<(), RubyError> {
     let module = ruby.define_module("RenderedStep")?;
     module.const_set("SCHEMA_VERSION", SCHEMA_VERSION)?;
+    module.const_set("ACT_LINE", renderedstep_engine::turn::chooser::LINE)?;
     module.define_module_function("submit", function!(submit, 5))?;
     module.define_module_function("play", function!(play, 4))?;
     module.define_module_function("glance", function!(glance, 2))?;
@@ -72,6 +73,9 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("request", function!(request, 3))?;
     module.define_module_function("read_line", function!(read_line, 4))?;
     module.define_module_function("submit_fixed", function!(submit_fixed, 6))?;
+    module.define_module_function("act", function!(act, 5))?;
+    module.define_module_function("facts_card", function!(facts_card, 3))?;
+    module.define_module_function("write_paragraph", function!(write_paragraph, 4))?;
     Ok(())
 }
 
@@ -104,12 +108,121 @@ fn submit(
                 }
             }
         };
-        submitted(&database, playthrough, &line, &token, &models, &mut deliver)
+        submitted(
+            &database,
+            playthrough,
+            Played::Line(&line),
+            &token,
+            &models,
+            &mut deliver,
+        )
     });
     if let Some(error) = raised {
         return Err(error);
     }
     Ok(answer.to_string())
+}
+
+/// `RenderedStep.act(database, playthrough_id, request_token, unwritten,
+/// models_json) { |chunk| ... }`: lets the game act in a game the player
+/// narrates (`Engine::act`) -- a submission like `submit`'s, whose line is the
+/// chooser's and whose act the engine picks. `unwritten` lets the pick walk
+/// into a room nobody has written, which only a turn with a model may do.
+/// Answers the same document `submit` does.
+fn act(
+    ruby: &Ruby,
+    database: String,
+    playthrough: i64,
+    token: String,
+    unwritten: bool,
+    models: String,
+) -> Result<String, RubyError> {
+    let block = if ruby.block_given() {
+        Some(BoxValue::new(ruby.block_proc()?))
+    } else {
+        None
+    };
+    let mut raised: Option<RubyError> = None;
+    let answer = without_gvl(|| {
+        let mut deliver = |chunk: &str| {
+            if raised.is_some() {
+                return;
+            }
+            if let Some(block) = &block {
+                if let Err(error) = with_gvl(|| call_block(block, chunk)) {
+                    raised = Some(error);
+                }
+            }
+        };
+        submitted(
+            &database,
+            playthrough,
+            Played::Act { unwritten },
+            &token,
+            &models,
+            &mut deliver,
+        )
+    });
+    if let Some(error) = raised {
+        return Err(error);
+    }
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.facts_card(database, playthrough_id, scene_id)`: what the
+/// player writes a chosen turn's paragraph from (`Engine::facts_card`), as
+/// `{"card": {...}}`, with `null` for a scene the game did not choose. Reads
+/// only.
+fn facts_card(database: String, playthrough: i64, scene: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.facts_card(playthrough, scene) {
+            Ok(card) => json!({ "card": card.map(|card| json!({
+                "scene": card.scene,
+                "act": card.act,
+                "found": card.found,
+                "people": card.people,
+                "tolls": card.tolls,
+                "wounds": card.wounds,
+                "ending": card.ending,
+            })) }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.write_paragraph(database, playthrough_id, scene_id, text)`:
+/// keeps the player's paragraph for a scene the game chose
+/// (`Engine::write_paragraph`), as `{"paragraph": id}`. A second write for
+/// the same scene replaces the words and clears the audit.
+fn write_paragraph(
+    database: String,
+    playthrough: i64,
+    scene: i64,
+    text: String,
+) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let mut engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.write_paragraph(playthrough, scene, &text) {
+            Ok(paragraph) => json!({ "paragraph": paragraph }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// What a submission plays: the line it carries, or the act the game picks.
+#[derive(Clone, Copy)]
+enum Played<'a> {
+    Line(&'a str),
+    Act { unwritten: bool },
 }
 
 /// `RenderedStep.play(database, playthrough_id, line, decision)`: one line
@@ -165,7 +278,7 @@ fn scaffold() -> String {
 fn submitted(
     database: &str,
     playthrough: i64,
-    line: &str,
+    played: Played,
     token: &str,
     models: &str,
     deliver: &mut dyn FnMut(&str),
@@ -192,19 +305,53 @@ fn submitted(
                 None => return glue_error("replay is a list of replies"),
             };
             let mut replay = Replay::new(replies);
-            let played =
-                engine.submit_stopping(playthrough, line, token, &mut replay, deliver, stop_after);
+            let result = play_one(
+                &mut engine,
+                playthrough,
+                played,
+                token,
+                &mut replay,
+                deliver,
+                stop_after,
+            );
             let replayed = json!({
                 "calls": replay.calls(),
                 "unfinished": replay.finish().err(),
             });
-            answered(played, Some(replayed))
+            answered(result, Some(replayed))
         }
         None => {
             let mut live = live(&config);
-            let played =
-                engine.submit_stopping(playthrough, line, token, &mut live, deliver, stop_after);
-            answered(played, None)
+            let result = play_one(
+                &mut engine,
+                playthrough,
+                played,
+                token,
+                &mut live,
+                deliver,
+                stop_after,
+            );
+            answered(result, None)
+        }
+    }
+}
+
+/// One submission, played as `played` says.
+fn play_one(
+    engine: &mut Engine,
+    playthrough: i64,
+    played: Played,
+    token: &str,
+    models: &mut dyn Models,
+    deliver: &mut dyn FnMut(&str),
+    stop_after: Option<&str>,
+) -> Result<engine::Submitted, engine::Error> {
+    match played {
+        Played::Line(line) => {
+            engine.submit_stopping(playthrough, line, token, models, deliver, stop_after)
+        }
+        Played::Act { unwritten } => {
+            engine.act_stopping(playthrough, token, unwritten, models, deliver, stop_after)
         }
     }
 }
@@ -867,6 +1014,8 @@ fn failed(error: &engine::Error) -> Value {
         Interrupted => ("interrupted", None),
         PreviouslyFailed => ("previously_failed", None),
         Stopped(_) => ("stopped", None),
+        WrongMode { .. } => ("wrong_mode", None),
+        NotChosen { .. } => ("not_chosen", None),
     };
     json!({ "error": { "kind": kind, "failure": failure, "message": error.to_string() } })
 }
@@ -976,6 +1125,8 @@ fn glance_json(glance: &Glance) -> Value {
                 .collect::<Map<_, _>>()),
         },
         "state": state_json(&glance.state),
+        "mode": glance.mode.as_str(),
+        "waiting": glance.waiting,
     })
 }
 

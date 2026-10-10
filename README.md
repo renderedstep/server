@@ -137,6 +137,17 @@ see only a 500. `ta` also needs a player token from `rake players:invite[name]`
 below, stored once with `ta login`; `rake players:reissue[name]` prints a
 replacement for a lost one, to store the same way. An explicit `PORT` still wins over `--ta`.
 
+Each Play button offers two ways to tell the game, kept on the game for good
+(`Playthrough::MODES`). **You type, the narrator writes** is the game as it has
+always been, and is chosen unless you choose otherwise. **The game acts, you
+write** turns it round: a "Let the game act" button stands where the box was,
+the engine picks the protagonist's act with one die and tells it in its own
+words, and a card of what happened sits over a box for your paragraph. Your
+paragraph is kept beside the turn (`Playthrough::Paragraph`), checked against
+the turn's facts by `Story::Audit`'s own checks and shown with what they found,
+and never read by the game: no prompt and no rule sees it. On a world whose
+rooms are written, that mode asks no model at all.
+
 Why two: **a turn is a `NarrationJob`, not a request.** The browser posts the
 command, gets an acknowledgement back immediately (a fresh submission token;
 `play.js` echoes the typed line itself), and reads the prose as Turbo

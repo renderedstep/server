@@ -1,4 +1,4 @@
-<%# locals: (turn:, playthrough: nil, verdicts: {}) %>
+<%# locals: (turn:, playthrough: nil, verdicts: {}, paragraphs: {}) %>
 <%# ONE TURN OF THE LOG, IN ONE WRAPPER.
 
     `.entry` exists so a turn's prose and the machinery panel beside it are one
@@ -25,6 +25,25 @@
       <p class="speaking">talking to <%= speakers.to_sentence %></p>
     <% end %>
     <div class="turn"><%= turn.description %></div>
+    <%# WHAT THE PLAYER WROTE FOR THIS TURN, in a game they narrate: their
+        paragraph under the engine's account of the turn, both kept, and the
+        note the check left on it (`Playthrough::Paragraph#notes`). The note is
+        the app talking, so it is a `.notice`; it never says the paragraph was
+        refused, because it never is. %>
+    <% if (paragraph = paragraphs[turn.id]) %>
+      <div class="turn" id="<%= dom_id(paragraph) %>"><%= paragraph.text %></div>
+      <% notes = paragraph.notes %>
+      <% if notes&.any? %>
+        <div class="notice">
+          <p>Checked against what the game records for this turn:</p>
+          <% notes.each do |note| %>
+            <p><%= note.headline %><% if note.evidence.present? %> &mdash; <q><%= note.evidence %></q><% end %></p>
+          <% end %>
+        </div>
+      <% elsif notes %>
+        <div class="notice"><p>Checked against what the game records for this turn: nothing contradicts it.</p></div>
+      <% end %>
+    <% end %>
     <%# A renderer may omit a crossing injury even after receiving its facts.
         These notices tell the player what the engine recorded, independently
         of the prose. The opening Scene can be shared, so filter by game even

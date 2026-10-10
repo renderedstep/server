@@ -44,6 +44,13 @@ module Playthrough::RustEngine
 
   ENGINES = %i[rust ruby].freeze
 
+  # THE LINE A SUBMISSION CARRIES WHEN THE PLAYER LETS THE GAME ACT, in a game
+  # the player narrates: the engine's own (`chooser::LINE`, which the extension
+  # answers as `RenderedStep::ACT_LINE`), copied here so a page can be drawn
+  # without the extension loaded. In any other game it is a typed line like any
+  # other.
+  ACT_LINE = "(the game acts)"
+
   # A turn the engine could not play, in its own words. `kind` is the engine's
   # name for the error (`unsupported`, `database`, ...), or `not_built` and
   # `transaction_open` for the two this side finds before asking it.
@@ -143,6 +150,62 @@ module Playthrough::RustEngine
     answer
   ensure
     # The engine wrote on another connection: nothing this one cached is true.
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
+  # LETTING THE GAME ACT, in a game the player narrates: the submission under
+  # `request_token` (its line `ACT_LINE`), played by the engine, which picks
+  # the protagonist's act with one die and tells it in its own words. No
+  # narrator is asked. Answers the engine's document, as `.submit` does.
+  #
+  # A ROOM NOBODY HAS WRITTEN IS WRITTEN BY A MODEL, so the pick may walk into
+  # one only when this install has a model to ask (`.model_configured?`) or a
+  # replay stands in for one. Without either, the engine is handed no model at
+  # all rather than the environment's, so a game on a written world plays
+  # keyless -- an offline walk included, whose guard stands in front of the
+  # live document.
+  def self.act(playthrough, request_token, &block)
+    replay = replay_document
+    unwritten = replay ? replay.fetch(:unwritten, false) : model_configured?
+    document = replay || (unwritten ? models : NO_MODELS)
+    answer = JSON.parse(extension.act(database, playthrough.id, request_token, unwritten, document.to_json, &block))
+    replayed!(answer["replay"]) if answer.key?("replay")
+    stood!(playthrough)
+    answer
+  ensure
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
+  # The models document of a turn that may ask no model.
+  NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
+
+  # WHAT THE PLAYER WRITES A CHOSEN TURN'S PARAGRAPH FROM, as the engine reads
+  # it off the records (`Engine::facts_card`): the act, what the arrival found,
+  # what the people there did, the tolls, the wounds and the closing words, as
+  # one parsed hash -- or nil for a scene the game did not choose. Reads only.
+  def self.facts_card(playthrough, scene)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.facts_card(file, playthrough.id, scene.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["card"]
+  end
+
+  # KEEPS THE PLAYER'S PARAGRAPH for a scene the game chose
+  # (`Engine::write_paragraph`), on the engine's own connection, and answers
+  # the row's id. A second paragraph for the scene replaces the first and
+  # clears its audit. A scene the game did not choose, or a game told another
+  # way, is refused in the engine's words (`not_chosen`, `wrong_mode`).
+  def self.write_paragraph(playthrough, scene, text)
+    unplayable = self.unplayable
+    raise unplayable if unplayable
+
+    answer = JSON.parse(extension.write_paragraph(database, playthrough.id, scene.id, text))
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["paragraph"]
+  ensure
     ActiveRecord::Base.connection.clear_query_cache
   end
 
@@ -247,11 +310,13 @@ module Playthrough::RustEngine
 
   # THE SWEEP'S PROVIDERS, for a browser step that plays on Rust: each call is
   # answered with the next of `replies` (the step's own), and `stop_after`
-  # stops the turn after that journal step. The engine's answer to what was
-  # asked is read back with `.replayed` once the block has run.
-  def self.replaying(replies, stop_after: nil)
+  # stops the turn after that journal step. `unwritten` lets a game the player
+  # narrates walk into an unwritten room, written by those replies (`.act`).
+  # The engine's answer to what was asked is read back with `.replayed` once
+  # the block has run.
+  def self.replaying(replies, stop_after: nil, unwritten: false)
     previous = Thread.current[:rust_engine_replay]
-    Thread.current[:rust_engine_replay] = { replay: replies, stop_after: stop_after }.compact
+    Thread.current[:rust_engine_replay] = { replay: replies, stop_after: stop_after, unwritten: unwritten || nil }.compact
     Thread.current[:rust_engine_replayed] = nil
     yield
   ensure

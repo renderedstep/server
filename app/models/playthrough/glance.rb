@@ -62,6 +62,15 @@ class Playthrough::Glance
 
   def over? = document["over"]
 
+  # HOW THE GAME IS TOLD (`Playthrough::MODES`), as the engine reads it.
+  def mode = document["mode"]
+
+  # THE TURN WAITING FOR THE PLAYER'S PARAGRAPH, in a game the player narrates:
+  # the id of the scene the latest turn the game chose was answered with, until
+  # a paragraph is written for it; nil otherwise. Letting the game act again is
+  # not blocked by it.
+  def waiting = document["waiting"]
+
   # WHY THE GAME STOPPED, in the words the play page and the refusal use, or nil
   # for a game still being played.
   def ended = document["ended"]

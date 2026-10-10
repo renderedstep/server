@@ -63,8 +63,13 @@
           <% end %>
         </p>
       <% else %>
-        <%= form_with url: playthroughs_path do |form| %>
+        <%# HOW THE GAME IS TOLD, chosen here and kept on the game for good
+            (`Playthrough::MODES`). Narrated is checked: it is the game as it
+            has always been, and the other way round is the secondary mode. %>
+        <%= form_with url: playthroughs_path, class: "play-mode" do |form| %>
           <%= form.hidden_field :story_id, value: story.id %>
+          <label><%= form.radio_button :mode, "narrated", checked: true %> you type, the narrator writes</label>
+          <label><%= form.radio_button :mode, "player_narrates" %> the game acts, you write</label>
           <%= form.submit "Play" %>
         <% end %>
       <% end %>

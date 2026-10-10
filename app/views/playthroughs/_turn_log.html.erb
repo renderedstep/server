@@ -54,9 +54,12 @@
       partial pay for it once -- and empty when the instrument is off, so a game
       nobody is evaluating pays nothing for it. %>
   <% verdicts = Playthrough::Debug.enabled? ? playthrough.feedback_by_scene : {} %>
+  <%# WHAT THE PLAYER WROTE, in a game they narrate: one query for the whole
+      log, as the verdicts are, and empty in every other game. %>
+  <% paragraphs = playthrough.player_narrates? ? playthrough.paragraphs.index_by(&:scene_id) : {} %>
   <div class="<%= class_names("log", streaming: command) %>">
     <%= render partial: "turns/turn", collection: playthrough.turn_log, as: :turn,
-               locals: { playthrough: playthrough, verdicts: verdicts } %>
+               locals: { playthrough: playthrough, verdicts: verdicts, paragraphs: paragraphs } %>
   </div>
 
   <%# A turn that failed -- a model that would not answer, a schema it ignored,
@@ -160,6 +163,15 @@
       The same `.notice` as the safety notice and the refusal above, and for the
       same reason: this is the app talking rather than the world. It is NOT an
       alert -- nothing went wrong, the game finished. %>
+  <%# THE TURN WAITING FOR THE PLAYER'S PARAGRAPH, in a game they narrate:
+      the facts it is written from and the box it is written in, at the foot of
+      the log where the turn is. Before the end notice on purpose -- the turn
+      that ended the story still waits for its paragraph -- and never while a
+      turn is in flight. %>
+  <% if command.nil? && playthrough.player_narrates? %>
+    <%= render "playthroughs/narrates", playthrough: playthrough %>
+  <% end %>
+
   <% if playthrough.over? %>
     <% ended = Playthrough::EndNotice.for(playthrough) %>
     <div class="notice">
@@ -186,6 +198,7 @@
           way a playthrough is created and this is not a second one. %>
       <%= form_with url: playthroughs_path do |form| %>
         <%= form.hidden_field :story_id, value: playthrough.story_id %>
+        <%= form.hidden_field :mode, value: playthrough.mode %>
         <%= form.submit "Start a new playthrough" %>
       <% end %>
     </div>
@@ -287,6 +300,19 @@
         was accepted and claims nothing about what happens next. %>
     <p class="command" data-play-target="receipt" hidden></p>
 
+    <%# IN A GAME THE PLAYER NARRATES THE GAME PICKS THE ACT, so there is no box
+        to type one in: one button, which is a turn like a typed one
+        (`TurnsController#act`), and the paragraph box above it. The hidden
+        line is the engine's own, there so the receipt echoes what was sent. %>
+    <% if playthrough.player_narrates? %>
+      <div class="sheet-actions">
+        <%= form_with url: act_playthrough_turns_path(playthrough) do |form| %>
+          <%= render "turns/request_token", token: SecureRandom.uuid %>
+          <%= hidden_field_tag :command, Playthrough::RustEngine::ACT_LINE, id: nil %>
+          <%= form.submit "Let the game act" %>
+        <% end %>
+      </div>
+    <% else %>
     <div class="ask" data-controller="slash"
          data-slash-menu-value="<%= Playthrough::SlashMenu.new(playthrough).to_json %>">
       <%= form_with url: playthrough_turns_path(playthrough) do |form| %>
@@ -308,5 +334,6 @@
       <% end %>
       <ul class="slash-menu" id="slash_menu" role="listbox" aria-label="commands" data-slash-target="menu" hidden></ul>
     </div>
+    <% end %>
   <% end %>
 </div>

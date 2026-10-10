@@ -20,6 +20,10 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     assert_operator ActiveRecord::Base.connection_pool.migration_context.current_version.to_s, :>=, RenderedStep::SCHEMA_VERSION
   end
 
+  test "the line that lets the game act is the engine's own" do
+    assert_equal RenderedStep::ACT_LINE, Playthrough::RustEngine::ACT_LINE
+  end
+
   test "every failure is an answer, never an exception or a panic" do
     missing = JSON.parse(RenderedStep.submit("/nonexistent/game.sqlite3", 1, "/look", "t", "{}"))
     assert_equal "database", missing.dig("error", "kind")
@@ -28,6 +32,9 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     assert_equal "panicked", garbled.dig("error", "kind")
 
     assert_equal "database", JSON.parse(RenderedStep.play("/nonexistent/game.sqlite3", 1, "/look", nil)).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.act("/nonexistent/game.sqlite3", 1, "t", false, "{}")).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.facts_card("/nonexistent/game.sqlite3", 1, 1)).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.write_paragraph("/nonexistent/game.sqlite3", 1, 1, "x")).dig("error", "kind")
   end
 
   test "a script walked on the Rust engine passes every gate" do

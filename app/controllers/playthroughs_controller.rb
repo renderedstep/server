@@ -5,9 +5,12 @@ class PlaythroughsController < ApplicationController
   end
 
   # Starting a game is `Playthrough::Session.begin!`; this binds the cookie to
-  # it, or sends the player back with the sentence that says why not.
+  # it, or sends the player back with the sentence that says why not. The mode
+  # is the player's choice at Play, and a value that is not one of
+  # `Playthrough::MODES` -- or none, as every older form sends -- is narrated.
   def create
-    start = Playthrough::Session.begin!(Story.find(params[:story_id]))
+    mode = params[:mode].presence_in(Playthrough::MODES) || "narrated"
+    start = Playthrough::Session.begin!(Story.find(params[:story_id]), mode: mode)
     unless start.started?
       redirect_to root_path, alert: start.refusal
       return

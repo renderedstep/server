@@ -151,6 +151,10 @@ module Roll
   # somewhere, and the realization bench re-loads a world per repetition. A kind
   # of its own is what keeps a room's furniture from being its population's die.
   KIT = 13
+  # 14 IS THE RUST ENGINE'S TOO: the act the game picks for the protagonist of
+  # a game the player narrates (`playthroughs.mode`), rolled nowhere in this
+  # app. Named so no die of this app's is ever given the number.
+  CHOICE = 14
 
   # THE SEED, FROM FIVE INTEGERS AND NOTHING ELSE. Public because it is the part
   # worth asserting on its own: `RollTest` pins that the same inputs give the

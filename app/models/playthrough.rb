@@ -97,6 +97,11 @@ class Playthrough < ApplicationRecord
   # builds a choice or applies one.
   has_many :volitions, class_name: "Playthrough::Volition::Record", dependent: :destroy,
                        inverse_of: :playthrough
+  # WHAT THE PLAYER WROTE, in a game they narrate: one paragraph per turn the
+  # game chose. Destroyed with the playthrough, as the player's own words in
+  # this game and nobody else's; see `Playthrough::Paragraph`.
+  has_many :paragraphs, class_name: "Playthrough::Paragraph", dependent: :destroy,
+                        inverse_of: :playthrough
 
   # THE WORLD, COPIED INTO THIS GAME AS IT BEGINS: the story's starting
   # inventory into the party's own hands, and the room the player opens in.
@@ -118,7 +123,17 @@ class Playthrough < ApplicationRecord
   # playthrough, so it has to be unguessable.
   has_secure_token :token, length: 32, on: :initialize
 
+  # HOW THE GAME IS TOLD, chosen at Play and kept for good. `narrated` is the
+  # game as it has always been: the player types each act and the narrator
+  # writes what happened. `player_narrates` is the other way round: the game
+  # picks each act (the Rust engine's chooser, one die), tells it in the
+  # engine's own words, and the player writes the paragraph
+  # (`Playthrough::Paragraph`). A closed set, and the engine's own
+  # (`playthrough::Mode`): a value it does not know it plays as narrated.
+  MODES = %w[narrated player_narrates].freeze
+
   validates :token, presence: true, uniqueness: true
+  validates :mode, inclusion: { in: MODES }
   validate :character_belongs_to_story
   validate :current_location_belongs_to_story
   validate :current_scene_belongs_to_story
@@ -364,6 +379,9 @@ class Playthrough < ApplicationRecord
   # a `#end!` by a mechanic that has not been written yet. `rake game:doctor`
   # reports a disagreement rather than either half repairing the other silently.
   def over? = ended_at.present?
+
+  # The game picks the acts and the player writes the paragraphs; see `MODES`.
+  def player_narrates? = mode == "player_narrates"
 
   # THE END, WRITTEN ONCE. `Playthrough::Turn#harm!` is the only caller, and it
   # calls it in the same statement that takes the last hit point.
