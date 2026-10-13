@@ -2338,9 +2338,9 @@ DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake ruby_llm:load_mo
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake eval:estimate
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 EVAL_LIVE=1 \
   EVAL_BUDGET_FILE=tmp/arrival/budget.json SET=my-arrival bundle exec rake eval:arrival
-bundle exec rake eval:arrival_score SET=arrival-body-after-2026-10-02
-bundle exec rake eval:arrival_board SET=arrival-body-after-2026-10-02
-bundle exec rake eval:arrival_compare BEFORE=arrival-body-after-2026-10-02 AFTER=my-arrival
+bundle exec rake eval:arrival_score SET=arrival-diff-after-2026-10-13
+bundle exec rake eval:arrival_board SET=arrival-diff-after-2026-10-13
+bundle exec rake eval:arrival_compare BEFORE=arrival-diff-after-2026-10-13 AFTER=my-arrival
 bundle exec rake eval:arrival_digest
 ```
 
@@ -2381,7 +2381,26 @@ carries "killed by Iri Calder about 1 hour ago". `arrival-body-before-2026-10-02
 and `arrival-body-after-2026-10-02` are the same corpus either side of that
 clause, every figure noise; no reading on either side names a killer or
 invents another cause, so the clause measured harmless rather than helpful
-here. The after set is `Eval::Arrival::BASELINE`.
+here.
+
+**What changed since the player was last here** is three returning cases. A
+`left` case stages the completed move that walked out of the room with the
+record the engine keeps of what the game saw there (its `revisit`):
+`returning_unchanged` finds nothing changed, and `returning_changed` finds the
+key in Maren's hands and the lamp and Tobin it saw gone. `returning` keeps no
+record, which is the branch every game that left a room before the record existed
+takes. `arrival-diff-before-2026-10-13` and `arrival-diff-after-2026-10-13` are
+that corpus either side of the text that hands the arrival writer the change
+list, or tells it the game kept none. Every lexical figure is noise, and the
+ten other cases send the same bytes on both sides. No check counts an invented
+change, so the twelve returning paragraphs a side were read by hand. Before,
+all twelve claim a change no record holds (the water has risen), and all four
+`returning_changed` readings keep the key on the desk. After, one of twelve
+does (the water at the stair has risen, in one `returning_changed` reading),
+and all four `returning_changed` readings tell all three changes. The after
+set is `Eval::Arrival::BASELINE`. A return moves the main prompt corpus's
+designated `move` case too, so `prompt-2026-10-13-arrival-diff` replaced
+`prompt-2026-09-28-reactions` as the main prompt baseline.
 
 **The room reacting to the arrival** is its own corpus on the same bench,
 `CORPUS=reactions` on `eval:arrival` and `eval:arrival_digest`

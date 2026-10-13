@@ -19,7 +19,7 @@ module EngineVectors::KeptRequests
           "The output is the request as the set stores it -- {system, user, schema, history}, schema a " \
           "to_json_schema output or null and history the replayed conversation -- and the export stops " \
           "if today's builders do not reproduce the stored bytes. `arrival` is every case of the arrival " \
-          "set, `reactions` one case of the set where the people in the room react to the arrival, with the ids " \
+          "set but the returns whose departure the game recorded, `reactions` one case of the set where the people in the room react to the arrival, with the ids " \
           "of the rows they wrote (`reactions`) that the request tells, and `realization` every branch case " \
           "of the realization bench's current baseline.".freeze
 
@@ -39,9 +39,13 @@ module EngineVectors::KeptRequests
     arrival + reactions + realization
   end
 
+  # Every arrival case but a return whose departure the game recorded
+  # (`left`): what changed since is the engine's `revisit`, which
+  # `Scene::Generator` keeps no record for, so it has no second builder to
+  # hold to the engine's bytes; the engine's own tests pin that text.
   def self.arrival
     stored = JSON.parse(Eval.kept_root.join(ARRIVAL, Eval::Arrival::RESULTS).read).fetch("rows")
-    Eval::Arrival.cases.map do |kase|
+    Eval::Arrival.cases.reject { |kase| kase["left"] }.map do |kase|
       row = stored.find { |one| one.fetch("id") == kase.fetch("id") && one.fetch("rep") == 1 }
       EngineVectors::Records.frozen do
         Eval::Arrival::Stage.open(kase) do |stage|

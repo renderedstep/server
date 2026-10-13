@@ -10,6 +10,8 @@
     {"id":"floor_and_carried", "why":"Floor ledger and already-carried brass key are distinct copies.", "state":"inventory", "facts":["key","floor"]},
     {"id":"no_exits", "why":"Destination has no outgoing edges: fallback wording.", "state":"no_exits", "facts":[]},
     {"id":"pending_toll", "why":"An untold directed crossing toll reaches Moment#one_toll.", "state":"toll", "facts":["toll"]},
-    {"id":"killed_resident", "why":"A resident this game killed an hour before the party walks in: the dead line names who struck the blow.", "state":"killed", "facts":["body"]}
+    {"id":"killed_resident", "why":"A resident this game killed an hour before the party walks in: the dead line names who struck the blow.", "state":"killed", "facts":["body"]},
+    {"id":"returning_unchanged", "why":"A return whose departure this game recorded, with nothing it saw changed since.", "state":"returning", "left":"unchanged", "facts":[]},
+    {"id":"returning_changed", "why":"A return whose departure this game recorded: the key is in Maren's hands, and the lamp and Tobin it saw are gone.", "state":"returning", "left":"changed", "facts":[]}
   ]
 }

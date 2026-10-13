@@ -12,7 +12,7 @@ require "test_helper"
 # never paid for a call. The one exception is the cost row, which reads the
 # `models` registry and degrades to `unpriced` rather than failing.
 class Eval::Prompt::KeptSetTest < ActiveSupport::TestCase
-  BASELINE = "prompt-2026-09-28-reactions".freeze
+  BASELINE = "prompt-2026-10-13-arrival-diff".freeze
 
   ARM = "mistralai/mistral-medium-3.1".freeze
 
@@ -24,7 +24,7 @@ class Eval::Prompt::KeptSetTest < ActiveSupport::TestCase
     assert_equal [ ARM ], result.answered_by, "answered_by is the check on arms, and the pinning has to have held"
     assert_equal Eval::Noise::MIN_RUNS, result.reps, "four is Eval::Noise::MIN_RUNS -- fewer cannot be given a verdict"
     assert_equal Eval::Prompt.corpus.size, result.corpus_size
-    assert_match(/\A2026-09-/, result.recorded_at.to_s, "the date belongs in the file, not the filename")
+    assert_match(/\A2026-10-/, result.recorded_at.to_s, "the date belongs in the file, not the filename")
     assert result.prompt_stable, "one case sending two prompts would make every figure in it suspect"
   end
 

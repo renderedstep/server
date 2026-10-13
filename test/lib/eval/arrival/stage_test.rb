@@ -19,9 +19,17 @@ class Eval::Arrival::StageTest < ActiveSupport::TestCase
               others = stage.generator.characters_present - [ stage.player ]
               kase["id"] == "opening_empty" ? assert_empty(others) : assert_predicate(others, :any?)
             end
-            if kase["id"] == "returning"
+            if kase["state"] == "returning"
               assert_includes prompt, "They were last here about 2 hours ago"
               assert stage.room.scenes.exists?
+            end
+            if kase["id"] == "returning"
+              assert_includes prompt, "The game kept no record of what was here when they left"
+              refute_includes prompt, "## Since You Were Last Here"
+            end
+            assert_includes prompt, "Nothing the player saw has changed." if kase["id"] == "returning_unchanged"
+            if kase["id"] == "returning_changed"
+              assert_includes prompt, "- Maren Vosk has the brass key now.\n- The oil lamp is gone.\n- Tobin Dunn is no longer here.\n"
             end
             assert_includes prompt, "None written yet." if kase["id"] == "no_exits"
             assert_includes prompt, "Maren Vosk is badly hurt" if kase["id"] == "wounded_resident"

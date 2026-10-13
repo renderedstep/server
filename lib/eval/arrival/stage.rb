@@ -61,6 +61,7 @@ class Eval::Arrival::Stage
     @game = Playthrough.create!(id: -920001, story: story, character: player, current_location: origin, current_scene: previous)
     Item.create!(name: "brass key", description: "A brass key.", location: room, properties: "{}")
     Playthrough::Snapshot.new(game).of_the_room!(room)
+    leave! if kase["left"]
     prepare_state!(edge)
     @generator = Scene::Generator.new(room, previous_scene: previous, playthrough: game)
   end
@@ -97,6 +98,30 @@ class Eval::Arrival::Stage
         hazard: kase["state"] == "toll" ? "undertow" : "flooded", damage: 3, hp_after: 15, saved: false,
         story_timestamp: generator_time, sequence: -1)
     end
+  end
+
+  # A RETURN THIS GAME KEPT A RECORD OF LEAVING: the completed move that walked
+  # out to the market keeps, in its journal's `left` step, what the game saw
+  # here as it went (the engine's `revisit::Seen`), which the engine compares
+  # with the room now and tells the arrival writer. "unchanged" saw the brass
+  # key on the floor, Maren and the way out, all still as they were.
+  # "changed" also saw an oil lamp and Tobin Dunn, whose rows are gone now,
+  # and Maren has picked up the key since: "Maren Vosk has the brass key
+  # now.", "The oil lamp is gone.", "Tobin Dunn is no longer here."
+  def leave!
+    key = game.items.find_by!(name: "brass key")
+    things = [ { "id" => key.id, "name" => key.name, "within" => nil, "how" => nil } ]
+    people = [ { "id" => resident.id, "name" => resident.fullname, "dead" => false } ]
+    if kase["left"] == "changed"
+      things << { "id" => -920010, "name" => "oil lamp", "within" => nil, "how" => nil }
+      people << { "id" => 920003, "name" => "Tobin Dunn", "dead" => false }
+      key.update!(location: nil, character: resident)
+    end
+    seen = { "room" => room.id, "at" => (story.start_time + 30.minutes).to_i, "things" => things, "people" => people,
+             "ways_out" => [ { "room" => origin.id, "name" => origin.name } ] }
+    game.commands.create!(command: "go Market", request_token: "arrival-bench-left", status: "completed",
+      result_scene: @previous, journal: { "version" => 1, "steps" => { "left" => seen.to_json,
+                                                                       "moved" => { "record" => "Scene", "id" => @previous.id } } })
   end
 
   def generator_time = story.start_time + 2.hours + 1.minute
