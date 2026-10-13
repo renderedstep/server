@@ -1123,6 +1123,21 @@ fit, that the engine would refuse rather than narrate, or that would buy a secon
 model call. What it cannot check is whether a case is worth measuring — that is
 the hand-verification, and every case carries a `why`.
 
+**A look at a plain thing** hands the narrator the thing's own description as a
+fact, says where it is now, and says the look moved nothing. Before that it got
+only the name, and invented the rest. Seven `examine` cases look at the ward
+stamp or the copy-room apron, and only their requests moved.
+`prompt-2026-10-13-arrival-diff` and `prompt-2026-10-13-examine-plain` are the
+main corpus either side of the change. Every check reads noise. No check counts
+an invented look, so the 28 paragraphs a side were read by hand. Before, all
+eight stamp readings that mention the ink call it dry, where the description
+says it is still wet, and no apron reading says it was folded without light.
+After, all sixteen stamp readings keep the ink wet, and all twelve apron
+readings tell that it was folded in the dark or by touch. One regression is
+known: three of four `examine-apron-carried` readings unfold the carried apron
+though the look moved nothing.
+`prompt-2026-10-13-examine-plain` is the main prompt baseline.
+
 ### What it measures
 
 Eight of the twelve `Story::Scoreboard` checks run, over the passage that came
