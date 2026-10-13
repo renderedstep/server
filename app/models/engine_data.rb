@@ -103,7 +103,8 @@ module EngineData
     "playthrough/volition/weights" => { "shapes" => [ String ], "base" => Integer, "table" => map(map(Integer)) },
     "quest/generator" => { "system_prompt" => String },
     "scene/ending" => { "instructions" => String },
-    "scene/generator" => { "system_prompt" => String, "arrival_returning" => String, "arrival_first" => String },
+    "scene/generator" => { "system_prompt" => String, "arrival_returning" => String, "arrival_returning_unrecorded" => String,
+                          "arrival_first" => String },
     "scene/narrator" => { "instructions" => String, "doing" => map(String) },
     "story/generator" => { "system_prompt" => String },
     "universe/generator" => { "system_prompt" => String, "societal_prompt" => String }

@@ -54,7 +54,7 @@ use renderedstep_engine::room::{Record, Room};
 use renderedstep_engine::store::SCHEMA_VERSION;
 use renderedstep_engine::turn::room_of;
 use renderedstep_engine::turn::{Fixed, Report, Turned};
-use renderedstep_engine::{cascade, classifier, dialogue, memory, narration, volition};
+use renderedstep_engine::{cascade, classifier, dialogue, memory, narration, revisit, volition};
 use serde_json::{json, Map, Value};
 use std::ffi::c_void;
 use std::panic::{self, AssertUnwindSafe};
@@ -676,6 +676,12 @@ fn built(kind: &str, records: &Records, args: &Value) -> Result<Value, String> {
                 .as_array()
                 .map(|rows| rows.iter().filter_map(Value::as_i64).collect())
                 .unwrap_or_default();
+            // What has changed since the game last left the room, as a move
+            // into it finds it before anybody there reacts; none where the
+            // game kept no record of leaving it.
+            let since = game
+                .as_ref()
+                .and_then(|game| revisit::since(game, location));
             Arrival {
                 records,
                 location,
@@ -683,6 +689,7 @@ fn built(kind: &str, records: &Records, args: &Value) -> Result<Value, String> {
                 game,
                 opening: args["opening"].as_bool().unwrap_or(false),
                 reactions: &reactions,
+                since: since.as_ref(),
             }
             .request()
         }

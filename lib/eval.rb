@@ -110,6 +110,8 @@ module Eval
     db/eval/arrival-first-visit-2026-09-28/arrival.json
     db/eval/arrival-body-before-2026-10-02/arrival.json
     db/eval/arrival-body-after-2026-10-02/arrival.json
+    db/eval/arrival-diff-before-2026-10-13/arrival.json
+    db/eval/arrival-diff-after-2026-10-13/arrival.json
     db/eval/arrival-reactions-2026-09-28/arrival.json
     db/eval/arrival-reactions-2026-09-28/README.md
     db/eval/adversarial-20260909/arrival-before.json
@@ -142,6 +144,9 @@ module Eval
     db/eval/prompt-2026-09-28-reactions/prompt.json
     db/eval/prompt-2026-09-28-reactions/receipts.json
     db/eval/prompt-2026-09-28-reactions/README.md
+    db/eval/prompt-2026-10-13-arrival-diff/prompt.json
+    db/eval/prompt-2026-10-13-arrival-diff/receipts.json
+    db/eval/prompt-2026-10-13-arrival-diff/README.md
     lib/eval/prompt/speech.rb
     lib/eval/prompt/speech/stage.rb
     lib/eval/prompt/speech/bench.rb

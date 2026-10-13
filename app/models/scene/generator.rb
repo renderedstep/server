@@ -362,11 +362,16 @@ class Scene::Generator
   # arrival bench's `first_thing_opener` reading from 22 to 14 of 36, a real
   # difference with every other reading noise (`db/eval/arrival-first-visit-2026-09-28`
   # against `arrival-branches`). The opener still occurs; it is no longer invited.
+  #
+  # A return is told to claim no change. The engine keeps what a game saw of a
+  # room when it left it, and tells its own arrival writer what has changed
+  # since (its `revisit`, the `arrival_returning` text); this generator keeps
+  # no such record, so its return is the engine's return with none.
   def arrival_instructions(returning, elapsed)
     texts = EngineData.fetch("scene/generator")
     return texts.fetch("arrival_first") unless returning
 
-    format(texts.fetch("arrival_returning"), elapsed: distance_of_time_in_words(elapsed))
+    format(texts.fetch("arrival_returning_unrecorded"), elapsed: distance_of_time_in_words(elapsed))
   end
 
   # Name, nickname and race -- the same ~15-token line `Character::Generator`
