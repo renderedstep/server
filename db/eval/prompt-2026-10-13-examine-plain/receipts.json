@@ -1,0 +1,7 @@
+{
+  "source": "OpenRouter key usage read immediately before and after the run (the key is shared, so this is an upper bound; it also takes in a 7-call trial whose spend reached the usage reading only during this run)",
+  "usage_before_usd": 30.43220247,
+  "usage_after_usd": 30.63666219,
+  "calls_including_warmups": 361,
+  "accounted_usd": 0.2015
+}

@@ -147,6 +147,9 @@ module Eval
     db/eval/prompt-2026-10-13-arrival-diff/prompt.json
     db/eval/prompt-2026-10-13-arrival-diff/receipts.json
     db/eval/prompt-2026-10-13-arrival-diff/README.md
+    db/eval/prompt-2026-10-13-examine-plain/prompt.json
+    db/eval/prompt-2026-10-13-examine-plain/receipts.json
+    db/eval/prompt-2026-10-13-examine-plain/README.md
     lib/eval/prompt/speech.rb
     lib/eval/prompt/speech/stage.rb
     lib/eval/prompt/speech/bench.rb
