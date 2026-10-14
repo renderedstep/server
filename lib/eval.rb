@@ -112,6 +112,8 @@ module Eval
     db/eval/arrival-body-after-2026-10-02/arrival.json
     db/eval/arrival-diff-before-2026-10-13/arrival.json
     db/eval/arrival-diff-after-2026-10-13/arrival.json
+    db/eval/arrival-fixed-before-2026-10-13/arrival.json
+    db/eval/arrival-fixed-after-2026-10-13/arrival.json
     db/eval/arrival-reactions-2026-09-28/arrival.json
     db/eval/arrival-reactions-2026-09-28/README.md
     db/eval/adversarial-20260909/arrival-before.json
