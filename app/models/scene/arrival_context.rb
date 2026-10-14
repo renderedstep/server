@@ -56,7 +56,12 @@ class Scene::ArrivalContext
       "#{person.fullname} is #{condition.in_words}." if condition && !condition.unhurt?
     end)
     parts << "Dead here: #{dead_names}. They cannot speak or act." if dead.any?
-    parts << "Lying here: #{item_names(floor)}."
+    # A fixed piece is not a thing lying here: it is told on a line of its
+    # own, as the narrator is told it, only when the room has one. The
+    # engine's `Arrival::facts`.
+    fixed, loose = floor.partition(&:fixture?)
+    parts << "Fixed here, and not takeable: #{item_names(fixed)}." if fixed.any?
+    parts << "Lying here: #{item_names(loose)}."
     parts << "You are carrying: #{item_names(carried)}."
     parts.concat(tolls.map(&:fact))
     parts

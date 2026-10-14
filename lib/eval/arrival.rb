@@ -10,11 +10,11 @@ module Eval::Arrival
   CORPUS = Rails.root.join("test/fixtures/files/arrival_corpus.json")
   STUDY = Rails.root.join("db/eval/adversarial-20260909")
   RESULTS = "arrival.json".freeze
-  # The set bought after a return was told what changed since the game last
-  # left the room (2026-10-13), judged against `arrival-diff-before-2026-10-13`
-  # on the same corpus; `arrival-body-after-2026-10-02` and the sets before it
-  # are kept as history.
-  BASELINE = Rails.root.join("db/eval/arrival-diff-after-2026-10-13")
+  # The set bought after the arrival writer was told a room's fixed pieces
+  # apart from what lies in it (2026-10-13), judged against
+  # `arrival-fixed-before-2026-10-13` on the same corpus;
+  # `arrival-diff-after-2026-10-13` and the sets before it are kept as history.
+  BASELINE = Rails.root.join("db/eval/arrival-fixed-after-2026-10-13")
 
   def self.cases = JSON.parse(CORPUS.read).fetch("cases")
   def self.stage = Stage

@@ -97,6 +97,21 @@ class Eval::Arrival::Stage
         location_connection: kase["state"] == "toll" ? edge : nil,
         hazard: kase["state"] == "toll" ? "undertow" : "flooded", damage: 3, hp_after: 15, saved: false,
         story_timestamp: generator_time, sequence: -1)
+    when "furnished"
+      # The desk the description puts the key on, as a fixed piece of the
+      # room: the arrival writer is told it apart from what lies loose.
+      desk = Item.create!(playthrough: game, location: room, name: "desk", description: "A clerk's desk.", properties: "{}",
+        tier: Item::FIXTURE, holds: "top", bulk: "immovable")
+      game.items.find_by!(name: "brass key").update!(within: desk, how: "on")
+    when "furnished_study"
+      # Fixed pieces the description never mentions and a model might well
+      # write as loose: a coal scuttle could be a bucket somebody carries.
+      Item.create!(playthrough: game, location: room, name: "windowsill", description: "A deep stone windowsill.", properties: "{}",
+        tier: Item::FIXTURE, holds: "top", bulk: "immovable")
+      scuttle = Item.create!(playthrough: game, location: room, name: "coal scuttle", description: "An iron coal scuttle by the hearth.",
+        properties: "{}", tier: Item::FIXTURE, holds: "hollow", bulk: "immovable")
+      Item.create!(playthrough: game, location: room, name: "lump of coal", description: "A lump of coal.", properties: "{}",
+        within: scuttle, how: "in")
     end
   end
 

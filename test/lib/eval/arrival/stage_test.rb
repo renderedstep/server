@@ -32,6 +32,13 @@ class Eval::Arrival::StageTest < ActiveSupport::TestCase
               assert_includes prompt, "- Maren Vosk has the brass key now.\n- The oil lamp is gone.\n- Tobin Dunn is no longer here.\n"
             end
             assert_includes prompt, "None written yet." if kase["id"] == "no_exits"
+            if kase["id"] == "furnished"
+              assert_includes prompt, "Fixed here, and not takeable: desk.\nLying here: brass key.\n"
+            elsif kase["id"] == "furnished_study"
+              assert_includes prompt, "Fixed here, and not takeable: windowsill, coal scuttle.\nLying here: brass key, lump of coal.\n"
+            else
+              refute_includes prompt, "Fixed here"
+            end
             assert_includes prompt, "Maren Vosk is badly hurt" if kase["id"] == "wounded_resident"
             assert_includes prompt, "You are carrying: brass key." if %w[carried_key floor_and_carried].include?(kase["id"])
             assert_includes prompt, "Dead here: Maren Vosk." if kase["id"] == "dead_resident"

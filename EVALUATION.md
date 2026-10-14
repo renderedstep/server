@@ -2343,7 +2343,7 @@ meaning, plausibility or world fit is built here.
 
 `eval:arrival` stages destination records and buys one `Scene::Generator` call
 per case. `test/fixtures/files/arrival_corpus.json` names the study cases and
-opening, returning, wound, inventory, no-exit and pending-toll branches. Openings
+opening, returning, wound, inventory, no-exit, pending-toll and fixed-piece branches. Openings
 have a protagonist and seeded population; an empty opening has no other people.
 `Eval::Arrival::Stage` explains why this is a sibling of the ordinary turn bench.
 
@@ -2353,9 +2353,9 @@ DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake ruby_llm:load_mo
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 bundle exec rake eval:estimate
 DATABASE_URL=sqlite3:tmp/arrival/bench.sqlite3 EVAL_LIVE=1 \
   EVAL_BUDGET_FILE=tmp/arrival/budget.json SET=my-arrival bundle exec rake eval:arrival
-bundle exec rake eval:arrival_score SET=arrival-diff-after-2026-10-13
-bundle exec rake eval:arrival_board SET=arrival-diff-after-2026-10-13
-bundle exec rake eval:arrival_compare BEFORE=arrival-diff-after-2026-10-13 AFTER=my-arrival
+bundle exec rake eval:arrival_score SET=arrival-fixed-after-2026-10-13
+bundle exec rake eval:arrival_board SET=arrival-fixed-after-2026-10-13
+bundle exec rake eval:arrival_compare BEFORE=arrival-fixed-after-2026-10-13 AFTER=my-arrival
 bundle exec rake eval:arrival_digest
 ```
 
@@ -2412,10 +2412,24 @@ change, so the twelve returning paragraphs a side were read by hand. Before,
 all twelve claim a change no record holds (the water has risen), and all four
 `returning_changed` readings keep the key on the desk. After, one of twelve
 does (the water at the stair has risen, in one `returning_changed` reading),
-and all four `returning_changed` readings tell all three changes. The after
-set is `Eval::Arrival::BASELINE`. A return moves the main prompt corpus's
+and all four `returning_changed` readings tell all three changes. A return moves the main prompt corpus's
 designated `move` case too, so `prompt-2026-10-13-arrival-diff` replaced
 `prompt-2026-09-28-reactions` as the main prompt baseline.
+
+**A room's fixed pieces** are two furnished cases. `furnished` fixes the
+counting house's desk in place with the key on it. `furnished_study` fixes a
+windowsill and a coal scuttle the description never names, with a lump of
+coal in the scuttle. `arrival-fixed-before-2026-10-13` and
+`arrival-fixed-after-2026-10-13` are that corpus either side of the text that
+tells fixed pieces on a "Fixed here, and not takeable" line of their own,
+rather than under "Lying here". Every lexical figure is noise, and the other
+cases send the same bytes on both sides. No check counts a fixed piece
+written as loose, so the furnished paragraphs were read by hand: none does,
+on either side. The writer did not name the windowsill or the scuttle at
+all, and put the key on the desk even where the records have it loose. It
+writes from the description and the people present, not from the list, so
+the change was shipped because the request is now true, not because it
+measured better. The after set is `Eval::Arrival::BASELINE`.
 
 **The room reacting to the arrival** is its own corpus on the same bench,
 `CORPUS=reactions` on `eval:arrival` and `eval:arrival_digest`
