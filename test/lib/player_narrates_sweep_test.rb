@@ -209,7 +209,9 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
     assert before.subset?(noticed), "#{where}: nothing noticed is ever forgotten"
     assert (glance.lying_here + glance.fixtures).all?(&:noticed_at), "#{where}: the panels list only noticed things"
     assert glance.carrying.all?(&:noticed_at), "#{where}: what the player carries is always noticed"
-    assert_predicate stamped.where(how: "in").where.not(within_id: nil), :none?, "#{where}: nothing concealed is noticed"
+    searched = Item.of_playthrough(game).where.not(searched_at: nil).select(:id)
+    assert_predicate stamped.where(how: "in").where.not(within_id: nil).where.not(within_id: searched), :none?,
+                     "#{where}: nothing concealed is noticed but what a search found"
     in_sight = game.items_lying_in(room).where(noticed_at: nil).reject { |item| item.within_id && item.how == "in" }
     assert_equal in_sight.size, glance.counts.unnoticed, "#{where}: the count of what a look would show"
     look = glance.verb(:examine).targets.find(&:look?)
