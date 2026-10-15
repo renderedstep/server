@@ -399,6 +399,18 @@ class SystemOneAgentTest < ActiveSupport::TestCase
     assert_equal SystemOneReceipt::ESTIMATED, SystemOneReceipt.sole.cost_source
   end
 
+  test "a receipt keeps how long its request took, answered or failed" do
+    slow = ->(outcome) { ->(_) { sleep 0.03; outcome.call } }
+    ask({ "intent" => CHOICE, "here" => NOUL }, transport: slow.call(-> { body({ "intent" => CHOICE, "here" => NOUL }) }))
+    assert_raises(SystemOneAgent::Unavailable) do
+      ask({}, transport: slow.call(-> { raise SystemOneAgent::Unavailable, "timed out" }))
+    end
+
+    latencies = SystemOneReceipt.order(:id).pluck(:latency_ms)
+    assert_equal 2, latencies.size
+    assert latencies.all? { |ms| ms >= 30 }, "both the answered and the failed request keep their wait: #{latencies.inspect}"
+  end
+
   test "a request refused before sending writes no receipt" do
     assert_raises(SystemOneAgent::Unavailable) do
       SystemOneAgent.new(transport: ->(_) { body({}) }).ask_questions(state: {}, questions: QUESTIONS)

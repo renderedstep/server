@@ -151,7 +151,13 @@ class SystemOneAgent
     # THE RECEIPT IS WRITTEN BEFORE THE REQUEST GOES, because a request that
     # fails after it was sent may still have been billed. See SystemOneReceipt.
     receipt = SystemOneReceipt.record!(purpose: @purpose, transport: transport_name)
-    Answers.new(parse(transport.call(body)), questions).tap { |answers| receipt.reported!(answers.usage) }
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    begin
+      payload = transport.call(body)
+    ensure
+      receipt.took!(((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round)
+    end
+    Answers.new(parse(payload), questions).tap { |answers| receipt.reported!(answers.usage) }
   end
 
   private
