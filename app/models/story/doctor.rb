@@ -1109,6 +1109,8 @@ class Story::Doctor
     findings.concat(items_with_an_unknown_bulk(items))
     findings.concat(fixtures_not_fixed(items))
     findings.concat(things_on_no_fixture(items))
+    findings.concat(insides_held_unsearched(items))
+    findings.concat(pieces_searched_and_never_drawn(items))
     findings.concat(rooms_over_the_visible_cap(items))
 
     if names > Item::Registry::MAX_PER_STORY
@@ -1459,6 +1461,58 @@ class Story::Doctor
               "#{item.name.inspect} -- #{item.whereabouts} -- #{problem}, so nothing in its room is what it lies " \
               "on or in",
               :manual, subject: item)
+    end
+  end
+
+  # A GAME HOLDING WHAT LIES INSIDE A PIECE IT HAS NOT SEARCHED. A game copies
+  # what is inside a closed piece only when it searches the piece, and stamps
+  # its copy of the piece `searched_at` in the same turn (the engine's
+  # `turn/search.rs`; `Item::Snapshot` and `Mechanics::snapshot_room` leave it
+  # out until then), so a copy lying `in` an unsearched closed copy is one
+  # that game was never shown and can still name, take and list. The usual
+  # source is a game that walked into a room before searching existed, when
+  # the snapshot copied a closed piece's inside with the rest of the room.
+  # `manual`: stamping the piece would say the player searched it, and
+  # removing the copy would take back something the player may already know
+  # is there.
+  def insides_held_unsearched(items)
+    by_id = items.index_by(&:id)
+    items.filter_map do |item|
+      next unless item.instance? && item.how == "in" && item.within_id
+
+      piece = by_id[item.within_id]
+      next unless piece&.holds == "closed" && piece.searched_at.nil?
+
+      finding(:inside_held_unsearched, :warning,
+              "playthrough ##{item.playthrough_id} holds #{item.name.inspect} inside #{piece.name.inspect} " \
+              "(#{piece.whereabouts}), and that game has never searched it; a game copies what lies inside a " \
+              "closed piece when it searches the piece, so this one can name and take a thing it was never shown",
+              :manual, subject: item)
+    end
+  end
+
+  # A PIECE A GAME HAS SEARCHED WHOSE INSIDE THE WORLD NEVER RECORDS DRAWING.
+  # The first search of a closed piece in any game draws what lies inside it
+  # (`Roll::CONTENTS`) into the world and stamps the world's piece
+  # `searched_at`, in the same turn, so it is drawn once for every game. A
+  # world's piece with no stamp beneath a game's searched copy, or beneath
+  # rows a draw wrote (`kit_key` `<piece>/inside/<name>`), is one the next
+  # search may draw again -- and a second game would then find something
+  # other than what the first found. `manual`: which draw is the world's is
+  # not on record.
+  def pieces_searched_and_never_drawn(items)
+    by_id = items.index_by(&:id)
+    drawn = items.select { |item| item.template? && item.kit_key.to_s.include?("/inside/") }.map(&:within_id)
+    searched = items.select { |item| item.instance? && item.holds == "closed" && item.searched_at }.map(&:template_id)
+    (drawn + searched).compact.uniq.filter_map do |id|
+      piece = by_id[id]
+      next if piece.nil? || piece.holds != "closed" || piece.searched_at
+
+      finding(:piece_searched_and_never_drawn, :warning,
+              "the world's #{piece.name.inspect} (#{piece.whereabouts}) has been searched, and the world does not " \
+              "record its inside as drawn; the next search may draw it again, and that game would find something " \
+              "other than what the first found",
+              :manual, subject: piece)
     end
   end
 

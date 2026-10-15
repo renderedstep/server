@@ -427,8 +427,9 @@ class PlaythroughTest < ActiveSupport::TestCase
 
     assert_equal original.attributes.except(*ignored), copy.attributes.except(*ignored)
     # `noticed_at` is one game's record of having noticed its own copy, so it is
-    # never the world's to hand down (`Item::NOT_COPIED`).
-    assert_equal (Item::PLACES.map(&:to_s) + %w[playthrough_id template_id noticed_at]).sort,
+    # never the world's to hand down (`Item::NOT_COPIED`); `searched_at` is one
+    # game's record of having searched its own copy of a piece.
+    assert_equal (Item::PLACES.map(&:to_s) + %w[playthrough_id template_id noticed_at searched_at]).sort,
                  (ignored - %w[id created_at updated_at]).sort
     assert_nil copy.character_id
     assert_nil copy.location_id

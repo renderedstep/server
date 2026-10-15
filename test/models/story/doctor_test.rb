@@ -541,6 +541,46 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_match(/names "lamp", which is not a fixture/, finding(story, :thing_on_no_fixture).message)
   end
 
+  # WHAT LIES INSIDE A CLOSED PIECE is a game's only once it searches it: a
+  # world's desk, its drawn inside, and one game's copies of both.
+  def a_searched_desk(story, searched:)
+    room = story.locations.first
+    desk = create(:item, :fixture, location: room, searched_at: Time.current)
+    create(:item, :lying, location: room, name: "letter", within: desk, how: "in", kit_key: "desk/inside/letter")
+    played = create(:playthrough, story: story, character: story.protagonist, current_location: room)
+    copy = create(:item, :fixture, location: room, playthrough: played, template: desk,
+                                   searched_at: (Time.current if searched))
+    create(:item, :lying, location: room, playthrough: played, name: "letter", within: copy, how: "in",
+                          template: desk.resting.sole)
+    desk
+  end
+
+  test "a game holding what it found in a piece it searched is healthy" do
+    story = healthy_story
+    a_searched_desk(story, searched: true)
+
+    assert_empty codes(story) & %i[inside_held_unsearched piece_searched_and_never_drawn thing_on_no_fixture]
+  end
+
+  test "reports a game holding what lies inside a piece it has not searched" do
+    story = healthy_story
+    a_searched_desk(story, searched: false)
+
+    found = finding(story, :inside_held_unsearched)
+    assert_match(/holds "letter" inside "desk"/, found.message)
+    assert_equal :manual, found.remedy
+  end
+
+  test "reports a world piece a game searched that never recorded its inside drawn" do
+    story = healthy_story
+    desk = a_searched_desk(story, searched: true)
+    desk.update_columns(searched_at: nil)
+
+    found = finding(story, :piece_searched_and_never_drawn)
+    assert_equal desk, found.subject
+    assert_match(/may draw it again/, found.message)
+  end
+
   test "reports a room showing more than one room may show" do
     story = healthy_story
     room = story.locations.first

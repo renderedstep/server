@@ -179,6 +179,23 @@ class Item::SnapshotTest < ActiveSupport::TestCase
     assert_equal desk, stamp.reload.within, "the world's own row still lies on the world's desk"
   end
 
+  # WHAT LIES INSIDE A CLOSED PIECE waits for this game's search, which copies
+  # it (the engine's `turn/search.rs`); what lies on it, and in a hollow one,
+  # is in plain view and comes along. And the world's stamp that its inside was
+  # drawn stays on the world's desk: this game has not searched its own.
+  test "what lies inside a closed piece is not copied until the game searches it" do
+    desk = create(:item, :fixture, location: @office, searched_at: Time.current)
+    create(:item, :lying, location: @office, name: "ward stamp", within: desk, how: "on")
+    create(:item, :lying, location: @office, name: "letter", within: desk, how: "in")
+    scuttle = create(:item, :fixture, :hollow, location: @office, name: "coal scuttle")
+    create(:item, :lying, location: @office, name: "lump of coal", within: scuttle, how: "in")
+
+    copies = playing.items_lying_in(@office)
+
+    assert_equal [ "coal scuttle", "desk", "lump of coal", "ward stamp" ], copies.map(&:name).sort
+    assert_nil copies.find_by(name: "desk").searched_at
+  end
+
   test "the fixtures are copied first, whatever order the rows were written in" do
     shelf = create(:item, :fixture, :top, location: @office, name: "shelf")
     jar = create(:item, :lying, location: @office, name: "jar", within: shelf, how: "on")

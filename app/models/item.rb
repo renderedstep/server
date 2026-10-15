@@ -225,8 +225,10 @@ class Item < ApplicationRecord
   HOLDS = %w[nothing top hollow closed].freeze
 
   # HOW A THING LIES ON THE FIXTURE IT NAMES, and which fixtures take which:
-  # `on` a top (a `top` or a `closed` fixture), `in` a `hollow` one.
-  HOWS = { "on" => %w[top closed], "in" => %w[hollow] }.freeze
+  # `on` a top (a `top` or a `closed` fixture), `in` a `hollow` one or a
+  # `closed` one -- inside it, where nobody sees it until it is searched
+  # (`Item.shut_in`).
+  HOWS = { "on" => %w[top closed], "in" => %w[hollow closed] }.freeze
 
   belongs_to :character, optional: true
   belongs_to :location, optional: true
@@ -330,6 +332,8 @@ class Item < ApplicationRecord
   # FIXED IN PLACE, or not. `portable` is every row written before the column.
   scope :fixtures, -> { where(tier: FIXTURE) }
   scope :portable, -> { where(tier: PORTABLE) }
+  # INSIDE A CLOSED PIECE, where a game sees nothing until it searches it.
+  scope :shut_in, -> { where(how: "in", within_id: Item.where(holds: "closed").select(:id)) }
 
   # WHAT THE CAPS COUNT: the room writer's own things and the world file's,
   # never a fixture and never a row a kit wrote. `Item::Registry::MAX_PER_ROOM`
@@ -514,7 +518,12 @@ class Item < ApplicationRecord
   # record of having noticed its own copy (a game the player narrates; the
   # engine's `noticed.rs` writes it), so a world's row never carries one and a
   # copy never inherits one -- a fresh copy is a thing this game has not seen.
-  NOT_COPIED = (PLACES.map(&:to_s) + %w[id playthrough_id template_id noticed_at created_at updated_at]).freeze
+  #
+  # `searched_at` IS ON IT FOR THE SAME REASON, though a world's row does carry
+  # one: on the world's piece it says what lies inside has been drawn, and on a
+  # game's copy that this game has searched it. A new game finds the piece
+  # unsearched whoever drew its inside.
+  NOT_COPIED = (PLACES.map(&:to_s) + %w[id playthrough_id template_id noticed_at searched_at created_at updated_at]).freeze
 
   private
 

@@ -452,6 +452,17 @@ class Playthrough::GrammarTest < ActiveSupport::TestCase
     assert_predicate read("/throw the daybook at Rowe"), :resolved?
   end
 
+  # A FIXED PIECE'S INSIDE is the engine's to play (renderedstep/engine
+  # `turn/search.rs`): the table names the words, and this Ruby reader, which
+  # plays no search, still reads an `open` that names a way out as the move it
+  # always was.
+  test "search, rummage and open are the engine's words for a piece's inside" do
+    assert_equal({ "search" => :search, "rummage" => :search, "open" => :open },
+                 Playthrough::Grammar::VERBS.slice("search", "rummage", "open"))
+    assert grammar.claims?("/search the desk")
+    assert_equal :move, EngineSweep.without_a_model { grammar.parse("open the supply closet") }.intent&.action
+  end
+
   # The menu offers six words, and every one of them is a word the grammar
   # reads -- so the box cannot complete to something the engine will not answer.
   test "the six offered verbs are all in the grammar's own table" do

@@ -407,7 +407,7 @@ class Item::LayerBackfill
       held << answer.template.id if answer.attributed? && answer.playthrough&.id == playthrough.id && answer.template
     end
 
-    owed = rooms.flat_map { |room| Item.lying_in(room).templates.to_a } +
+    owed = rooms.flat_map { |room| Item.lying_in(room).templates.where.not(id: Item.shut_in).to_a } +
            (story.protagonist ? Item.for_character(story.protagonist).templates.to_a : [])
 
     owed.uniq.reject { |template| held.include?(template.id) } + restored_for(playthrough, rooms, answers)
