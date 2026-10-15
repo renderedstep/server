@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_180000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -775,6 +775,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.string "purpose"
     t.string "transport"
     t.datetime "updated_at", null: false
+    t.string "cost_source", default: "estimated", null: false
     t.index ["player_id", "created_at"], name: "index_system_one_receipts_on_player_id_and_created_at"
     t.index ["player_id"], name: "index_system_one_receipts_on_player_id"
     t.index ["playthrough_id"], name: "index_system_one_receipts_on_playthrough_id"
