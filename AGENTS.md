@@ -12,6 +12,9 @@ deliberately holds no counts, no measured numbers and no enumeration presented a
 complete, because those go stale silently and a reader cannot tell. Where you
 need a number, the constant is named here and the number is read from it.
 
+**Verify current code yourself before making or documenting a claim; task notes
+are not evidence.**
+
 There is no status file and no roadmap in this repo: the code is the record of
 what is built, and the task queue is managed outside this repository.
 
