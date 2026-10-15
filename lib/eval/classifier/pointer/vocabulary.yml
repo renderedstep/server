@@ -1,0 +1,85 @@
+# THE WORDS A GENERATED ROOM IS BUILT FROM, read by
+# `Eval::Classifier::Pointer::Worlds` (which writes the rooms) and by
+# `script/pointer_classifier/templates.py` (which writes the lines typed in
+# them, and names things that are NOT in the room).
+#
+# NONE OF THESE NAMES COMES FROM THE THREE SEEDED WORLDS the classifier corpus
+# is staged in, deliberately: the corpus is the yardstick, and a model trained
+# on its own rooms' names would be measured on what it memorised. That covers
+# the common nouns their things are named with, not only proper names --
+# `Eval::Classifier::PointerTest` checks both against those three seed files.
+---
+first_names: [Adela, Agnes, Alder, Amos, Anselm, Ardith, Arlo, Basil, Beatrix, Benedek, Bertram, Brann, Briony,
+  Calla, Caspar, Cedric, Celandine, Clement, Corin, Dacre, Dagny, Dorran, Edda, Edric, Elsbeth, Emeric, Enid,
+  Esmond, Faye, Fennick, Fenwick, Florian, Galen, Garrick, Gisela, Godric, Greer, Gwenna, Hale, Hester, Hollis,
+  Ida, Ilse, Ines, Isolde, Ivo, Jago, Jory, Juniper, Kaspar, Kestrel, Kit, Lark, Leopold, Linnea, Lorcan,
+  Lucan, Madoc, Maren, Marlow, Mattias, Mirela, Morwen, Nell, Nico, Noll, Oda, Orrin, Osric, Ottilie, Pell,
+  Petra, Piers, Quill, Ramona, Reyna, Rhosyn, Roderick, Rosalind, Rufus, Sabine, Saoirse, Sef, Sigrid, Silas,
+  Solenne, Sorrel, Tamar, Tansy, Teodor, Thea, Tobin, Ulla, Ursel, Valen, Vesna, Wend, Wilmot, Wren, Ysolde,
+  Zora, Abel, Bram, Cora, Dov, Elm, Fritha, Gus, Hob, Iver, Jem, Kaz, Lou, Mab, Ned, Opal, Pim, Rue, Tib]
+
+surnames: [Ashdown, Bellweather, Blackwood, Brackett, Bramley, Carrow, Cassidy, Coldridge, Crane, Dunmore,
+  Easterby, Fairlie, Farrow, Fenmore, Gallowglass, Garnett, Gorse, Greaves, Hadley, Harrowgate, Hawthorne,
+  Hesketh, Holloway, Ingram, Kettle, Kincaid, Lacey, Larch, Lockwood, Marchbank, Merriman, Millward, Morrow,
+  Nettleship, Norcross, Oakes, Orme, Padgett, Pennock, Quarles, Ravensworth, Redfern, Rookby, Salter,
+  Scrope, Shard, Sallow, Stannard, Stoke, Tallis, Thackeray, Thorne, Tolliver, Trask, Underhill, Vane, Varga,
+  Wexley, Whitlock, Winter, Wolstan, Yarrow, Zell, Abernathy, Birch, Corran, Drummond, Elphick, Fosse, Gale,
+  Hearne, Iles, Juxon, Kemble, Lisle, Maddox, Nairn, Ostrander, Pryce, Quint, Ruddock, Sorley, Tenby, Urquhart]
+
+# What a person may be called besides their full name: the role is written
+# lower-case after "the", as a player would say it.
+roles: [clerk, porter, warden, ferryman, cook, smith, tanner, chandler, scribe, apothecary, lamplighter, gaoler,
+  sexton, harbourmaster, cartographer, miller, weaver, brewer, glazier, bookbinder, quartermaster, sergeant,
+  captain, abbess, steward, innkeeper, fishwife, tinker, surveyor, magistrate, physician, mason, carter,
+  rope-maker, night watchman, archivist, beekeeper, falconer, cooper, courier, pilot, engineer, medic, guard]
+
+titles: [Master, Mistress, Sister, Brother, Old, Young, Doctor, Captain, Sergeant, Father, Mother, Auntie, Uncle]
+
+place_heads: [Hall, Gallery, Corridor, Stair, Landing, Cellar, Loft, Yard, Alley, Wharf, Quay, Dock,
+  Mill, Kiln Room, Workshop, Forge, Chapel, Crypt, Library, Reading Room, Archive, Counting House,
+  Pantry, Scullery, Kitchen, Larder, Stable, Barn, Granary, Orchard, Garden, Greenhouse, Tower, Belfry,
+  Gatehouse, Guardroom, Armoury, Barracks, Infirmary, Dormitory, Bathhouse, Laundry, Boathouse,
+  Lighthouse, Watchtower, Market, Square, Bridge, Tunnel, Cistern, Sluice, Pump Room, Engine Room,
+  Boiler Room, Signal Box, Platform, Ticket Hall, Waiting Room, Parlour, Study, Bedchamber, Attic, Garret,
+  Terrace, Balcony, Cloister, Refectory, Records Room, Map Room, Chart House, Observatory, Glasshouse,
+  Ropewalk, Tannery, Dyeworks, Brewhouse, Smokehouse, Icehouse, Saltpan, Quarry, Mine Gallery, Shaft Head]
+
+place_adjectives: [Narrow, Low, High, Upper, Lower, North, South, East, West, Old, New, Grey, Green,
+  Red, Black, White, Sunken, Drowned, Broken, Silent, Burnt, Bright, Cold, Little, Great, Back, Front,
+  Middle, Outer, Inner, Hidden, Crooked, Leaning, Echoing, Dusty, Flooded, Frozen]
+
+place_proper: [Saltmere, Hollin, Varrow, Calder, Wyke, Brennock, Ostry, Fallowmere, Kestle, Dunhallow, Marrick,
+  Thornby, Penhallow, Ashgrove, Lowick, Stannet, Ebbridge, Corve, Harnwick, Isca, Morrowfield, Quellin,
+  Redmarsh, Silverdale, Tarn, Upwey, Veldt, Whitstane, Yarrowby, Zennor]
+
+item_adjectives: [brass, iron, copper, tin, silver, wooden, oak, ash, bone, horn, leather, linen, wool, canvas,
+  glass, clay, stone, paper, waxed, oiled, rusted, cracked, chipped, dented, bent, polished, painted, carved,
+  stamped, sealed, folded, torn, stained, scorched, damp, heavy, small, large, old, new, worn, tarnished,
+  faded, red, blue, green, black, white, grey, yellow, battered, spare, broken, empty, half-full, numbered]
+
+item_nouns: [ledger, logbook, almanac, map, chart, letter, envelope, parcel, satchel, purse, wallet,
+  coin, token, badge, medal, ring, locket, brooch, comb, mirror, lantern, candle, candlestick, lamp,
+  whistle, compass, sextant, spyglass, telescope, pocket watch, clock, hourglass, quill, inkpot, seal,
+  ruler, scissors, needle, thimble, spool, chain, hook, nail, hammer, chisel, saw, trowel, spade,
+  bucket, basket, crate, box, chest, jar, bottle, flask, cup, mug, bowl, plate, spoon, knife, fork, kettle,
+  pot, pan, ladle, tray, blanket, cloak, coat, scarf, glove, boot, hat, shawl, sack, net, oar, paddle,
+  rod, staff, cane, umbrella, fan, kite, drum, flute, fiddle, dice, deck of cards, chess piece, doll, puppet,
+  ticket, pass, warrant, receipt, invoice, deed, will, petition, ballot, notice, poster, handbill, pamphlet,
+  newspaper, photograph, portrait, sketch, ribbon, feather, shell, pebble, tooth, skull, horseshoe, bridle,
+  saddle, wrench, spanner, gauge, valve, lever arm, crank, gear, spring, fuse, battery, wire, tube, funnel]
+
+# Things named in a possessive or with a number, the way generated rooms name
+# them ("Wexley's ledger", "dock 4 manifest").
+item_specials: [manifest, register, roll, roster, docket, dossier, casebook, inventory]
+
+foods: [bread roll, heel of bread, wedge of cheese, apple, pear, plum, onion, turnip, meat pie, pasty, oatcake,
+  ship's biscuit, strip of jerky, smoked eel, salted herring, boiled egg, honeycomb, fig cake, raisin bun,
+  bowl of porridge]
+drinks: [flask of water, bottle of cider, skin of wine, jug of milk, mug of tea, tin of broth, flask of brandy]
+healing: [bandage roll, vial of tincture, poultice, jar of salve, bottle of tonic, packet of willow bark]
+keys: [key, latchkey, door key, gate key, iron key, brass key, cellar key, tower key]
+lockpicks: [bent wire, hairpin, lockpick, picklock, length of wire]
+levers: [crowbar, pry bar, iron bar, jemmy, tyre lever]
+firestarters: [tinderbox, box of matches, flint and steel, lighter, oil lamp]
+combustibles: [bundle of straw, stack of letters, old newspaper, oily rag, wad of paper, dry kindling,
+  bundle of rushes, sheaf of notes]

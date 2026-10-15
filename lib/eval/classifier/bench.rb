@@ -391,7 +391,17 @@ class Eval::Classifier::Bench
 
   # Whether this arm's lines may reach the cascade. True for an ambient
   # `cascade: true` bench and for any arm that pinned a System One transport.
-  def cascade_for?(arm) = @cascade || arm.pins_system_one_transport?
+  # A pointer arm IS a System One reader, so its lines always go through the
+  # cascade; see `Eval::Classifier::Pointer`.
+  def cascade_for?(arm) = @cascade || arm.pins_system_one_transport? || arm.pointer?
+
+  # The pointer model's process for this arm, started on first use and closed
+  # when the run ends. One per arm, so fp32 and int8 never share a process.
+  def pointer_for(arm)
+    @pointers ||= {}
+    @pointers[arm.id] ||= Eval::Classifier::Pointer.new(directory: arm.model, precision: arm.precision,
+                                                         threads: (ENV["POINTER_THREADS"].presence || 1).to_i)
+  end
 
   # Which `system_one:` value `#read` passes. `false` pins the reader off;
   # `nil` is ambient preference; a `SystemOneAgent` is a pinned transport.
@@ -452,7 +462,9 @@ class Eval::Classifier::Bench
       request_identity: request_identity,
                                  arms: arms.map(&:id), reps: reps, passes: passes, warmups: warmups,
                                  concurrency: concurrency,
-                                 cascade: @cascade || arms.any?(&:pins_system_one_transport?))
+                                 cascade: @cascade || arms.any? { |arm| arm.pins_system_one_transport? || arm.pointer? })
+  ensure
+    @pointers&.each_value(&:close)
   end
 
   private
@@ -548,7 +560,8 @@ class Eval::Classifier::Bench
   # WHETHER SYSTEM ONE IS ASKED FIRST ON THIS ARM: never unless its cascade is
   # on; then always for an arm that pinned a transport, and otherwise where the
   # environment has a credential, exactly as a live turn decides.
-  def system_one?(arm) = cascade_for?(arm) && (arm.pins_system_one_transport? || SystemOneAgent.configured?)
+  def system_one?(arm) = cascade_for?(arm) &&
+                         (arm.pins_system_one_transport? || arm.pointer? || SystemOneAgent.configured?)
 
   # THE TWO CALLS OF ONE LINE, answered through one arm. A System One call goes
   # through the arm's `SystemOneAgent` (`#system_one_for`), and a failure of
@@ -569,10 +582,12 @@ class Eval::Classifier::Bench
     end
 
     def call(request)
+      return pointer(request) if @arm.pointer?
+
       request["kind"] == "system_one" ? questions(request) : classifier(request)
     end
 
-    def answered_by = @agent&.current_model&.dig(:model)
+    def answered_by = @arm.pointer? ? @arm.model : @agent&.current_model&.dig(:model)
 
     # THE PROVIDER'S OWN JSON for the call just made. `#recorded_chat` is the
     # non-building reader on purpose -- looking for a conversation must not
@@ -591,6 +606,30 @@ class Eval::Classifier::Bench
     end
 
     private
+
+    # BOTH CALLS OF A POINTER ARM'S LINE, and neither leaves this machine. The
+    # System One request is answered by the local model; a classifier call --
+    # which the engine makes only when it escalated, or when the local answer
+    # was unusable -- is answered from that same local answer, read as the
+    # engine reads it with escalation off (`Pointer.escalated_reading`). No
+    # chat model is asked, so a run needs no key and spends nothing.
+    def pointer(request)
+      @transport = "pointer"
+      if request["kind"] == "system_one"
+        @state = request.fetch("state")
+        @body = @bench.pointer_for(@arm).answer(@state, request.fetch("questions"))
+      elsif @body
+        { "content" => Eval::Classifier::Pointer.escalated_reading(@state, @body, request["user"]),
+          "model" => @arm.model }
+      else
+        raise Eval::Classifier::Pointer::Unavailable, "the classifier was asked before the pointer model answered"
+      end
+    rescue Eval::Classifier::Pointer::Unavailable => e
+      return { "unavailable" => "#{e.class}: #{e.message}" } if request["kind"] == "system_one"
+
+      @failure = e
+      { "failure" => { "kind" => "provider", "message" => "#{e.class}: #{e.message}" } }
+    end
 
     def questions(request)
       agent = @bench.system_one_for(@arm) || SystemOneAgent.new(purpose: "classifier")

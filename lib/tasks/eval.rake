@@ -148,6 +148,22 @@ namespace :eval do
     ).offline_floor
   end
 
+  # The rooms the local pointer classifier trains on: generated worlds staged
+  # offline and the engine's own cascade state written out for each. OUT must
+  # be outside the repository -- this is training data -- and the training
+  # itself is `script/pointer_classifier/train.py`. See Eval::Classifier::Pointer.
+  desc "Generated rooms for the pointer classifier, as the engine states them. Usage: rake eval:pointer_rooms OUT=dir COUNT=2000 SEED=1"
+  task pointer_rooms: :environment do
+    out = ENV["OUT"].presence or abort "OUT=<directory> is where the rooms are written; keep it outside the repository."
+    abort "OUT is inside the repository; training data does not belong in it." if
+      File.expand_path(out).start_with?("#{Rails.root}/")
+    abort "The rooms must not be staged in the test environment." if Rails.env.test?
+
+    path = Eval::Classifier::Pointer::Rooms.new(directory: out, seed: (ENV["SEED"].presence || 1).to_i,
+                                                count: (ENV["COUNT"].presence || 2000).to_i).write!
+    puts "Wrote #{path}."
+  end
+
   desc "The `also_named` omission rate on its own -- the two-noun lines only. Usage: rake eval:classifier_omission REPS=1"
   task classifier_omission: :environment do
     ClassifierTasks.omission!

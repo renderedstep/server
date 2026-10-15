@@ -38,8 +38,21 @@
 # set for a local model for the same reason `BaseAgent::LOCAL_MODEL_OPTIONS`
 # sets it: an ollama model is in neither registry and saving the chat would
 # otherwise raise `RubyLLM::ModelNotFoundError` before anything is asked.
+#
+# `pointer:<model directory>` IS NOT A CHAT MODEL AT ALL. It is the local
+# pointer-head classifier (`Eval::Classifier::Pointer`) answering the cascade's
+# System One request in Jev's place, with no key and no spend; `+int8` asks
+# for its dynamically quantised weights instead of fp32. It is `local?` --
+# free, one call at a time -- and nothing is pinned in `BaseAgent`, because
+# nothing it does goes through `BaseAgent`: its rotation is pinned EMPTY for
+# the pass, so a chat call reached by mistake fails loudly instead of
+# spending.
 class Eval::Classifier::Arm
-  PROVIDERS = %i[openrouter ollama].freeze
+  PROVIDERS = %i[openrouter ollama pointer].freeze
+
+  # The precisions a pointer arm may ask for; `+int8` is the suffix.
+  POINTER_PRECISIONS = %w[fp32 int8].freeze
+  INT8_SUFFIX = "+int8".freeze
 
   class UnknownProvider < StandardError; end
 
@@ -107,7 +120,7 @@ class Eval::Classifier::Arm
   TYPESAFE_DIRECT_SUFFIX = "+typesafe-direct".freeze
   OPENROUTER_DECISIONS_SUFFIX = "+openrouter-decisions".freeze
 
-  attr_reader :provider, :model, :provider_params, :shape, :system_one_transport
+  attr_reader :provider, :model, :provider_params, :shape, :system_one_transport, :precision
 
   # `"ollama:qwen3:8b"` -> ollama, `qwen3:8b`. Anything with no known provider
   # prefix is OpenRouter, which is what the app's own ids are.
@@ -120,6 +133,12 @@ class Eval::Classifier::Arm
   # Jev transport the same way; transport suffixes are read before shape ones.
   def self.parse(spec)
     text = spec.to_s.strip
+    if text.start_with?("pointer:")
+      int8 = text.end_with?(INT8_SUFFIX)
+      return new(provider: :pointer, model: text.delete_prefix("pointer:").delete_suffix(INT8_SUFFIX),
+                 precision: int8 ? "int8" : "fp32")
+    end
+
     nothink = text.end_with?(NOTHINK_SUFFIX)
     text = text.delete_suffix(NOTHINK_SUFFIX) if nothink
     params = nothink ? NO_THINKING : {}
@@ -157,7 +176,8 @@ class Eval::Classifier::Arm
   # remember which it is holding.
   def self.all(specs) = Array(specs).map { |spec| spec.is_a?(self) ? spec : parse(spec) }
 
-  def initialize(provider:, model:, provider_params: {}, shape: :schema, system_one_transport: :ambient)
+  def initialize(provider:, model:, provider_params: {}, shape: :schema, system_one_transport: :ambient,
+                 precision: "fp32")
     unless PROVIDERS.include?(provider.to_sym)
       raise UnknownProvider, "#{provider.inspect} is not one of #{PROVIDERS.inspect}"
     end
@@ -174,6 +194,10 @@ class Eval::Classifier::Arm
     @provider_params = provider_params.to_h
     @shape = shape.to_sym
     @system_one_transport = system_one_transport.to_sym
+    @precision = precision.to_s
+    unless POINTER_PRECISIONS.include?(@precision) && (pointer? || @precision == "fp32")
+      raise UnknownProvider, "#{precision.inspect} is a pointer arm's precision, one of #{POINTER_PRECISIONS.inspect}"
+    end
     if @provider_params.any? && !local?
       raise UnknownProvider, "provider params are only for a local arm; #{id} is hosted, and changing " \
                              "the shape of a remote request is not what the seam is for"
@@ -186,7 +210,7 @@ class Eval::Classifier::Arm
   # keeps that in the label too, and a tool-shaped arm keeps its suffix, all for
   # the same reason: each is a different measurement of the same model.
   def id = [ local? ? "#{provider}:#{model}" : model, shape_suffix, system_one_suffix,
-             thinking_off? ? NOTHINK_SUFFIX : nil ]
+             thinking_off? ? NOTHINK_SUFFIX : nil, precision == "int8" ? INT8_SUFFIX : nil ]
              .compact.join
 
   def shape_suffix
@@ -213,7 +237,9 @@ class Eval::Classifier::Arm
   # preference alone. A pinned arm implies a cascade measurement.
   def pins_system_one_transport? = system_one_transport != :ambient
 
-  def local? = provider == :ollama
+  def local? = %i[ollama pointer].include?(provider)
+
+  def pointer? = provider == :pointer
 
   def to_s = id
 
@@ -234,10 +260,10 @@ class Eval::Classifier::Arm
   def ==(other)
     other.is_a?(self.class) && other.provider == provider && other.model == model &&
       other.provider_params == provider_params && other.shape == shape &&
-      other.system_one_transport == system_one_transport
+      other.system_one_transport == system_one_transport && other.precision == precision
   end
   alias eql? ==
-  def hash = [ provider, model, provider_params, shape, system_one_transport ].hash
+  def hash = [ provider, model, provider_params, shape, system_one_transport, precision ].hash
 
   # WHAT IT COSTS PER CALL. A local model costs nothing -- it is the captain's
   # own hardware and his own electricity -- and saying "unpriced" for it would
@@ -268,7 +294,10 @@ class Eval::Classifier::Arm
   # Pins the model in memory for `KEEP_ALIVE` and says whether it worked. Only
   # ever called for a local arm; a hosted provider has nothing to keep.
   def keep_resident!
-    return :not_local unless local?
+    # A pointer arm's model is a child process the bench holds open for the
+    # whole run, so it is resident by construction.
+    return :resident if pointer?
+    return :not_local unless provider == :ollama
 
     uri = URI.parse(RubyLLM.config.ollama_api_base.to_s.sub(%r{/v1/?\z}, "") + "/api/generate")
     response = Net::HTTP.start(uri.host, uri.port, open_timeout: RESIDENCY_TIMEOUT,
@@ -288,7 +317,7 @@ class Eval::Classifier::Arm
   def pinned
     was_options = BaseAgent.method(:default_model_options)
     was_params = BaseAgent.method(:default_provider_params)
-    options = [ model_options ]
+    options = pointer? ? [] : [ model_options ]
     params = provider_params
 
     BaseAgent.singleton_class.send(:define_method, :default_model_options) { options }
