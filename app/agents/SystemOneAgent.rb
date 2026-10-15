@@ -181,7 +181,8 @@ class SystemOneAgent
   #
   # OpenRouter's response envelope may also carry `id`, `provider` and
   # `usage.cost`. Those are kept as provenance on this object and never consulted
-  # by the cascade or any other game path.
+  # by the cascade or any other game path; only the receipt reads `usage.cost`,
+  # to book what the request really cost (`SystemOneReceipt#reported!`).
   class Answers
     # `payload` is the provider's whole body, which a caller composing the
     # answers itself (the engine, through a bench) reads again.

@@ -5,27 +5,48 @@
 # message row and no token counts, and it cannot be switched off for one player
 # -- a credential in the environment is the whole switch. Without a row of its
 # own it would be spend no allowance could see, so every request writes one
-# BEFORE it is sent, priced at `COST_PER_REQUEST_USD`, a stated constant. A
-# request that fails after sending may still have been billed, so the row is
-# never removed. When the provider reports a numeric `usage.cost` higher than
-# the constant, the row is raised to it; it is never lowered.
+# BEFORE it is sent, priced at `COST_PER_REQUEST_USD`, a stated constant, with
+# `cost_source` "estimated". A request that fails after sending may still have
+# been billed, so the row is never removed and keeps the estimate.
+#
+# WHEN THE PROVIDER REPORTS A PRICE, THE PRICE IS BOOKED, lower or higher than
+# the estimate, and `cost_source` becomes "reported". OpenRouter Decisions
+# reports `usage.cost`; TypeSafe direct reports tokens and no price, so its rows
+# stay estimated rather than priced at a rate this app would be inventing. A
+# reader telling real spend from the conservative figure reads `cost_source`.
+#
+# The Rust engine writes the rows a played turn leaves, under the same rule
+# (renderedstep/engine `receipts::system_one_reported`); this class is the
+# Ruby path's half and the two must agree.
 class SystemOneReceipt < ApplicationRecord
   # Stated, not measured: a round figure above what a classifier or volition
   # request has been seen to report, so an allowance errs towards refusing.
+  # Booked only where no cost was reported.
   COST_PER_REQUEST_USD = BigDecimal("0.002")
+
+  ESTIMATED = "estimated".freeze
+  REPORTED = "reported".freeze
+  COST_SOURCES = [ ESTIMATED, REPORTED ].freeze
 
   belongs_to :player, optional: true
   belongs_to :playthrough, optional: true
 
   validates :cost_usd, numericality: { greater_than_or_equal_to: 0 }
+  validates :cost_source, inclusion: { in: COST_SOURCES }
 
   def self.record!(purpose:, transport:)
     create!(player: Current.player, playthrough: Current.playthrough, purpose: purpose,
-            transport: transport&.to_s, cost_usd: COST_PER_REQUEST_USD)
+            transport: transport&.to_s, cost_usd: COST_PER_REQUEST_USD, cost_source: ESTIMATED)
   end
 
+  # Books the reported cost when it is a usable number (finite, not negative);
+  # anything else leaves the estimate where it is.
   def reported!(usage)
     cost = usage.is_a?(Hash) ? usage["cost"] : nil
-    update!(cost_usd: cost) if cost.is_a?(Numeric) && cost > cost_usd
+    return unless cost.is_a?(Numeric) && cost.finite? && cost >= 0
+
+    update!(cost_usd: cost, cost_source: REPORTED)
   end
+
+  def reported? = cost_source == REPORTED
 end

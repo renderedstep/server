@@ -370,7 +370,25 @@ class SystemOneAgentTest < ActiveSupport::TestCase
     assert_equal 1, receipts_when_sent
     receipt = SystemOneReceipt.sole
     assert_equal player, receipt.player
-    assert_equal BigDecimal("0.005"), receipt.cost_usd, "a reported cost above the constant raises the receipt"
+    assert_equal BigDecimal("0.005"), receipt.cost_usd, "a reported cost is booked"
+    assert_equal SystemOneReceipt::REPORTED, receipt.cost_source
+  end
+
+  test "an OpenRouter answer's reported cost below the estimate is booked as reported" do
+    transport = ->(_) { body({ "intent" => CHOICE, "here" => NOUL }, extra: { "usage" => { "input_tokens" => 874, "output_tokens" => 202, "cost" => 0.000037 } }) }
+    ask({ "intent" => CHOICE, "here" => NOUL }, transport: transport)
+
+    receipt = SystemOneReceipt.sole
+    assert_equal BigDecimal("0.000037"), receipt.cost_usd
+    assert_equal SystemOneReceipt::REPORTED, receipt.cost_source
+  end
+
+  test "a TypeSafe answer reporting tokens and no price keeps the estimate, marked estimated" do
+    ask({ "intent" => CHOICE, "here" => NOUL }, transport: ->(_) { body({ "intent" => CHOICE, "here" => NOUL }) })
+
+    receipt = SystemOneReceipt.sole
+    assert_equal SystemOneReceipt::COST_PER_REQUEST_USD, receipt.cost_usd
+    assert_equal SystemOneReceipt::ESTIMATED, receipt.cost_source
   end
 
   test "a request that fails after sending keeps its receipt" do
@@ -378,6 +396,7 @@ class SystemOneAgentTest < ActiveSupport::TestCase
       ask({}, transport: ->(_) { raise SystemOneAgent::Unavailable, "timed out" })
     end
     assert_equal SystemOneReceipt::COST_PER_REQUEST_USD, SystemOneReceipt.sole.cost_usd
+    assert_equal SystemOneReceipt::ESTIMATED, SystemOneReceipt.sole.cost_source
   end
 
   test "a request refused before sending writes no receipt" do
