@@ -622,10 +622,13 @@ class Eval::Classifier::Bench
         { "content" => Eval::Classifier::Pointer.escalated_reading(@state, @body, request["user"]),
           "model" => @arm.model }
       else
-        raise Eval::Classifier::Pointer::Unavailable, "the classifier was asked before the pointer model answered"
+        raise Eval::Classifier::Pointer::Unavailable, @unavailable || "the classifier was asked before the pointer model answered"
       end
     rescue Eval::Classifier::Pointer::Unavailable => e
-      return { "unavailable" => "#{e.class}: #{e.message}" } if request["kind"] == "system_one"
+      if request["kind"] == "system_one"
+        @unavailable = e.message
+        return { "unavailable" => "#{e.class}: #{e.message}" }
+      end
 
       @failure = e
       { "failure" => { "kind" => "provider", "message" => "#{e.class}: #{e.message}" } }
