@@ -18,7 +18,7 @@ serde_json = { version = "1", features = ["preserve_order"] }
 # The engine, pinned to one commit of its public repository. `bin/rails
 # engine:build` builds against exactly this; moving the pin is a change of
 # its own, with the parity gates run again (README, "The Rust engine").
-renderedstep-engine = { git = "https://github.com/renderedstep/engine", rev = "20bddee44b11e29333e03802a9ddfe980a7fc226" }
+renderedstep-engine = { git = "https://github.com/renderedstep/engine", rev = "326e81d862394dbfe5519a939e2fea367ea3672f" }
 
 [profile.release]
 # A panic must unwind so the engine's own catch_unwind can turn it into an
