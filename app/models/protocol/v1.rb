@@ -177,7 +177,7 @@ module Protocol::V1
   # blows.
   def rolls(command, outcome, round: nil)
     steps = command.journal.fetch("steps", {})
-    checks = receipts_in(steps, "Character::Check").filter_map { |receipt| receipt["fields"] if receipt.dig("fields", "die") }.map do |fields|
+    checks = receipts_in(steps, "Character::Check").map { |receipt| fields_of(receipt) }.select { |fields| fields["die"] }.map do |fields|
       { kind: "check", die: Character::CHECK_DIE, result: fields["die"], target: fields["score"].to_i - fields["penalty"].to_i }
     end
     breaks = receipts_in(steps, "Physics::Break").map do |receipt|
