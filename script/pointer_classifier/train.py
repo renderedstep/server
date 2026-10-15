@@ -32,7 +32,7 @@ import torch.nn.functional as F  # noqa: E402
 
 from compact import INTENTS, NOTHING, TARGET_ACTIONS  # noqa: E402
 from model import NOULS, PointerClassifier, batch, encoder, option_logits, save  # noqa: E402
-from templates import lines_for, vocabulary  # noqa: E402
+from templates import lines_for, novel_words, seeded_words, vocabulary  # noqa: E402
 
 GROUP_ORDER = ("ways_out", "other_characters", "available_items", "player_items", "physical_actions")
 
@@ -82,9 +82,9 @@ def examples_for(rooms, words, seed, per_room):
     rng = random.Random(seed)
     made = []
     for room in rooms:
-        state = room["state"]
-        options = options_for(state)
-        for line, lab in lines_for(state, words, rng, per_room):
+        options = options_for(room["state"])
+        state, lines = lines_for(room["state"], words, rng, per_room)
+        for line, lab in lines:
             made.append({"state": state, "line": line, "label": lab, "options": options})
     return made
 
@@ -152,6 +152,8 @@ def main():
     torch.manual_seed(arguments.seed)
     torch.set_num_threads(arguments.threads)
     words = vocabulary()
+    base, tokenizer = encoder(arguments.encoder)
+    words["novel"] = novel_words(tokenizer, seeded_words())
     with open(arguments.rooms) as source:
         rooms = [json.loads(row) for row in source]
     random.Random(arguments.seed).shuffle(rooms)
@@ -160,7 +162,6 @@ def main():
     held_examples = examples_for(held, words, arguments.seed - 1, arguments.per_room)
     live = live_examples(arguments.live, arguments.live_repeat) if arguments.live else []
 
-    base, tokenizer = encoder(arguments.encoder)
     model = PointerClassifier(base)
     heads = [p for name, p in model.named_parameters() if not name.startswith("encoder.")]
     optimizer = torch.optim.AdamW([

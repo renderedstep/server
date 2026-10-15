@@ -108,7 +108,8 @@ def place_head(name, words):
 def place_refs(name, words):
     head = place_head(name, words)
     bare = strip_article(name)
-    refs = [name, name.lower(), bare, "the " + bare.lower(), "the " + head, head]
+    last = re.sub(r"^.*'s ", "", bare.lower()).split()[-1]
+    refs = [name, name.lower(), bare, "the " + bare.lower(), "the " + head, head, "the " + last, last]
     if re.search(r"\d+$", name):
         refs.append(f"{head} {name.split()[-1]}")
     return refs
@@ -123,12 +124,69 @@ def item_head(name):
 
 
 def item_refs(name, carried=False):
+    """Every way a player shortens a thing's name: whole, by its head noun, by
+    the last part of a hyphenated head, by its last two words."""
     bare = strip_article(name)
     head = item_head(name)
+    words = [w for w in re.sub(r"^.*'s ", "", bare.lower()).split() if not w.isdigit()]
     refs = [name, "the " + bare, "the " + bare.lower(), bare.lower(), "the " + head, head]
+    if "-" in head:
+        refs += ["the " + head.split("-")[-1], "the " + head.replace("-", " "), head.replace("-", " ")]
+    if len(words) >= 2:
+        refs.append("the " + " ".join(words[-2:]))
+    if " of " in bare.lower():
+        refs.append("the " + bare.lower().split(" of ", 1)[0].split()[-1])
     if carried:
         refs += ["my " + bare.lower(), "my " + head]
     return refs
+
+
+def renamed(state, rng, novel):
+    """The room with some things and places given names nobody chose.
+
+    The vocabulary is small, and a model that saw only its head nouns learns
+    those nouns rather than learning to match a name in the line against a
+    name in the state. So most rooms have some of their things and ways out
+    renamed from `novel` -- ordinary words drawn from the encoder's own
+    vocabulary -- written into every record that carries the name, attempts
+    included, exactly as the engine would have written it.
+    """
+    if not novel or rng.random() < 0.3:
+        return state
+    pick = lambda: rng.choice(novel)  # noqa: E731
+    changes = {}
+    for group in ("available_items", "player_items"):
+        for entry in (state.get(group) or {}).values():
+            if rng.random() < 0.6:
+                changes[entry["name"]] = rng.choice([
+                    f"{pick()}", f"{pick()} {pick()}", f"{pick()}-{pick()}", f"{pick().title()} {pick()}",
+                    f"{pick()} of {pick()}", f"{pick().title()}'s {pick()}", f"{pick()} {rng.randint(2, 99)}",
+                ])
+    for entry in (state.get("ways_out") or {}).values():
+        if rng.random() < 0.6:
+            changes[entry["name"]] = rng.choice([
+                f"The {pick().title()}", f"The {pick().title()} {pick().title()}", f"{pick().title()} {pick()}",
+                f"{pick().title()}'s {pick().title()}", f"The {pick().title()} {rng.randint(2, 40)}",
+            ])
+    if len({value.lower() for value in changes.values()}) < len(changes):
+        return state
+    new = {}
+    for group, entries in state.items():
+        if not isinstance(entries, dict):
+            new[group] = entries
+            continue
+        new[group] = {}
+        for key, entry in entries.items():
+            entry = dict(entry)
+            name = entry["name"]
+            if name in changes:
+                entry["name"] = changes[name]
+            elif group == "physical_actions":
+                for old in sorted(changes, key=len, reverse=True):
+                    name = re.sub(rf"(?<![\w-]){re.escape(old)}(?![\w-])", changes[old], name)
+                entry["name"] = name
+            new[group][key] = entry
+    return new
 
 
 def person_refs(entry):
@@ -425,7 +483,58 @@ class Lines:
 
     def refs_for_name(self, fullname):
         key = self.room.key_named(self.room.people, fullname)
-        return self.refs.get(key) or [fullname]
+        refs = list(self.refs.get(key) or [fullname])
+        if len(self.room.people) == 1:
+            refs += ["him", "her", "them"]
+        return refs
+
+    def offer_absent(self):
+        if not self.room.people:
+            return None
+        thing = self.absent("item")
+        if not thing:
+            return None
+        who = self.ref(self.pick(self.room.people)[0])
+        target = [NOTHING] if self.room.attempts else None
+        return self.pick([f"give {thing} to {who}", f"hand {who} {thing}", f"offer {who} {thing}"]), \
+            label("use", target, present=0)
+
+    def take_from(self):
+        """Asking for a thing somebody else holds: nothing lying here is it."""
+        if not self.room.people:
+            return None
+        thing = self.absent("item")
+        if not thing:
+            return None
+        who = self.ref(self.pick(self.room.people)[0])
+        target = [NOTHING] if self.room.lying else None
+        return self.pick([f"take {thing} from {who}", f"snatch {thing} out of {who}'s hands",
+                          f"grab {thing} off {who}"]), label("take", target, present=0)
+
+    def examine_person(self):
+        """Looking at a person: they are listed, but not as a thing to examine."""
+        if not self.room.people:
+            return None
+        who = self.ref(self.pick(self.room.people)[0])
+        pronoun = self.pick(["him", "her", "them"])
+        text = self.pick([f"look at {who}", f"study {who}'s face", f"look {pronoun} over" if len(self.room.people) == 1
+                          else f"look {who} over", f"watch {who} closely", f"examine {who}'s hands",
+                          f"look {who} up and down"])
+        target = [NOTHING] if self.room.lying or self.room.carried else None
+        return text, label("examine", target)
+
+    def other_about(self):
+        """A line that names a record and asks for no act on it."""
+        named = self.room.people + self.room.lying + self.room.carried + self.room.ways
+        if not named:
+            return None
+        key, _ = self.pick(named)
+        what = self.ref(key)
+        text = self.pick([f"wait for {what}", f"think about {what}", f"wonder about {what}", f"remember {what}",
+                          f"consider {what} for a while", f"hesitate, thinking of {what}",
+                          f"wait for {what} to say something", f"keep thinking about {what}",
+                          f"daydream about {what}", f"worry about {what}"])
+        return text, label("other")
 
     # -- other
     def other(self):
@@ -471,7 +580,10 @@ class Lines:
         else:
             second = self.pick([self.ref(b), f"{verb} {self.ref(b)}"])
             text = f"{verb} {self.ref(a)}{joiner}{second}"
-        return text, label(intent, [a, b], [a, b], two=1)
+        # THE FIRST NAMED IS THE TARGET AND THE SECOND IS `also_named`. Both
+        # sets accepting either record let the model name the same one twice,
+        # which the engine collapses to one name and the line to one act.
+        return text, label(intent, [a], [b], two=1)
 
     def collective(self):
         choices = []
@@ -490,7 +602,9 @@ class Lines:
             return None
         intent, entries, texts = self.pick(choices)
         keys = [k for k, _ in entries]
-        return self.pick(texts), label(intent, keys, keys, two=1)
+        # A collective word names them in no order, so the state's order
+        # decides: the first as the target, the second as the other name.
+        return self.pick(texts), label(intent, keys[:1], keys[1:2], two=1)
 
     def two_sets(self):
         """Two acts of different kinds: the first is the intent, nothing second."""
@@ -514,6 +628,7 @@ class Lines:
         ("attack", 4), ("attack_absent", 1), ("take", 7), ("take_absent", 2), ("take_pronoun", 1),
         ("drop", 5), ("drop_absent", 1), ("drop_pronoun", 1), ("examine", 6), ("examine_absent", 3),
         ("look_around", 2), ("use", 5), ("other", 6), ("two_one_set", 5), ("collective", 1), ("two_sets", 4),
+        ("other_about", 3), ("examine_person", 2), ("take_from", 1), ("offer_absent", 1),
     )
 
     def sample(self, count):
@@ -548,7 +663,42 @@ def roughen(text, rng):
 
 
 def lines_for(state, words, rng, count):
-    return Lines(Room(state, words), rng).sample(count)
+    """(the state the lines were written in, [(line, label)]): the state is the
+    room as staged, or the same room with some names replaced (`renamed`)."""
+    state = renamed(state, rng, words.get("novel"))
+    return state, Lines(Room(state, words), rng).sample(count)
+
+
+def novel_words(tokenizer, excluded):
+    """Ordinary lower-case words from the encoder's own vocabulary, less any
+    word the corpus's seeded worlds use, for `renamed`."""
+    found = set()
+    for token in tokenizer.get_vocab():
+        word = token[1:] if token.startswith("Ġ") else None
+        if word and re.fullmatch(r"[a-z]{4,10}", word) and word not in excluded:
+            found.add(word)
+    return sorted(found)
+
+
+def seeded_words():
+    """Every word in the names of the corpus's three seeded worlds."""
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "db", "seeds", "worlds")
+    words = set()
+    for file in os.listdir(root):
+        if not file.endswith(".yml"):
+            continue
+        with open(os.path.join(root, file)) as source:
+            document = yaml.safe_load(source)
+        names = []
+        for location in document.get("locations") or []:
+            names.append(location.get("name") or "")
+            names += [item.get("name") or "" for item in location.get("items") or []]
+        for person in document.get("characters") or []:
+            names += [person.get("fullname") or "", person.get("nickname") or ""]
+            names += [item.get("name") or "" for item in person.get("items") or []]
+        for name in names:
+            words.update(re.findall(r"[a-z]+", name.lower()))
+    return words
 
 
 if __name__ == "__main__":
@@ -560,5 +710,8 @@ if __name__ == "__main__":
     with open(sys.argv[1]) as source:
         for row in list(source)[: int(sys.argv[2]) if len(sys.argv) > 2 else 2]:
             room = json.loads(row)
-            for text, line_label in lines_for(room["state"], words, rng, 25):
+            state, lines = lines_for(room["state"], words, rng, 25)
+            print(json.dumps({key: [e["name"] for e in entries.values()] for key, entries in state.items()
+                              if isinstance(entries, dict)}))
+            for text, line_label in lines:
                 print(json.dumps({"line": text, **line_label}))

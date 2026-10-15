@@ -41,7 +41,8 @@ def main():
         rooms = [json.loads(row) for row in source][-200:]
     items = []
     for room in rooms:
-        items += [(room["state"], line) for line, _ in lines_for(room["state"], words, rng, 2)]
+        state, lines = lines_for(room["state"], words, rng, 2)
+        items += [(state, line) for line, _ in lines]
     items = items[: arguments.lines + WARMUP]
 
     report = {"threads": arguments.threads, "lines": len(items) - WARMUP}
