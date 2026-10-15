@@ -11,7 +11,10 @@ rooms is held back and scored after every epoch; the classifier corpus is
 never read here -- it is the yardstick, and `rake eval:classifier` is where it
 is used.
 
-CPU only, deterministic for a given seed and thread count.
+CPU only, deterministic for a given seed and thread count. A step's batch is
+run in micro-batches (`--micro`) to keep memory small, and `<out>/checkpoint.pt`
+is written every `--checkpoint-every` steps: run the same command again and
+it resumes from the last one, so a killed run loses only those steps.
 """
 
 import argparse
@@ -137,6 +140,8 @@ def main():
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--per-room", type=int, default=32)
     parser.add_argument("--batch", type=int, default=32)
+    parser.add_argument("--micro", type=int, default=8, help="examples per forward pass; --batch per optimizer step")
+    parser.add_argument("--checkpoint-every", type=int, default=50, help="optimizer steps between checkpoints")
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--head-lr", type=float, default=1e-3)
     parser.add_argument("--threads", type=int, default=6)
@@ -170,35 +175,61 @@ def main():
 
     log = {"arguments": vars(arguments), "rooms": len(rooms), "held_out_rooms": len(held),
            "live_rows": len(live) // max(1, arguments.live_repeat), "epochs": []}
-    print(json.dumps({"train_rooms": len(train_rooms), "held_out_rooms": len(held), "steps": steps}), flush=True)
+    step, minutes, running = 0, 0.0, {}
+    checkpoint = os.path.join(arguments.out, "checkpoint.pt")
+    if os.path.exists(checkpoint):
+        saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
+        model.load_state_dict(saved["model"])
+        optimizer.load_state_dict(saved["optimizer"])
+        schedule.load_state_dict(saved["schedule"])
+        step, minutes, running, log["epochs"] = saved["step"], saved["minutes"], saved["running"], saved["epochs"]
+        print(json.dumps({"resumed": checkpoint, "step": step}), flush=True)
+    print(json.dumps({"train_rooms": len(train_rooms), "held_out_rooms": len(held), "steps": steps,
+                      "micro_batch": arguments.micro}), flush=True)
     model.train()
-    step = 0
-    started = time.time()
-    for epoch in range(arguments.epochs):
+    started = time.time() - minutes * 60
+
+    def keep():
+        os.makedirs(arguments.out, exist_ok=True)
+        torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(), "schedule": schedule.state_dict(),
+                    "step": step, "minutes": (time.time() - started) / 60, "running": running,
+                    "epochs": log["epochs"]}, checkpoint + ".tmp")
+        os.replace(checkpoint + ".tmp", checkpoint)
+
+    for epoch in range(step // per_epoch, arguments.epochs):
         examples = examples_for(train_rooms, words, arguments.seed + epoch, arguments.per_room) + live
         random.Random(arguments.seed + 100 + epoch).shuffle(examples)
-        running = {}
-        for start in range(0, len(examples), arguments.batch):
+        for start in range((step - epoch * per_epoch) * arguments.batch, len(examples), arguments.batch):
             chunk = examples[start: start + arguments.batch]
-            ids, mask, pool, keys = batch(tokenizer, [(e["state"], e["line"]) for e in chunk])
-            out = model(ids, mask, pool)
-            parts = losses(out, chunk, keys)
-            loss = parts["intent"] + parts["target"] + 0.5 * parts["also"] + 0.5 * parts["noul"]
             optimizer.zero_grad()
-            loss.backward()
+            parts_sum = {}
+            # THE SAME EFFECTIVE BATCH IN SMALLER PIECES, so a step's
+            # activations are a quarter of the size and the gradient is the
+            # same weighted mean.
+            for piece in range(0, len(chunk), arguments.micro):
+                micro = chunk[piece: piece + arguments.micro]
+                ids, mask, pool, keys = batch(tokenizer, [(e["state"], e["line"]) for e in micro])
+                parts = losses(model(ids, mask, pool), micro, keys)
+                loss = parts["intent"] + parts["target"] + 0.5 * parts["also"] + 0.5 * parts["noul"]
+                (loss * len(micro) / len(chunk)).backward()
+                for name, value in parts.items():
+                    parts_sum[name] = parts_sum.get(name, 0.0) + float(value) * len(micro) / len(chunk)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             schedule.step()
             step += 1
-            for name, value in parts.items():
-                running[name] = running.get(name, 0.0) * 0.98 + float(value) * 0.02
+            for name, value in parts_sum.items():
+                running[name] = running.get(name, 0.0) * 0.98 + value * 0.02
             if step % 100 == 0:
                 print(json.dumps({"epoch": epoch, "step": step, "of": steps, "minutes": round((time.time() - started) / 60, 1),
                                   **{k: round(v, 4) for k, v in running.items()}}), flush=True)
+            if step % arguments.checkpoint_every == 0:
+                keep()
         scored = score(model, tokenizer, held_examples)
         log["epochs"].append({"epoch": epoch, "held_out": scored, "minutes": round((time.time() - started) / 60, 1)})
         print(json.dumps(log["epochs"][-1]), flush=True)
         save(model, tokenizer, arguments.out, log)
+        keep()
     print(json.dumps({"saved": arguments.out}), flush=True)
 
 
