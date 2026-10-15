@@ -103,10 +103,10 @@ class NarrationJobEventsTest < ActiveJob::TestCase
 
   test "the rolls a turn threw are read off its journal" do
     command = create(:playthrough_command, playthrough: @game, status: "completed", journal: {
-      "version" => 1, "steps" => { "check" => { "data" => "Character::Check",
-                                               "fields" => { "hash" => {}, "ability" => "strength", "score" => 12, "penalty" => 2, "die" => 7 } } }
+      "version" => 1, "steps" => { "checks" => { "array" => [ check_receipt(7), check_receipt(nil) ] } }
     })
-    assert_equal [ { kind: "check", die: 20, result: 7, target: 10 } ], Protocol::V1.rolls(command, nil)
+    assert_equal [ { kind: "check", die: 20, result: 7, target: 10 } ], Protocol::V1.rolls(command, nil),
+                 "an impossible check, with no die, is not a roll"
   end
 
   test "a toll a fall took is a fall, and any other hazard's a toll" do
@@ -120,6 +120,14 @@ class NarrationJobEventsTest < ActiveJob::TestCase
   end
 
   private
+
+  # A check's receipt as the journal encodes it (`Playthrough::Command::Journal#encode`).
+  def check_receipt(die)
+    { "data" => "Character::Check", "fields" => { "hash" => [
+      [ { "symbol" => "ability" }, { "symbol" => "strength" } ], [ { "symbol" => "score" }, 12 ],
+      [ { "symbol" => "penalty" }, 2 ], [ { "symbol" => "die" }, die ]
+    ] } }
+  end
 
   # A GAME STANDING IN FRONT OF A MONSTER, as `NarrationJobTest`'s is, and
   # belonging to a player because it is played over the API.

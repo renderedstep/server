@@ -109,6 +109,37 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     end
   end
 
+  # A CHECK IS A ROLL TOO. A throw makes its thrower's strength check before
+  # anything lands, and the engine keeps that check's receipt in the turn's
+  # `checks` journal step; the finish reports its d20 against the target, and
+  # ahead of the break die, as `Protocol::V1#rolls` orders them.
+  test "a check the engine threw is one of the turn's rolls" do
+    script = EngineSweep.scripts.find { |candidate| candidate.name == "a-throw-can-fall-short" }
+    walked = script.steps.select { |step| step.id == "into-the-ropewalk" }
+
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "checks.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        walk = EngineSweep::Walk.new(script)
+        walk.prepare!
+        walked.each { |step| walk.play_step(step) }
+        game = walk.game_of(walked.sole.player)
+        Playthrough::RustEngine.replaying([]) do
+          Playthrough::Session.new(game).play("/throw tar pot at The Tarring Shed", request_token: "checks")
+        end
+        command = game.commands.find_by!(request_token: "checks")
+
+        rolled = Protocol::V1.rolls(command, command.result_scene)
+        assert_equal "check", rolled.first[:kind], command.journal.inspect
+        check = rolled.select { |roll| roll[:kind] == "check" }.sole
+        assert_equal Character::CHECK_DIE, check[:die]
+        assert_includes 1..Character::CHECK_DIE, check[:result]
+        assert_kind_of Integer, check[:target]
+      end
+    end
+  end
+
   # TWO COPIES OF SQLITE IN ONE PROCESS, the `sqlite3` gem's and the
   # extension's, on one file in write-ahead-log mode. The engine's connection
   # closing must leave the log to this process's own connection: a checkpoint
