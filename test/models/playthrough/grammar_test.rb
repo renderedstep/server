@@ -463,6 +463,15 @@ class Playthrough::GrammarTest < ActiveSupport::TestCase
     assert_equal :move, EngineSweep.without_a_model { grammar.parse("open the supply closet") }.intent&.action
   end
 
+  # A PART OFF A FIXED PIECE is the engine's to play too (renderedstep/engine
+  # `turn/snap.rs`): the table names `break` and `snap`, and not `pull`, so
+  # "pull the door shut" is still read as it always was.
+  test "break and snap are the engine's words for a part off a piece, and pull is no break" do
+    assert_equal({ "break" => :break, "snap" => :break }, Playthrough::Grammar::VERBS.slice("break", "snap"))
+    assert_not Playthrough::Grammar::VERBS.key?("pull")
+    assert grammar.claims?("/break branch off old tree")
+  end
+
   # The menu offers six words, and every one of them is a word the grammar
   # reads -- so the box cannot complete to something the engine will not answer.
   test "the six offered verbs are all in the grammar's own table" do

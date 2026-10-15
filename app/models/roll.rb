@@ -165,6 +165,11 @@ module Roll
   # `turn/search.rs`), seeded on the story and the piece's own row. Rolled
   # nowhere in this app; named for the reason `CHOICE` is.
   CONTENTS = 16
+  # 17 IS THE RUST ENGINE'S TOO: the strength check to break a part off a
+  # fixed piece, less what its hold takes off (`Item::Kit::HOLD_PENALTY`, the
+  # engine's `turn/snap.rs`), seeded on the story, the part's own row and the
+  # story time. Rolled nowhere in this app; named for the reason `CHOICE` is.
+  SNAP = 17
 
   # THE SEED, FROM FIVE INTEGERS AND NOTHING ELSE. Public because it is the part
   # worth asserting on its own: `RollTest` pins that the same inputs give the

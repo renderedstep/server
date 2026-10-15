@@ -581,6 +581,66 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_match(/may draw it again/, found.message)
   end
 
+  # A PART is attached to a fixed piece in its own room, holding by a hold the
+  # kit table prices; a part broken off is a portable thing with neither.
+  def a_tree_with_a_branch(story)
+    tree = create(:item, :fixture, location: story.locations.first, name: "old tree", holds: "nothing")
+    [ tree, create(:item, :part, within: tree) ]
+  end
+
+  test "a tree with its branches, two of one name, is healthy" do
+    story = healthy_story
+    tree, = a_tree_with_a_branch(story)
+    create(:item, :part, within: tree)
+
+    assert_empty codes(story) & %i[part_not_attached part_with_no_hold hold_on_no_part thing_on_no_fixture
+                                   duplicate_items_in_a_room]
+  end
+
+  test "reports a part attached to nothing, or to a piece in another room" do
+    story = healthy_story
+    _, branch = a_tree_with_a_branch(story)
+    branch.update_columns(within_id: nil, how: nil)
+
+    assert_match(/the part "branch" .* is attached to nothing/, finding(story, :part_not_attached).message)
+
+    elsewhere = create(:item, :fixture, location: create(:location, story: story), name: "tree", holds: "nothing")
+    branch.update_columns(within_id: elsewhere.id, how: Item::ATTACHED)
+    found = finding(story, :part_not_attached)
+    assert_match(/is attached to "tree", which is/, found.message)
+    assert_equal :manual, found.remedy
+  end
+
+  test "reports a part attached to a thing that is not fixed in place" do
+    story = healthy_story
+    _, branch = a_tree_with_a_branch(story)
+    stick = create(:item, :lying, location: story.locations.first, name: "stick")
+    branch.update_columns(within_id: stick.id)
+
+    assert_match(/attached to "stick", which is not fixed in place/, finding(story, :part_not_attached).message)
+  end
+
+  test "reports a part with no hold, or a hold the table does not price" do
+    story = healthy_story
+    _, branch = a_tree_with_a_branch(story)
+    branch.update_columns(hold: nil)
+
+    assert_match(/holds by nil/, finding(story, :part_with_no_hold).message)
+
+    branch.update_columns(hold: "welded")
+    assert_match(/holds by "welded", which is not one of loose, firm, stout/, finding(story, :part_with_no_hold).message)
+  end
+
+  test "reports a hold left on a row that is not a part" do
+    story = healthy_story
+    stick = create(:item, :lying, location: story.locations.first, name: "stick")
+    stick.update_columns(hold: "firm")
+
+    found = finding(story, :hold_on_no_part)
+    assert_equal stick, found.subject
+    assert_match(/is a portable row, not a part/, found.message)
+  end
+
   test "reports a room showing more than one room may show" do
     story = healthy_story
     room = story.locations.first

@@ -84,6 +84,7 @@ class Item::TemplateRefresh
         next if template.nil?
 
         columns = FROM_THE_TEMPLATE.select { |column| copy[column] != template[column] }
+        columns -= %w[description] if broken_off?(copy, template)
         next if columns.empty?
 
         Lag.new(copy: copy, template: template, columns: columns, touched: acted_on.include?(copy.id))
@@ -113,6 +114,14 @@ class Item::TemplateRefresh
   end
 
   private
+
+  # A GAME'S COPY OF A PART THAT CAME AWAY. The world's row is still attached
+  # and says so ("The branch, attached to the old tree."); the game's copy is a
+  # thing in a hand now, and the engine gave it the line a thing lying against
+  # nothing has (renderedstep/engine `turn/snap.rs`). Its description differs
+  # because it is somewhere else, which is the player's business, and bringing
+  # the world's line forward would put the branch back on the tree in words.
+  def broken_off?(copy, template) = template.part? && !copy.part?
 
   # THE COPY IDS SOME TURN HAS ACTED ON. One query for the story rather than one
   # per row: `scenes(acted_on_type, acted_on_id)` is indexed for exactly this.

@@ -714,6 +714,14 @@ class Story::Audit
     return if items_elsewhere.empty?
 
     items_elsewhere.each do |item|
+      # A PART ON A PIECE STANDING WHERE THE PLAYER IS IS WITHIN REACH AND IN
+      # NOBODY'S HANDS, and the narration of a try at breaking it off has the
+      # player take hold of it: "you pick at the bark", "you hang your weight
+      # on the branch". That is the attempt, not a claim of custody, and the
+      # part is never anybody's to hold until it comes away (`Item::PART`). A
+      # part in some other room is still judged like anything else.
+      next if item.part? && item.location_id == scene.location_id
+
       # WHAT THE PROSE WOULD CALL IT, not only what the records do. `Item#name`
       # is "Ward Office 12 daybook" and not one of 132 whole-run narrations
       # ever wrote that string -- every one of them wrote "daybook". Matching

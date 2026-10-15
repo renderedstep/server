@@ -163,10 +163,15 @@ class Playthrough < ApplicationRecord
   # top of a turn and on arrival, so a read can never be the thing that changes
   # the world. A room this playthrough has never been in reads empty here, which
   # is honest -- it has not seen it yet.
+  #
+  # A PART IS NOT LYING THERE: a branch on a tree is in no closed set a line is
+  # read against, and only the engine's break attempt reads it
+  # (`Item::PART`; the engine's `Game::items_lying_in` leaves it out the same
+  # way).
   def items_lying_in(location)
     return Item.none if location.nil?
 
-    Item.of_playthrough(self).lying_in(location).order(:id)
+    Item.of_playthrough(self).lying_in(location).unattached.order(:id)
   end
 
   # WHAT THE PLAYER HAS NOTICED LYING IN A ROOM: in a game the player narrates,

@@ -459,6 +459,25 @@ class PlaythroughTest < ActiveSupport::TestCase
     assert_equal [ "ward stamp" ], second.items_lying_in(room).pluck(:name)
   end
 
+  # A PART IS NOT LYING IN THE ROOM: a game's copy of a tree comes with its
+  # own copies of the tree's branches, holding as the world's do, and neither
+  # is in the closed set a take reads -- only the engine's break attempt reads
+  # a part.
+  test "a game copies a piece's parts with their hold, and lists none of them as lying here" do
+    story = create(:story)
+    protagonist = create(:character, :protagonist, story: story)
+    room = create(:location, story: story)
+    tree = create(:item, :fixture, location: room, name: "old tree", holds: "nothing")
+    create(:item, :part, within: tree)
+
+    playing = create(:playthrough, story: story, character: protagonist, current_location: room)
+    Item::Snapshot.new(playing).of_the_room!(room)
+    branch = Item.of_playthrough(playing).parts.sole
+
+    assert_equal [ "old tree" ], playing.items_lying_in(room).pluck(:name)
+    assert_equal [ "firm", playing.items_lying_in(room).sole ], [ branch.hold, branch.within ]
+  end
+
   test "a story with no starting inventory starts a playthrough empty-handed" do
     story = create(:story)
     create(:character, :protagonist, story: story)

@@ -163,6 +163,20 @@ class Story::AuditTest < ActiveSupport::TestCase
     assert_equal :item_not_held, audit.contradictions.first.code
   end
 
+  # A PART ON A PIECE STANDING HERE is taken hold of by every try at breaking
+  # it off, and is in nobody's hands; one on a tree in another room is still
+  # judged like anything else.
+  test "taking hold of a part attached to a piece standing here is no claim of custody" do
+    tree = create(:item, :fixture, location: @here, name: "old tree", holds: "nothing")
+    create(:item, :part, within: tree, name: "bark", hold: "loose")
+    scene_at(@here, description: "You pick at the bark. It clings.")
+    scene_at(@there, description: "You take the bark from your coat and turn it over.")
+
+    flags = audit.contradictions
+
+    assert_equal [ @there.name ], flags.map { |flag| flag.evidence[:where] }
+  end
+
   # HELD BY THE PROTAGONIST IS THE STORY'S STARTING INVENTORY, which every
   # playthrough begins with a copy of -- so a narration about it is a narration
   # about something the player has.
