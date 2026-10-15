@@ -41,6 +41,19 @@ class SystemOneReceiptTest < ActiveSupport::TestCase
     assert_equal SystemOneReceipt::ESTIMATED, receipt.cost_source
   end
 
+  test "a row from before latency was kept stays NULL, and a negative wait is refused" do
+    assert_nil create(:system_one_receipt).latency_ms
+    assert_not build(:system_one_receipt, latency_ms: -1).valid?
+  end
+
+  test "the three volition purposes and the older combined one read as one family" do
+    purposes = [ *SystemOneReceipt::VOLITION_PURPOSES, SystemOneReceipt::VOLITION_COMBINED, SystemOneReceipt::CLASSIFIER ]
+    purposes.each { |purpose| create(:system_one_receipt, purpose: purpose) }
+
+    assert_equal %w[volition volition_acts volition_reactions volition_speech], SystemOneReceipt.volition.pluck(:purpose).sort
+    assert_equal 1, SystemOneReceipt.where(purpose: SystemOneReceipt::VOLITION_SPEECH).count, "each split purpose is filed apart"
+  end
+
   test "a cost source outside the two is refused" do
     assert_not build(:system_one_receipt, cost_source: "guessed").valid?
   end

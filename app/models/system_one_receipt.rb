@@ -18,7 +18,21 @@
 # The Rust engine writes the rows a played turn leaves, under the same rule
 # (renderedstep/engine `receipts::system_one_reported`); this class is the
 # Ruby path's half and the two must agree.
+#
+# `latency_ms` is wall-clock from sending to the answer or the failure, kept
+# whichever way the request went; a row written before it existed is NULL, not
+# zero. `purpose` names the caller. The three volition calls are filed apart
+# (`VOLITION_PURPOSES`); a row from before the split says only "volition", the
+# combined form, and `.volition` reads all four as one family.
 class SystemOneReceipt < ApplicationRecord
+  CLASSIFIER = "classifier".freeze
+  VOLITION_SPEECH = "volition_speech".freeze
+  VOLITION_ACTS = "volition_acts".freeze
+  VOLITION_REACTIONS = "volition_reactions".freeze
+  VOLITION_PURPOSES = [ VOLITION_SPEECH, VOLITION_ACTS, VOLITION_REACTIONS ].freeze
+  # What every volition row was filed under before the three were split.
+  VOLITION_COMBINED = "volition".freeze
+
   # Stated, not measured: a round figure above what a classifier or volition
   # request has been seen to report, so an allowance errs towards refusing.
   # Booked only where no cost was reported.
@@ -33,6 +47,9 @@ class SystemOneReceipt < ApplicationRecord
 
   validates :cost_usd, numericality: { greater_than_or_equal_to: 0 }
   validates :cost_source, inclusion: { in: COST_SOURCES }
+  validates :latency_ms, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+
+  scope :volition, -> { where(purpose: [ *VOLITION_PURPOSES, VOLITION_COMBINED ]) }
 
   def self.record!(purpose:, transport:)
     create!(player: Current.player, playthrough: Current.playthrough, purpose: purpose,
@@ -49,4 +66,6 @@ class SystemOneReceipt < ApplicationRecord
   end
 
   def reported? = cost_source == REPORTED
+
+  def took!(milliseconds) = update!(latency_ms: milliseconds)
 end

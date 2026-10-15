@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_200000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -714,6 +714,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_180000) do
     t.integer "thinking_tokens"
     t.decimal "total_cost", precision: 16, scale: 10
     t.datetime "updated_at", null: false
+    t.integer "latency_ms"
     t.index ["chat_type", "chat_id"], name: "index_ruby_llm_usages_on_chat_type_and_chat_id"
     t.index ["message_type", "message_id"], name: "index_ruby_llm_usages_on_message_type_and_message_id"
     t.index ["status"], name: "index_ruby_llm_usages_on_status"
@@ -776,6 +777,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_180000) do
     t.string "transport"
     t.datetime "updated_at", null: false
     t.string "cost_source", default: "estimated", null: false
+    t.integer "latency_ms"
     t.index ["player_id", "created_at"], name: "index_system_one_receipts_on_player_id_and_created_at"
     t.index ["player_id"], name: "index_system_one_receipts_on_player_id"
     t.index ["playthrough_id"], name: "index_system_one_receipts_on_playthrough_id"
