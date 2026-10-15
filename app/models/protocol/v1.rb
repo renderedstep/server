@@ -24,7 +24,8 @@ module Protocol::V1
   # turn ends without a scene of its own.
   OUTCOME_KINDS = {
     "move" => "moved", "talk" => "talked", "take" => "took", "drop" => "dropped", "examine" => "read",
-    "attack" => "attacked", "throw" => "threw", "use" => "used", "conclude" => "ended", "ending" => "ended"
+    "attack" => "attacked", "throw" => "threw", "use" => "used", "search" => "searched",
+    "conclude" => "ended", "ending" => "ended"
   }.freeze
   OUTCOMES = (OUTCOME_KINDS.values.uniq + %w[narrated refused safety failed]).freeze
 

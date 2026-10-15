@@ -70,6 +70,7 @@ module EngineData
       "kinds" => map({ "pieces" => map(Integer), "loose" => [ String ] }),
       "pieces" => map(String),
       "holding" => map(String),
+      "contents" => map(String),
       "pools" => map({ "count" => [ Integer ], "from" => [ String ] }),
       "readable" => [ String ], "use_kinds" => map(String), "combustible" => [ String ]
     },

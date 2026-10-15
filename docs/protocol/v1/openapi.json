@@ -299,9 +299,10 @@
             ],
             "enum": [
               "shut",
+              "open",
               null
             ],
-            "description": "`shut` for a `closed` fixture, null for any other."
+            "description": "`shut` for a `closed` fixture this game has not searched, `open` for one it has (since revision 1.4), null for any other."
           },
           "searched": {
             "type": [
@@ -990,6 +991,7 @@
                   "attacked",
                   "threw",
                   "used",
+                  "searched",
                   "ended",
                   "narrated",
                   "refused",

@@ -55,6 +55,11 @@
 # holds no copy of standing in the same room is set on the floor rather than
 # on somebody else's desk.
 #
+# EXCEPT WHAT LIES INSIDE A CLOSED PIECE, which a game copies when it searches
+# the piece and not before (`Item.shut_in`). The engine's search is the one
+# writer of that copy (renderedstep/engine `turn/search.rs`): until a game has
+# searched a desk, nothing in its drawers can be named, taken or listed there.
+#
 # NO MODEL, NO NETWORK, NO GENERATION. Every row it writes is a copy of a row
 # that already exists.
 class Item::Snapshot
@@ -75,7 +80,7 @@ class Item::Snapshot
   def of_the_room!(location)
     return [] if location.nil?
 
-    templates = Item.lying_in(location).templates.order(:id).to_a
+    templates = Item.lying_in(location).templates.where.not(id: Item.shut_in).order(:id).to_a
     # A follower's world row stays in the room they started in. Contact follows
     # this game's whereabouts so their possessions can join them, once each.
     people = playthrough.characters_located_in(location)

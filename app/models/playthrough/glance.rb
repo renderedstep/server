@@ -34,8 +34,10 @@ class Playthrough::Glance
   # the story time a game the player narrates noticed it, in the engine's
   # seconds, and nil in any other game.
   Thing = Data.define(:id, :name, :on, :noticed_at)
-  # Something fixed in place: `holds` is one of `Item::HOLDS`, `state` and
-  # `searched` are nil for a fixture with no inside, `on` is what lies on or in
+  # Something fixed in place: `holds` is one of `Item::HOLDS`, `state` is
+  # `shut` for a closed fixture this game has not searched and `open` once it
+  # has, `state` and `searched` are nil for a fixture with no inside, `on` is
+  # what lies on or in
   # it, by name, and `noticed_at` is `Thing`'s.
   Fixture = Data.define(:id, :name, :holds, :state, :searched, :on, :noticed_at)
   # How much the room shows, how many closed fixtures nobody has searched, and,

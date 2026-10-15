@@ -160,6 +160,11 @@ module Roll
   # spent there (`items.noticed_at`). Rolled nowhere in this app; named for
   # the reason `CHOICE` is.
   NOTICE = 15
+  # 16 IS THE RUST ENGINE'S TOO: what lies inside a closed piece, drawn the
+  # first time anybody searches or opens it (`Item::Contents`, the engine's
+  # `turn/search.rs`), seeded on the story and the piece's own row. Rolled
+  # nowhere in this app; named for the reason `CHOICE` is.
+  CONTENTS = 16
 
   # THE SEED, FROM FIVE INTEGERS AND NOTHING ELSE. Public because it is the part
   # worth asserting on its own: `RollTest` pins that the same inputs give the
