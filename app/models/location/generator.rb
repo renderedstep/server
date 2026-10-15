@@ -713,7 +713,9 @@ class Location::Generator
   # applied to things: the engine decides and the writer is told. Every line is
   # a record read out, never the kit table: the fixtures standing here (a
   # closed one marked, since what is inside it is nobody's to say yet), what
-  # lies on or in each, and the kit's loose things. A seeded fixture reads the
+  # lies on or in each, and the kit's loose things -- never a piece's parts,
+  # which the engine's `realization.rs` leaves out too, so a tree's branches
+  # change no prompt. A seeded fixture reads the
   # same as a kit's; the writer's own things and a seed file's loose ones are
   # the items block's business, as they always were.
   #
@@ -725,7 +727,7 @@ class Location::Generator
   # to `#geometry_facts`' line rather than standing on one of its own, which
   # would add a blank line to every prompt in the game the day it was empty.
   def already_here
-    here = Item.lying_in(location).templates.order(:id).to_a
+    here = Item.lying_in(location).templates.unattached.order(:id).to_a
     fixed = here.select(&:fixture?)
     loose = here.select { |item| !item.fixture? && item.within_id.nil? && item.kit_key.present? }
     return "" if fixed.empty? && loose.empty?

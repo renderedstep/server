@@ -1,0 +1,138 @@
+# A BRANCH BROKEN OFF THE OLD TREE, AND BARK THAT COMES AWAY IN PIECES.
+#
+# Rook Wood is furnished from the forest kit as it is written, and its old
+# tree is born with its parts: two branches that hold firm and bark that holds
+# loose (`Item::Kit.furnish`). The room writer is told the tree and not its
+# parts, and a part is in no closed set a line is read against: `take branch`
+# finds nothing lying here. Only the break attempt reads it -- one strength
+# check less the hold's penalty (`Item::Kit::HOLD_PENALTY`), on a d20 keyed on
+# the part's own row at story time (`Roll::SNAP`).
+#
+# Two tries at a branch fail and the third passes: the part's row becomes a
+# portable thing in the hand. The bark holds once, then comes away brittle and
+# throws the break die as a thing put down here would, and comes up in pieces:
+# the hand holds nothing new, and no bark is left to try. The branch is then
+# dropped and taken again like any portable thing. A break turn hands the
+# narrator no fact of its own; what came away reaches it only as what the
+# player is carrying.
+story: The Rook Wood Gate
+why: a part is attached to its piece until a strength check against its hold breaks it off, and then it is a thing in the hand
+steps:
+- id: into-rook-wood
+  type: "/move Rook Wood"
+  why: the wood is furnished from its kit as it is written, and the room writer is told the tree and none of its parts
+  browser:
+    token: first-entry
+    realizes: Rook Wood
+    replies:
+    - purpose: location
+      prompt_includes:
+      - "## Already Here, Decided By The Game"
+      - 'Fixed in place: old tree, undergrowth (unsearched), fallen log.'
+      - 'Loose, and could be picked up: snail shell.'
+      prompt_excludes: [branch, bark]
+      content:
+        description: A wood of old trees, one far older than the rest.
+        lore: The porters cut their kindling here.
+        items: []
+        people: []
+    - purpose: location
+      content:
+        exits: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: Rook Wood (realized)
+    here: [old tree, undergrowth, fallen log, snail shell]
+    changed: true
+    refused: false
+
+- id: a-branch-is-not-lying-here
+  type: take branch
+  why: a part is in no closed set a line is read against, so there is no branch lying here to take
+  expect:
+    refused: true
+    changed: false
+
+- id: the-first-try-fails
+  type: "/break a branch off the old tree"
+  why: a firm hold takes three off strength, and the d20 comes up over what is left
+  browser:
+    token: break-1
+    replies:
+    - purpose: narration
+      content: You reach up and take hold of a low branch. It does not give.
+      prompt_excludes: [You tried to break, It held, strength ->]
+  expect:
+    here: [old tree, undergrowth, fallen log, snail shell]
+    carrying: []
+
+- id: the-second-try-fails
+  type: "/break a branch off the old tree"
+  why: the next try is thrown at a later story time, and fails again
+  browser:
+    token: break-2
+    replies:
+    - purpose: narration
+      content: You hang your weight on it. It holds.
+      prompt_excludes: [You tried to break, It held]
+  expect:
+    carrying: []
+
+- id: the-third-try-passes
+  type: "/break a branch off the old tree"
+  why: a passed check makes the part's row a portable thing in the hand, and the narrator is told only what the player carries
+  browser:
+    token: break-3
+    replies:
+    - purpose: narration
+      content: The branch cracks away in your hands.
+      prompt_includes: ['The player is carrying: branch.']
+      prompt_excludes: [You broke, strength ->]
+  expect:
+    here: [old tree, undergrowth, fallen log, snail shell]
+    carrying: [branch]
+
+- id: the-bark-holds
+  type: "/break the bark"
+  why: a loose hold takes nothing off strength, and the check can still fail
+  browser:
+    token: bark-1
+    replies:
+    - purpose: narration
+      content: You pick at the bark. It clings.
+  expect:
+    carrying: [branch]
+
+- id: the-bark-comes-away-in-pieces
+  type: "/break the bark"
+  why: brittle bark that comes away throws the break die as a thing put down here would, and comes up spent
+  expect:
+    changed: true
+    change: It came away in pieces; you are holding nothing new.
+    here: [old tree, undergrowth, fallen log, snail shell]
+    carrying: [branch]
+
+- id: no-bark-is-left-to-break
+  type: "/break the bark"
+  why: the old tree had one bark, and it is spent
+  expect:
+    refused: true
+    changed: false
+    carrying: [branch]
+
+- id: the-branch-put-down
+  type: drop branch
+  why: a branch broken off is a portable thing like any other
+  expect:
+    changed: true
+    here: [old tree, undergrowth, fallen log, snail shell, branch]
+    carrying: []
+
+- id: and-taken-again
+  type: take branch
+  why: and lying on the floor it is in the closed set a take reads
+  expect:
+    changed: true
+    here: [old tree, undergrowth, fallen log, snail shell]
+    carrying: [branch]

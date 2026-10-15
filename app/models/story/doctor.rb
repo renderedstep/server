@@ -1109,6 +1109,9 @@ class Story::Doctor
     findings.concat(items_with_an_unknown_bulk(items))
     findings.concat(fixtures_not_fixed(items))
     findings.concat(things_on_no_fixture(items))
+    findings.concat(parts_not_attached(items))
+    findings.concat(parts_with_no_hold(items))
+    findings.concat(holds_on_no_part(items))
     findings.concat(insides_held_unsearched(items))
     findings.concat(pieces_searched_and_never_drawn(items))
     findings.concat(rooms_over_the_visible_cap(items))
@@ -1398,7 +1401,9 @@ class Story::Doctor
   # resolves the word by an ordering accident, as `duplicate_items` says of the
   # rest. `manual` for its reason: which one the player meant is not derivable.
   def duplicate_items_in_a_room(templates)
-    templates.select(&:lying?)
+    # A part is the one kit row a room may hold two of by name -- an old tree's
+    # two branches -- and no line resolves one by name against the room.
+    templates.select(&:lying?).reject(&:part?)
              .group_by { |item| [ item.location_id, WorldSeed.natural_key(item.name) ] }
              .filter_map do |(_, key), group|
       next if group.one? || key.blank? || group.none?(&:kit_key)
@@ -1444,7 +1449,7 @@ class Story::Doctor
   def things_on_no_fixture(items)
     by_id = items.index_by(&:id)
     items.filter_map do |item|
-      next if item.within_id.nil? && item.how.nil?
+      next if item.part? || (item.within_id.nil? && item.how.nil?)
 
       fixture = by_id[item.within_id] || (Item.find_by(id: item.within_id) if item.within_id)
       problem = if item.within_id.nil? || item.how.nil? then "carries one of within and how and not the other"
@@ -1460,6 +1465,71 @@ class Story::Doctor
       finding(:thing_on_no_fixture, :warning,
               "#{item.name.inspect} -- #{item.whereabouts} -- #{problem}, so nothing in its room is what it lies " \
               "on or in",
+              :manual, subject: item)
+    end
+  end
+
+  # A PART NOT ATTACHED TO A FIXED PIECE IN ITS OWN ROOM. A part is written
+  # `attached` to a fixture in the room it lies in, in its own layer -- the
+  # engine furnishes it so (`kit::furnish`, `Item::Kit.furnish`) and a game's
+  # copy names the game's copy of the piece -- and a part that comes away
+  # stops being one in the same write. So a part attached to nothing, to a row
+  # that is no fixture, or to one in another room or another layer arrived
+  # through raw SQL or a piece deleted out from under it. What it costs: the
+  # engine's break attempts are offered per piece standing here
+  # (`Room::breaks`), so a part on no piece here is one nobody can ever break
+  # off and nothing lists. `manual`: which piece it belonged to is not on
+  # record.
+  def parts_not_attached(items)
+    by_id = items.index_by(&:id)
+    items.select(&:part?).filter_map do |item|
+      piece = by_id[item.within_id] || (Item.find_by(id: item.within_id) if item.within_id)
+      problem = if item.how != Item::ATTACHED || item.within_id.nil? then "is attached to nothing"
+      elsif piece.nil? then "names item ##{item.within_id}, which is not there"
+      elsif !piece.fixture? then "is attached to #{piece.name.inspect}, which is not fixed in place"
+      elsif piece.location_id != item.location_id || piece.playthrough_id != item.playthrough_id
+        "is attached to #{piece.name.inspect}, which is #{piece.whereabouts}"
+      elsif item.intact? && !item.lying?
+        "is not in any room"
+      end
+      next if problem.nil?
+
+      finding(:part_not_attached, :warning,
+              "the part #{item.name.inspect} -- #{item.whereabouts} -- #{problem}; a part is attached to a fixed " \
+              "piece in its own room, and one that is not can never be broken off",
+              :manual, subject: item)
+    end
+  end
+
+  # A PART WITH NO HOLD THE TABLE PRICES. The check to break a part off takes
+  # its hold's penalty off strength (`Item::Kit::HOLD_PENALTY`), and the engine
+  # reads a hold the table does not name as no penalty at all -- so a part with
+  # no hold, or a word the table lacks, is one that comes away as easily as a
+  # loose one whatever it is. `Item#a_part_is_attached` refuses to save one, so
+  # this is raw SQL or a table that dropped a hold a stored row still names.
+  # `manual`: how hard it was meant to hold is not on record.
+  def parts_with_no_hold(items)
+    items.select(&:part?).reject { |item| Item::Kit::HOLD_PENALTY.key?(item.hold) }.map do |item|
+      finding(:part_with_no_hold, :warning,
+              "the part #{item.name.inspect} -- #{item.whereabouts} -- holds by #{item.hold.inspect}, which is not " \
+              "one of #{Item::Kit::HOLD_PENALTY.keys.join(", ")}; the check to break it off takes nothing off " \
+              "strength for it",
+              :manual, subject: item)
+    end
+  end
+
+  # A HOLD LEFT ON A ROW THAT IS NOT A PART. A part that comes away has its
+  # hold cleared in the same write that makes it a portable thing (the
+  # engine's `turn/snap.rs`), and nothing else is ever given one, so a hold on
+  # any other row is raw SQL or a write that stopped halfway. Nothing reads
+  # it there today; it is reported because the next reader of `hold` would
+  # take it for a part. `manual`: whether the row was meant to be a part is
+  # not on record.
+  def holds_on_no_part(items)
+    items.reject(&:part?).select { |item| item.hold.present? }.map do |item|
+      finding(:hold_on_no_part, :warning,
+              "#{item.name.inspect} -- #{item.whereabouts} -- holds by #{item.hold.inspect} and is a " \
+              "#{item.tier} row, not a part; only a part attached to a fixed piece holds by anything",
               :manual, subject: item)
     end
   end

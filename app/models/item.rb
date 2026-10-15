@@ -214,9 +214,19 @@ class Item < ApplicationRecord
   # WHETHER A ROW STANDS IN ITS ROOM OR LIES IN IT. `PORTABLE` is the column's
   # default and every row written before it; a `FIXTURE` is fixed in place,
   # `immovable`, and always lying in a room -- see this class's header.
+  #
+  # A `PART` is attached to a fixed piece and could be broken off it -- an old
+  # tree's branch, a wall's loose stone. It lies in the piece's room, `within`
+  # the piece and `ATTACHED` to it, holding by its `hold` (one of
+  # `Item::Kit::HOLD_PENALTY`'s keys), and it is in no closed set a line is
+  # read against: only the engine's break attempt reads it (renderedstep/engine
+  # `turn/snap.rs`), and a part that comes away is a `PORTABLE` thing in the
+  # hand with its `within`, `how` and `hold` cleared.
   PORTABLE = "portable"
   FIXTURE = "fixture"
-  TIERS = [ PORTABLE, FIXTURE ].freeze
+  PART = "part"
+  TIERS = [ PORTABLE, FIXTURE, PART ].freeze
+  ATTACHED = "attached"
 
   # WHAT A FIXTURE HOLDS, and nothing on a portable row. `top`: things lie on
   # it. `hollow`: things lie in it, in plain view. `closed`: a shut inside
@@ -227,8 +237,8 @@ class Item < ApplicationRecord
   # HOW A THING LIES ON THE FIXTURE IT NAMES, and which fixtures take which:
   # `on` a top (a `top` or a `closed` fixture), `in` a `hollow` one or a
   # `closed` one -- inside it, where nobody sees it until it is searched
-  # (`Item.shut_in`).
-  HOWS = { "on" => %w[top closed], "in" => %w[hollow closed] }.freeze
+  # (`Item.shut_in`). A part is `attached` to any fixture, and nothing else is.
+  HOWS = { "on" => %w[top closed], "in" => %w[hollow closed], ATTACHED => HOLDS }.freeze
 
   belongs_to :character, optional: true
   belongs_to :location, optional: true
@@ -267,6 +277,7 @@ class Item < ApplicationRecord
   validates :tier, inclusion: { in: TIERS }
   validates :how, inclusion: { in: HOWS.keys }, allow_nil: true
   validate :a_fixture_is_fixed
+  validate :a_part_is_attached
   validate :a_within_is_whole
   validate :only_a_game_can_spend_an_item
   validate :in_exactly_one_place
@@ -332,6 +343,9 @@ class Item < ApplicationRecord
   # FIXED IN PLACE, or not. `portable` is every row written before the column.
   scope :fixtures, -> { where(tier: FIXTURE) }
   scope :portable, -> { where(tier: PORTABLE) }
+  # ATTACHED TO A FIXED PIECE, and every row that is not.
+  scope :parts, -> { where(tier: PART) }
+  scope :unattached, -> { where.not(tier: PART) }
   # INSIDE A CLOSED PIECE, where a game sees nothing until it searches it.
   scope :shut_in, -> { where(how: "in", within_id: Item.where(holds: "closed").select(:id)) }
 
@@ -403,6 +417,8 @@ class Item < ApplicationRecord
   def carried? = intact? && instance? && !held? && !occupies?(:location_id)
 
   def fixture? = tier == FIXTURE
+
+  def part? = tier == PART
 
   # WHAT A WRITER LIFTING A THING OFF A FLOOR CLEARS: its position and the
   # fixture it lay on or in, in one statement -- `Location::Placement.unplaced`
@@ -655,6 +671,21 @@ class Item < ApplicationRecord
     errors.add(:bulk, "must be #{IMMOVABLE} on a fixture") unless bulk == IMMOVABLE
     errors.add(:base, "is a fixture and is not lying in a room") if intact? && !lying?
     errors.add(:within, "is only for a portable thing; a fixture stands on the floor") if within_id.present?
+  end
+
+  # A PART IS ATTACHED, AND HOLDS BY A HOLD THE TABLE PRICES: `attached` to a
+  # fixture while it is one (the rest is `#a_within_is_whole`'s), with a `hold`
+  # `Item::Kit::HOLD_PENALTY` names. Nothing else is attached or holds by
+  # anything -- a part broken off is a portable thing with both cleared.
+  def a_part_is_attached
+    unless part?
+      errors.add(:how, "#{ATTACHED} is only for a part") if how == ATTACHED
+      errors.add(:hold, "is only for a part") if hold.present?
+      return
+    end
+
+    errors.add(:how, "must be #{ATTACHED} on a part") unless how == ATTACHED
+    errors.add(:hold, "must be one of #{Item::Kit::HOLD_PENALTY.keys.join(", ")}") unless Item::Kit::HOLD_PENALTY.key?(hold)
   end
 
   # HALF A PLACE ON A FIXTURE IS NOT ONE, `#a_position_is_whole`'s rule: a

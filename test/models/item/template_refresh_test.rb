@@ -52,6 +52,18 @@ class Item::TemplateRefreshTest < ActiveSupport::TestCase
     assert_not_predicate lag, :touched?
   end
 
+  # A PART THAT CAME AWAY is a thing in a hand with the engine's plain line,
+  # while the world's row is still attached and says so: that is where the
+  # copy is, not what the world used to say.
+  test "a game's part that came away is not lagging its attached template" do
+    tree = create(:item, :fixture, location: @office, name: "old tree", holds: "nothing")
+    branch = create(:item, :part, within: tree, description: "The branch, attached to the old tree.")
+    create(:item, playthrough: @playthrough, template: branch, name: "branch", description: "The branch.",
+                  character: nil)
+
+    assert_empty refresh.lags
+  end
+
   test "a description the world rewrote is a lag too" do
     _template, _copy = lagging_pair(description: "A slate of grey stone, the chalk half wiped.")
 

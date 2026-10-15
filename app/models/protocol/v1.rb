@@ -25,6 +25,7 @@ module Protocol::V1
   OUTCOME_KINDS = {
     "move" => "moved", "talk" => "talked", "take" => "took", "drop" => "dropped", "examine" => "read",
     "attack" => "attacked", "throw" => "threw", "use" => "used", "search" => "searched",
+    "break" => "broke",
     "conclude" => "ended", "ending" => "ended"
   }.freeze
   OUTCOMES = (OUTCOME_KINDS.values.uniq + %w[narrated refused safety failed]).freeze

@@ -16,6 +16,12 @@
 #   lying        [{ id, name, bulk?, use_kind?, combustible? }] on this
 #                game's floor of `here`
 #   carried      the same shape, in this game's hands
+#   parts        [{ id, name, bulk?, piece: [id, name], hold }] attached to a
+#                fixed piece lying in `here` (`Item::PART`): `piece` is that
+#                piece's id and name, and `hold` one of
+#                `Item::Kit::HOLD_PENALTY`'s keys. Read only by the engine's
+#                own portions (`grammar`, `slash_menu`), whose break attempts
+#                are offered on them; `.build!` writes none
 #
 # The playthrough is `story_id` too. A key left out takes the column's default.
 module EngineVectors::Room

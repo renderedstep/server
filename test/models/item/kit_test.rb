@@ -72,8 +72,57 @@ class Item::KitTest < ActiveSupport::TestCase
     assert things.any? { |thing| thing.within == gutter }
   end
 
+  # A PIECE'S PARTS ARE DRAWN LAST, on the same generator, so `.roll` -- what
+  # the kits vector holds -- is `.furnish` less them, and a room whose pieces
+  # have none rolls what it always rolled.
+  test "parts are drawn last, attached to a fixed piece that came up, and the roll is the rest" do
+    seen = false
+    200.times do |n|
+      name = "clearing #{n}"
+      things = Item::Kit.furnish(name: name, kind: "forest", density: "cluttered")
+      parts = things.select { |thing| thing.tier == Item::PART }
+
+      assert_equal roll(name, "forest", "cluttered"), things - parts
+      assert_operator things.size, :<=, Item::Kit::VISIBLE
+      next if parts.empty?
+
+      seen = true
+      assert_equal parts, things.last(parts.size)
+      parts.each do |part|
+        piece = things.fetch(part.within)
+        assert_equal Item::FIXTURE, piece.tier
+        assert_equal [ Item::ATTACHED, "forest/#{piece.name}/attached/#{part.name}" ], [ part.how, part.kit_key ]
+        assert Item::Kit::HOLD_PENALTY.key?(part.hold)
+        assert_includes Item::FRAGILITIES, part.fragility
+      end
+    end
+    assert seen, "no forest of two hundred came up with a part"
+  end
+
+  test "every hold a part names is priced, and a firmer hold costs more strength" do
+    holds = Item::Kit::PARTS.values.flat_map { |parts| parts.values.map { |spec| spec.fetch("hold") } }.uniq
+
+    assert_empty holds - Item::Kit::HOLD_PENALTY.keys
+    assert_equal Item::Kit::HOLD_PENALTY.values.sort, Item::Kit::HOLD_PENALTY.values_at("loose", "firm", "stout")
+  end
+
   # ------------------------------------------------------------------------
   # THE WRITER.
+
+  test "an old tree is written with its parts, attached to it, holding, and lying in nobody's closed set" do
+    room = create(:location, :stub, name: "Rook Wood", kind: "forest", density: "sparse")
+    written = Item::Kit.new(room).furnish!
+    tree = written.find { |item| item.name == "old tree" }
+    parts = written.select(&:part?)
+
+    assert_equal [ "bark", "branch", "branch" ], parts.map(&:name).sort
+    assert parts.all? { |part| part.within == tree && part.how == Item::ATTACHED && part.location == room }
+    assert_equal [ "firm", Item::STURDY ], parts.find { |part| part.name == "branch" }.then { [ _1.hold, _1.fragility ] }
+    assert_equal [ "loose", "light", "brittle" ], parts.find { |part| part.name == "bark" }.then { [ _1.hold, _1.bulk, _1.fragility ] }
+    assert_equal "The branch, attached to the old tree.", parts.first.description
+    assert parts.none?(&:positioned?)
+    assert_equal written.reject(&:part?).map(&:name), Item.lying_in(room).templates.unattached.order(:id).map(&:name)
+  end
 
   test "furnishing writes the kit as the world's own rows, once" do
     room = create(:location, :stub, name: "The Reading Room", kind: "study", density: "lived-in")
