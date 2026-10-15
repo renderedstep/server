@@ -27,7 +27,8 @@ sqlite3 'file:storage/development.sqlite3?mode=ro' ".backup $DATA/owner-copy.sql
 $DATA/venv/bin/python script/pointer_classifier/live_lines.py \
   $DATA/owner-copy.sqlite3 test/fixtures/files/classifier_corpus.yml $DATA/live.jsonl
 
-# 3. Train (CPU; about two hours on a busy laptop).
+# 3. Train (CPU; about an hour on 8 threads of a busy laptop, ~3 GB of memory).
+#    It checkpoints every 50 steps; run the same command again to resume.
 $DATA/venv/bin/python script/pointer_classifier/train.py \
   --rooms $DATA/rooms/rooms.jsonl --live $DATA/live.jsonl --out $DATA/model
 
