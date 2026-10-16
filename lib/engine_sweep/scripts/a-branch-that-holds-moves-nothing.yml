@@ -1,0 +1,59 @@
+# A BRANCH THAT HOLDS MOVES NOTHING, AND A SECOND GAME HAS A TREE OF ITS OWN.
+#
+# A failed break is a played turn that moves nothing: the part stays attached,
+# the room and the hands are as they were, and the engine's sentence says it
+# held. A second game walking into the wood copies the tree with its own parts
+# (`Item::Snapshot` brings `hold` along), and its try is thrown on its own
+# copy's row, so neither game's die is the other's; the first game's branch
+# is still on its tree when it tries again.
+story: The Rook Wood Gate
+why: a failed break moves nothing, and every game breaks its own copy of a part
+steps:
+- id: into-rook-wood
+  type: "/move Rook Wood"
+  why: the wood is furnished from its kit as it is written
+  browser:
+    token: first-entry
+    realizes: Rook Wood
+    replies:
+    - purpose: location
+      content:
+        description: A wood of old trees, one far older than the rest.
+        lore: The porters cut their kindling here.
+        items: []
+        people: []
+    - purpose: location
+      content:
+        exits: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: Rook Wood (realized)
+    here: [old tree, undergrowth, fallen log, snail shell]
+
+- id: a-branch-that-holds
+  type: "/break branch off old tree"
+  why: a failed check is a played turn that leaves the room and the hands as they were
+  expect:
+    changed: false
+    refused: false
+    note: It held; nothing came away.
+    here: [old tree, undergrowth, fallen log, snail shell]
+    carrying: []
+
+- id: a-second-game-walks-in
+  player: second
+  type: go to Rook Wood
+  why: a second game copies the tree with its own parts
+  expect:
+    location: Rook Wood (realized)
+    here: [old tree, undergrowth, fallen log, snail shell]
+
+- id: and-tries-its-own-branch
+  player: second
+  type: "/break branch off old tree"
+  why: its try is thrown on its own copy's row
+
+- id: the-first-games-branch-is-still-on-the-tree
+  type: "/break branch off old tree"
+  why: the first game's branch is still attached, whatever the second game did

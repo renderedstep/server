@@ -1,0 +1,65 @@
+# A WOOD THE ENGINE FURNISHES, WITH A TREE TO BREAK A BRANCH OFF.
+#
+# The gate is written by hand and holds nothing. Rook Wood is a stub with a
+# kind and a density, so the engine furnishes it from its kit the moment it
+# is written (`Item::Kit`): a forest's old tree always comes up, and it is
+# born with its parts -- branches that hold firm and bark that holds loose --
+# which are records on the tree, in no list a line is read against but the
+# break attempts.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lamps, hand carts and hatchets.
+  weapons: Walking sticks.
+  geographies: A walled ward and the wood behind its gate.
+  civilizations: A walled town that keeps its records.
+  history: The wood was the ward's before the wall was.
+  economics: Coins and stamped receipts.
+  politics: The ward keeps the peace.
+  religion: The town keeps its own festivals.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the town.
+story:
+  title: The Rook Wood Gate
+  genre: town adventure
+  start_time: '2026-09-28T09:00:00Z'
+  preface: The ward's back gate opens onto a wood.
+  summary: Tamsin goes out of the gate for firewood.
+opening_scene:
+  location: The Back Gate
+  characters: [Tamsin Rook]
+  description: You stand at the ward's back gate.
+  summary: Tamsin comes to the gate.
+characters:
+- fullname: Tamsin Rook
+  nickname: Tamsin
+  race: Townsfolk
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A ward porter sent out for kindling.
+  personality: Patient and plain.
+  appearance: A canvas apron.
+  likes: A dry log.
+  dislikes: Wet boots.
+  fears: The wood after dark.
+  stats: {level: 2, hit_die: 8, strength: 10, dexterity: 11, will: 10}
+locations:
+- name: The Back Gate
+  detail_level: realized
+  opening: true
+  description: A narrow gate in the ward wall, standing open onto a wood.
+  teaser: The ward's back gate.
+  lore: The porters go out this way for kindling.
+- name: Rook Wood
+  detail_level: stub
+  population: nobody
+  kind: forest
+  density: sparse
+  teaser: A wood beyond the gate.
+connections:
+- between: [The Back Gate, Rook Wood]
+  distance: adjacent
+  travel_method: walking

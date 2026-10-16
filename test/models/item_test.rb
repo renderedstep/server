@@ -484,6 +484,21 @@ class ItemTest < ActiveSupport::TestCase
     assert_predicate build(:item, :lying, location: room, within: create(:item, :lying, location: room), how: "on"), :invalid?
   end
 
+  # A PART is attached to any fixture, whatever it holds, and holds by a word
+  # the kit table prices; nothing else is attached or holds by anything.
+  test "a part is attached to a fixture by a priced hold, and nothing else is attached or holds" do
+    room = create(:location)
+    tree = create(:item, :fixture, location: room, name: "old tree", holds: "nothing")
+
+    assert_predicate build(:item, :part, within: tree), :valid?
+    assert_predicate build(:item, :part, within: tree, hold: nil), :invalid?
+    assert_predicate build(:item, :part, within: tree, hold: "welded"), :invalid?
+    assert_predicate build(:item, :part, within: tree, how: "on"), :invalid?
+    assert_predicate build(:item, :part, within: create(:item, :lying, location: room, name: "stick")), :invalid?
+    assert_predicate build(:item, :lying, location: room, within: tree, how: Item::ATTACHED), :invalid?
+    assert_predicate build(:item, :lying, location: room, hold: "firm"), :invalid?
+  end
+
   test "a fixture destroyed puts what lay on it on the floor, both columns together" do
     desk = create(:item, :fixture)
     stamp = create(:item, :lying, location: desk.location, within: desk, how: "on")

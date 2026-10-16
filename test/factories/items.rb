@@ -88,6 +88,19 @@ FactoryBot.define do
       holds { "hollow" }
     end
 
+    # ATTACHED TO A FIXED PIECE: a firm branch, the shape a kit writes. The
+    # piece is the caller's (`within:`), and the part takes its room and layer
+    # from it, as `Item#a_within_is_whole` wants.
+    trait :part do
+      character { nil }
+      name { "branch" }
+      tier { Item::PART }
+      how { Item::ATTACHED }
+      hold { "firm" }
+      location { within&.location }
+      playthrough { within&.playthrough }
+    end
+
     # Readable and nobody has read it yet -- a seeded note whose file did not
     # spell the words out, or a row older than the columns. `Item::Inscriber`
     # writes them on the first read, once.

@@ -71,6 +71,8 @@ module EngineData
       "pieces" => map(String),
       "holding" => map(String),
       "contents" => map(String),
+      "parts" => map(map({ "count" => [ Integer ], "hold" => String, "bulk" => String, "fragility" => String })),
+      "hold_penalty" => map(Integer),
       "pools" => map({ "count" => [ Integer ], "from" => [ String ] }),
       "readable" => [ String ], "use_kinds" => map(String), "combustible" => [ String ]
     },

@@ -19,9 +19,15 @@
 # in the prompt on every run. ONE GENERATOR, THROWN IN ONE ORDER: a die per
 # piece the kind lists, in the file's order; then, for each piece that came up,
 # the count of what lies on or in it and a draw per thing; then the count of
-# small stuff at the room's density and a draw per thing. No name is drawn
-# twice in one room, and the list is cut at `VISIBLE` -- pieces first, so a cut
-# only ever drops small stuff.
+# small stuff at the room's density and a draw per thing; last, for each piece
+# that came up, how many of each of its parts it was born with. No name is
+# drawn twice in one room but a part's (a tree's two branches), and the list is
+# cut at `VISIBLE` -- pieces first, so a cut only ever drops parts and then
+# small stuff.
+#
+# PARTS ARE NOT STATED TO THE ROOM'S WRITER (`Location::Generator#already_here`
+# leaves them out) and are in no closed set a line is read against
+# (`Playthrough#items_lying_in`): only the engine's break attempt reads them.
 #
 # A ROOM WITH NO WORD GETS NOTHING, which is the rule that a parameter ships
 # inert: a kind the table does not have, or none at all, rolls no die and
@@ -38,8 +44,10 @@
 # the table says; a piece that can be carried off is a portable thing of the
 # table's bulk; a thing on or in a piece is a portable thing lying `within` it,
 # with no position of its own; small stuff is a portable thing on the floor.
-# Every row carries its `kit_key` -- `kind/piece`, `kind/piece/thing` or
-# `kind/loose/thing` -- which is what keeps a kit row out of the room writer's
+# A part is an `Item::PART` `attached` to its piece, with the piece's room, no
+# position, a `hold` and the bulk and fragility it will have once it comes
+# away. Every row carries its `kit_key` -- `kind/piece`, `kind/piece/thing`,
+# `kind/piece/attached/part` or `kind/loose/thing` -- which is what keeps a kit row out of the room writer's
 # caps (`Item.bespoke`) and tells the doctor who wrote it. A description is one
 # engine line and no prose: nothing sends an item's description to a model, and
 # the narrator is what makes a desk read like a desk.
@@ -60,13 +68,34 @@ class Item::Kit
   # bulk for a piece that stands here and can be carried off.
   PIECES = TABLES.fetch("pieces")
 
-  # One thing a kit writes. `within` is the index, in the same list, of the
-  # piece it lies on or in.
-  Thing = Data.define(:name, :tier, :holds, :bulk, :within, :how, :kit_key)
+  # WHAT IS ATTACHED TO EACH FIXED PIECE THAT HAS ANYTHING, and what each hold
+  # takes off strength on the check to break a part off (`Roll::SNAP`, the
+  # engine's `turn/snap.rs`). Read by the doctor, which names a part whose hold
+  # has no penalty.
+  PARTS = TABLES.fetch("parts")
+  HOLD_PENALTY = TABLES.fetch("hold_penalty")
 
-  # THE ROOM'S KIT, as values and in the order it is written. Pure: it reads the
-  # tables and throws the dice, and touches no record.
+  # One thing a kit writes. `within` is the index, in the same list, of the
+  # piece it lies on, in or is attached to; `hold` and `fragility` are a part's
+  # and nil on anything else.
+  Thing = Data.define(:name, :tier, :holds, :bulk, :within, :how, :kit_key, :hold, :fragility) do
+    def initialize(hold: nil, fragility: nil, **rest) = super
+  end
+
+  # THE ROOM'S KIT, as values and in the order it is written, as it was rolled
+  # before pieces had parts: `.furnish` less the parts. Pure: it reads the
+  # tables and throws the dice, and touches no record. It is what the kits
+  # vector holds (`lib/engine_vectors/kits.rb`), and since the parts are drawn
+  # after everything else and cut first, adding them moved none of it.
   def self.roll(name:, kind:, density:)
+    furnish(name: name, kind: kind, density: density).reject { |thing| thing.tier == Item::PART }
+  end
+
+  # EVERYTHING A ROOM IS FURNISHED WITH, its pieces' parts included, in the
+  # order it is written: `.roll`'s list, then, for each piece that came up, in
+  # the file's order, how many of each of its parts it was born with -- and the
+  # whole cut at `VISIBLE`. The engine's `kit::furnish`, on the same generator.
+  def self.furnish(name:, kind:, density:)
     kit = TABLES.fetch("kinds")[kind]
     return [] if kit.nil?
 
@@ -94,6 +123,16 @@ class Item::Kit
       end
     end
 
+    pieces.each_with_index do |piece, index|
+      PARTS.fetch(piece, {}).each do |part, spec|
+        Roll.one_of(spec.fetch("count"), rng: rng).times do
+          things << Thing.new(name: part, tier: Item::PART, holds: nil, bulk: spec.fetch("bulk"), within: index,
+                              how: Item::ATTACHED, kit_key: "#{kind}/#{piece}/#{Item::ATTACHED}/#{part}",
+                              hold: spec.fetch("hold"), fragility: spec.fetch("fragility"))
+        end
+      end
+    end
+
     things.first(VISIBLE)
   end
 
@@ -107,6 +146,7 @@ class Item::Kit
   # THE ONE ENGINE LINE A KIT'S ROW IS DESCRIBED BY, given the piece it lies on
   # or in (anything with a `name`), or nil.
   def self.description_of(thing, within)
+    return "The #{thing.name}, attached to the #{within.name}." if within && thing.how == Item::ATTACHED
     return "The #{thing.name}, #{thing.how} the #{within.name}." if within
     return "The #{thing.name}, fixed in place." if thing.tier == Item::FIXTURE
 
@@ -137,7 +177,7 @@ class Item::Kit
   def furnish!
     return [] if location.place? || furnished?
 
-    things = self.class.roll(name: location.name, kind: location.kind, density: location.density)
+    things = self.class.furnish(name: location.name, kind: location.kind, density: location.density)
     Item.transaction do
       things.each_with_object([]) { |thing, rows| rows << write!(thing, rows) }
     end
@@ -154,7 +194,8 @@ class Item::Kit
       bulk: thing.bulk, within: within, how: thing.how, kit_key: thing.kit_key,
       use_kind: TABLES.fetch("use_kinds").fetch(thing.name, "ordinary"),
       combustible: TABLES.fetch("combustible").include?(thing.name),
-      readable: TABLES.fetch("readable").include?(thing.name)
+      readable: TABLES.fetch("readable").include?(thing.name),
+      **{ hold: thing.hold, fragility: thing.fragility }.compact
     )
     return item if within
 
@@ -183,6 +224,16 @@ class Item::Kit
     PIECES.each { |piece, word| problems << "#{piece} is #{word} and holds nothing" if %w[top hollow].include?(word) && !TABLES.fetch("holding").key?(piece) }
     drawn = TABLES.fetch("pools").values.flat_map { |pool| pool.fetch("from") } + TABLES.fetch("kinds").values.flat_map { |kit| kit.fetch("loose") }
     problems << "#{(drawn & PIECES.keys).inspect} are both a piece and a thing" if (drawn & PIECES.keys).any?
+    PARTS.each do |piece, parts|
+      problems << "#{piece} has parts and is not fixed" unless Item::HOLDS.include?(PIECES[piece])
+      parts.each do |part, spec|
+        problems << "#{part} is both a piece and a part" if PIECES.key?(part)
+        problems << "#{piece}'s #{part} has no count" if spec.fetch("count").empty? || spec.fetch("count").any?(&:negative?)
+        problems << "#{piece}'s #{part} holds #{spec.fetch("hold").inspect}, which has no penalty" unless HOLD_PENALTY.key?(spec.fetch("hold"))
+        problems << "#{piece}'s #{part} is #{spec.fetch("bulk").inspect}, which no hand moves" unless Item::BULK[spec.fetch("bulk")]
+        problems << "#{piece}'s #{part} is #{spec.fetch("fragility").inspect}, which is no fragility" unless Item::FRAGILITIES.include?(spec.fetch("fragility"))
+      end
+    end
     TABLES.fetch("density").each_key { |word| problems << "density #{word} is not Location::Kind's" unless Location::Kind::DENSITIES.include?(word) }
     TABLES.fetch("use_kinds").each_value { |use| problems << "#{use} is no use kind" unless Item::USE_KINDS.include?(use) }
     unless VISIBLE + Item::Registry::MAX_PER_ROOM == MAX_VISIBLE_PER_ROOM
