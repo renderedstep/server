@@ -428,9 +428,13 @@ that, both cheap to forget:
 
 `classifier-cascade-state-20260919` was the cascade's kept set until the
 checked-in worlds gained arcs; `classifier-cascade-state-20260927` is the same
-request re-bought on them, and on today's worlds its lead over the model call
-alone is **inside the noise**. Read both READMEs before changing anything about
-the cascade.
+request re-bought on them, and on those worlds its lead over the model call
+alone was **inside the noise**. `classifier-cascade-state-20261017` is the
+cascade re-bought at today's corpus, with the `throw` lines in it: on the lines
+both sets scored it is NOISE against the 2026-09-27 set, and on the whole corpus
+it reads **behind** the model call alone, because the cascade asks no `throw`
+question and composes six of the throw lines wrong without escalating. Read the
+READMEs before changing anything about the cascade.
 
 ### What it measures
 
@@ -1257,6 +1261,10 @@ moved with the world -- see `db/eval/classifier-2026-09-26/README.md`, which
 also has why the classifier readings were scored twice. Every set's README has
 its verdict against the set it replaced; the receipts, the credit readings and
 the scripts are under `doc/evidence/seed-world-arcs-rebuy/`.
+
+`classifier-cascade-state-20261017` replaces `classifier-cascade-state-20260927`
+as the cascade's before side: the same arm and transport at today's corpus
+digest. Its README has both verdicts and its receipts.
 
 `inscription-2026-10-02` and `prompt-ending-after-2026-10-02` replace
 `inscription-2026-09-26` and `prompt-ending-2026-09-10` in turn. The Lunar
