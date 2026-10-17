@@ -480,6 +480,48 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
                     alone.spread(:closed_set_misses, arm: arm).median
   end
 
+  # THE CASCADE AT TODAY'S CORPUS: the arc set's arm and transport re-bought
+  # on every labelled line, the throw lines among them. Its README has the
+  # verdicts; what is asserted here is that it is that run, on these lines,
+  # and that on the lines the arc set also scored it has not moved.
+  TODAY_CASCADE = "classifier-cascade-state-20261017".freeze
+
+  test "the cascade at today's corpus is one run of today's request on every line, every reading kept" do
+    result = load_kept(TODAY_CASCADE)
+
+    assert result.cascade
+    assert_equal Eval::Classifier.digest, result.corpus_digest
+    assert_equal Eval::Classifier.corpus.size, result.corpus_size
+    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms
+    assert_equal Eval::Noise::MIN_RUNS, result.reps
+    assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size
+    assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq
+    result.rows.each do |row|
+      flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
+      assert_equal flagged, row["resolved_by"] == "typed_model_escalated", row["id"]
+    end
+    %w[classifier.json offline.json receipts.json README.md].each do |file|
+      assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{TODAY_CASCADE}/#{file}"
+    end
+  end
+
+  test "on the lines the arc cascade set also scored, the cascade at today's corpus reads NOISE against it" do
+    before = load_kept(ARC_CASCADE)
+    after = load_kept(TODAY_CASCADE)
+    shared = before.rows.map { |row| row["id"] }.to_set
+    accuracy = ->(result) { result.passes.map { |pass| pass.rows.select { |row| shared.include?(row["id"]) }.count { |row| row["right"] }.fdiv(shared.size) } }
+
+    assert_equal arc_corpus.size, shared.size
+    assert_predicate Eval::Noise.compare(:accuracy, accuracy.(before), accuracy.(after)), :noise?
+  end
+
+  test "the floor of the cascade at today's corpus can be recomputed offline" do
+    floor = JSON.parse(Eval.kept_root.join(TODAY_CASCADE, "offline.json").read)
+    assert_equal Eval::Classifier.digest, floor.fetch("corpus_digest")
+    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json), floor.fetch("floor")
+  end
+
   test "the current classifier floor can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(CURRENT, "offline.json").read)
     assert_equal Eval::Classifier.digest(current_corpus), floor.fetch("corpus_digest")
