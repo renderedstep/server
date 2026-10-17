@@ -1,0 +1,8 @@
+# CPU-only PyTorch: install with
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+# and then the rest of this file.
+torch>=2.14
+transformers>=5.19
+safetensors
+pyyaml
+numpy
