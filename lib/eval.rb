@@ -418,6 +418,10 @@ module Eval
     db/eval/classifier-cascade-openrouter-20260927/classifier.json
     db/eval/classifier-cascade-openrouter-20260927/offline.json
     db/eval/classifier-cascade-openrouter-20260927/README.md
+    db/eval/classifier-cascade-state-20261017/classifier.json
+    db/eval/classifier-cascade-state-20261017/offline.json
+    db/eval/classifier-cascade-state-20261017/receipts.json
+    db/eval/classifier-cascade-state-20261017/README.md
     db/eval/classifier-throw-before-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/offline.json
