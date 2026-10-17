@@ -1,12 +1,14 @@
 """Trains the pointer classifier on staged rooms and templated lines.
 
-    python train.py --rooms <rooms.jsonl> --out <model dir> [--live <live.jsonl>] [--epochs 3]
+    python train.py --rooms <rooms.jsonl> --out <model dir> [--live <live.jsonl>] [--paid <labels.jsonl>] [--epochs 3]
 
 `rooms.jsonl` is `rake eval:pointer_rooms`'s output: the engine's own cascade
 `state` for every generated room. Each epoch writes fresh lines into those
 rooms (`templates.py`, labelled by construction), so no two epochs see the same
 sentences. `--live` adds the owner's model-read lines (`live_lines.py`),
-repeated `--live-repeat` times because there are few of them. A slice of the
+repeated `--live-repeat` times because there are few of them. `--paid` adds the
+written-and-labelled lines (`rake eval:pointer_labels`), repeated
+`--paid-repeat` times, less a held-out slice of their rooms. A slice of the
 rooms is held back and scored after every epoch; the classifier corpus is
 never read here -- it is the yardstick, and `rake eval:classifier` is where it
 is used.
@@ -99,6 +101,27 @@ def live_examples(path, repeat):
     return made * repeat
 
 
+def paid_examples(path, held_out, seed, held_rooms):
+    """The paid lines (`rake eval:pointer_labels`), split BY ROOM: a held-out
+    room's lines are scored after every epoch and never trained on, so that
+    figure is agreement with the labeller on rooms the model has not read. A
+    room the templates hold out (`held_rooms`) is held out here too."""
+    rows = []
+    with open(path) as source:
+        for row in source:
+            row = json.loads(row)
+            if "label" in row:
+                rows.append(row)
+    rooms = sorted({row["room"] for row in rows})
+    random.Random(seed).shuffle(rooms)
+    held = set(rooms[: int(len(rooms) * held_out)]) | (set(rooms) & held_rooms)
+    split = {True: [], False: []}
+    for row in rows:
+        split[row["room"] in held].append({"state": row["state"], "line": row["line"], "label": row["label"],
+                                           "options": options_for(row["state"])})
+    return split[False], split[True]
+
+
 def score(model, tokenizer, examples, size=64):
     model.eval()
     right = {"intent": 0, "target": 0, "also": 0, "nmto": 0, "present": 0}
@@ -136,6 +159,9 @@ def main():
     parser.add_argument("--out", required=True)
     parser.add_argument("--live")
     parser.add_argument("--live-repeat", type=int, default=6)
+    parser.add_argument("--paid", help="labels.jsonl from `rake eval:pointer_labels`")
+    parser.add_argument("--paid-repeat", type=int, default=4)
+    parser.add_argument("--paid-held-out", type=float, default=0.1, help="share of the paid ROOMS held out")
     parser.add_argument("--encoder", default="jhu-clsp/ettin-encoder-17m")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--per-room", type=int, default=32)
@@ -161,6 +187,9 @@ def main():
     held, train_rooms = rooms[:cut], rooms[cut:]
     held_examples = examples_for(held, words, arguments.seed - 1, arguments.per_room)
     live = live_examples(arguments.live, arguments.live_repeat) if arguments.live else []
+    paid, paid_held = (paid_examples(arguments.paid, arguments.paid_held_out, arguments.seed,
+                                     {room["room"] for room in held}) if arguments.paid else ([], []))
+    live += paid * arguments.paid_repeat
 
     model = PointerClassifier(base)
     heads = [p for name, p in model.named_parameters() if not name.startswith("encoder.")]
@@ -175,7 +204,8 @@ def main():
         optimizer, lambda step: min(1.0, (step + 1) / warmup) * max(0.0, (steps - step) / max(1, steps - warmup)))
 
     log = {"arguments": vars(arguments), "rooms": len(rooms), "held_out_rooms": len(held),
-           "live_rows": len(live) // max(1, arguments.live_repeat), "epochs": []}
+           "live_rows": (len(live) - len(paid) * arguments.paid_repeat) // max(1, arguments.live_repeat),
+           "paid_rows": len(paid), "paid_held_out_rows": len(paid_held), "epochs": []}
     step, minutes, running = 0, 0.0, {}
     checkpoint = os.path.join(arguments.out, "checkpoint.pt")
     if os.path.exists(checkpoint):
@@ -228,6 +258,8 @@ def main():
                 keep()
         scored = score(model, tokenizer, held_examples)
         log["epochs"].append({"epoch": epoch, "held_out": scored, "minutes": round((time.time() - started) / 60, 1)})
+        if paid_held:
+            log["epochs"][-1]["paid_held_out"] = score(model, tokenizer, paid_held)
         print(json.dumps(log["epochs"][-1]), flush=True)
         save(model, tokenizer, arguments.out, log)
         keep()
