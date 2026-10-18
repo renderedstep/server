@@ -184,6 +184,7 @@ class Eval::Classifier::Stage
 
   def stand!
     story = load_world!
+    write_the_room!(story)
     place_the_cast!(story)
     playthrough = new_playthrough(story)
     mechanics = Playthrough::Mechanics.new(playthrough, model: false)
@@ -209,6 +210,25 @@ class Eval::Classifier::Stage
   end
 
   private
+
+  # A STUB THE POSITION STANDS IN, WRITTEN AS A ROOM WRITER'S REPLY WOULD WRITE
+  # IT, and the one thing a setup line cannot reach: walking into a stub is a
+  # model call, which no stage makes. A position that names `written` (the
+  # prompt corpus's, `Eval::Prompt::Corpus::Position`) gives the room the
+  # description and lore it states, as `EngineSweep::Walk` writes a stub from a
+  # script's scripted reply, and the room is furnished from its kit offline
+  # (`Location::Generator#furnish!`), so every fixture and part in it is the
+  # kit's own record. Before anybody stands in it, so the game's snapshot of
+  # the room holds them.
+  def write_the_room!(story)
+    written = position.try(:written).presence or return
+    room = story.locations.find_by(name: position.room)
+    raise Unstageable, "#{position.id}: #{story.title.inspect} has no room called #{position.room.inspect}" if room.nil?
+    raise Unstageable, "#{position.id}: #{position.room.inspect} is written already" unless room.stub?
+
+    room.update!(description: written.fetch("description"), lore: written.fetch("lore"), detail_level: "realized")
+    Location::Generator.new(room).furnish!
+  end
 
   # WHERE THE RECORDS PUT PEOPLE, when a position needs them somewhere the seed
   # file does not. Through `Character#move_to!` -- the explicit writer -- and

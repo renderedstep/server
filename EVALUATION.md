@@ -1566,6 +1566,7 @@ taken fresh, and it tells you that for nothing rather than after a run.
 | `MODELS=a,b` | **the arm selector**, `Eval::Classifier::Arm` and not a second one. Defaults to ONE model — `BaseAgent::REMOTE_MODEL_IDS.first`, which is what a player's rooms are really written by |
 | `SET=name` | where the numbers land (`tmp/eval/<set>/realization.json`). Defaults to a timestamp |
 | `SAMPLE=12` | how many flagged cases the board prints in full |
+| `CASES=a,b` | run only the cases named — a targeted buy of the few a change moves. The set's corpus digest is over the cases it built |
 | `SAMPLE_CASES=4` | run only the first n cases — a smoke test for a few cents |
 | `YES=1` | spend past the $1.00 ceiling |
 
