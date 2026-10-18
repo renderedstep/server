@@ -2449,6 +2449,26 @@ writes from the description and the people present, not from the list, so
 the change was shipped because the request is now true, not because it
 measured better. The after set is `Eval::Arrival::BASELINE`.
 
+**What could be broken off a fixed piece** is its own corpus on all three
+readers it is told to, so no kept set above lost its digest. `CORPUS=parts` on
+`eval:arrival` (`Eval::Arrival::Parts`) stages a wood whose old tree has two
+branches and bark. `CORPUS=parts` on `eval:prompt`
+(`test/fixtures/files/prompt_parts_corpus.yml`) plays the sweep's
+`/break a branch off the old tree` in Rook Wood, written as the sweep writes
+it and furnished from its kit. On `eval:realization`,
+`CASES=iron-gate-tunnel-upward` builds the one case whose room has a piece with
+a part. Each pair (`*-parts-before-2026-10-18` and `*-parts-after-2026-10-18`)
+is the engine either side of the "Attached to the old tree, and could be broken
+off: two branches, bark." line, four repetitions a side.
+`Eval::PartsKeptSetsTest` holds each after side to today's request and each
+before side to it less that line. Every figure is noise. No check reads a
+part, so the paragraphs were read by hand: on neither side does a part come
+away unbroken or a piece go bare. The room writer names no fixed piece of
+the tunnel on either side. The arrival writer mentions the tree's branches
+or bark a little more often after, but never counts them. The narrator,
+whose branch holds in this case, writes it held on both sides. The line
+shipped because the request is now true, not because it measured better.
+
 **The room reacting to the arrival** is its own corpus on the same bench,
 `CORPUS=reactions` on `eval:arrival` and `eval:arrival_digest`
 (`Eval::Arrival::Reactions`, `test/fixtures/files/arrival_reactions_corpus.json`):

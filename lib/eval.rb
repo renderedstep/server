@@ -97,9 +97,13 @@ module Eval
     lib/eval/arrival/stage.rb
     lib/eval/arrival/reactions.rb
     lib/eval/arrival/reactions/stage.rb
+    lib/eval/arrival/parts.rb
     lib/tasks/arrival.rake
     test/fixtures/files/arrival_corpus.json
     test/fixtures/files/arrival_reactions_corpus.json
+    test/fixtures/files/arrival_parts_corpus.json
+    test/fixtures/files/prompt_parts_corpus.yml
+    test/lib/eval/parts_kept_sets_test.rb
     test/lib/eval/arrival/budget_test.rb
     test/lib/eval/arrival/kept_set_test.rb
     test/lib/eval/arrival/reactions_kept_set_test.rb
@@ -114,6 +118,14 @@ module Eval
     db/eval/arrival-diff-after-2026-10-13/arrival.json
     db/eval/arrival-fixed-before-2026-10-13/arrival.json
     db/eval/arrival-fixed-after-2026-10-13/arrival.json
+    db/eval/arrival-parts-before-2026-10-18/arrival.json
+    db/eval/arrival-parts-after-2026-10-18/arrival.json
+    db/eval/prompt-parts-before-2026-10-18/prompt.json
+    db/eval/prompt-parts-after-2026-10-18/prompt.json
+    db/eval/realization-parts-before-2026-10-18/realization.json
+    db/eval/realization-parts-before-2026-10-18/requests.json
+    db/eval/realization-parts-after-2026-10-18/realization.json
+    db/eval/realization-parts-after-2026-10-18/requests.json
     db/eval/arrival-reactions-2026-09-28/arrival.json
     db/eval/arrival-reactions-2026-09-28/README.md
     db/eval/adversarial-20260909/arrival-before.json
