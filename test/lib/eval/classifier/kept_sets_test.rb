@@ -204,9 +204,10 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
                                  lines: kept.lines.map { |line| FORMER_ACCEPTS[line.id] ? line.with(also_accept: FORMER_ACCEPTS[line.id]) : line })
   end
 
-  # THE STUDY'S LINES, after the cascade's set at today's corpus was bought: the
-  # first position offered a search or an opening of a fixed piece. No kept set
-  # scored them, so each one below is checked against today's corpus less these.
+  # THE STUDY'S LINES, after the cascade's sets at the 354-line corpus were
+  # bought: the first position offered a search or an opening of a fixed piece.
+  # Those sets did not score them, so each is checked against today's corpus
+  # less these.
   ADDED_SINCE_TODAY = %w[use-search-desk use-search-desk-rummage use-search-desk-go-through use-open-desk
                          use-open-desk-drawers use-search-scuttle use-search-scuttle-look-inside
                          unresolved-use-open-scuttle unresolved-use-search-windowsill examine-search-room
@@ -532,6 +533,56 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
   end
 
+  # THE CASCADE THAT ESCALATES A THROW: today's request and corpus, read
+  # through the engine that sends a line naming a throw on to the model call
+  # (`cascade::thrown`). Its README has the verdicts; what is asserted here is
+  # that it is that run, that it escalated exactly what the engine's rule says,
+  # and that the lines the rule cannot reach have not moved.
+  THROW_CASCADE = "classifier-cascade-throw-20261018".freeze
+
+  # `cascade::THROW_VERBS` in the engine, restated as `Eval::Classifier::Pointer`
+  # restates `cascade::SPEECH_VERBS`: no vector portion carries the list.
+  THROW_VERBS = %w[throw throws threw thrown throwing hurl hurls hurled hurling toss tosses tossed tossing
+                   fling flings flung flinging lob lobs lobbed lobbing chuck chucks chucked chucking].freeze
+
+  test "the throw cascade is one run of today's request on every line, escalating a flag or a throw" do
+    result = load_kept(THROW_CASCADE)
+
+    assert result.cascade
+    assert_equal Eval::Classifier.digest(today_corpus), result.corpus_digest
+    assert_equal today_corpus.size, result.corpus_size
+    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms
+    assert_equal Eval::Noise::MIN_RUNS, result.reps
+    assert_equal Eval::Noise::MIN_RUNS * today_corpus.size, result.rows.size
+    assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq
+    result.rows.each do |row|
+      flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
+      assert_equal flagged || thrown?(row["typed"]), row["resolved_by"] == "typed_model_escalated", row["id"]
+    end
+    %w[classifier.json offline.json receipts.json README.md].each do |file|
+      assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{THROW_CASCADE}/#{file}"
+    end
+  end
+
+  test "the throw cascade reads every throw line right and the other lines NOISE against the set before it" do
+    before = load_kept(TODAY_CASCADE)
+    after = load_kept(THROW_CASCADE)
+    unthrown = ->(result) { result.passes.map { |pass| pass.rows.reject { |row| thrown?(row["typed"]) } } }
+    accuracy = ->(result) { unthrown.(result).map { |rows| rows.count { |row| row["right"] }.fdiv(rows.size) } }
+    throws = after.rows.select { |row| thrown?(row["typed"]) }
+
+    assert_equal 8 * Eval::Noise::MIN_RUNS, throws.size
+    assert throws.all? { |row| row["right"] }, throws.reject { |row| row["right"] }.map { |row| row["id"] }.inspect
+    assert_predicate Eval::Noise.compare(:accuracy, accuracy.(before), accuracy.(after)), :noise?
+  end
+
+  test "the floor of the throw cascade can be recomputed offline" do
+    floor = JSON.parse(Eval.kept_root.join(THROW_CASCADE, "offline.json").read)
+    assert_equal Eval::Classifier.digest(today_corpus), floor.fetch("corpus_digest")
+    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
+  end
+
   test "the current classifier floor can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(CURRENT, "offline.json").read)
     assert_equal Eval::Classifier.digest(current_corpus), floor.fetch("corpus_digest")
@@ -575,4 +626,6 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     # read `tmp/eval` on the machine that just ran the bench and `db/eval` in
     # CI, and pass for two different reasons.
     def load_kept(name) = Eval::Classifier::Result.load(Eval.kept_root.join(name))
+
+    def thrown?(typed) = typed.to_s.downcase.split(/[^[:alnum:]]+/).intersect?(THROW_VERBS)
 end

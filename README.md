@@ -686,9 +686,9 @@ flowchart TD
         C1 --> CK
         CK -->|"no: resolved_by = model, byte for byte today's path"| C2
         CK -->|"yes"| CS["MODEL CALL, typed questions, not a chat<br/>the System One cascade -- one System One<br/>request, 6-11 Choice/Noul questions built from<br/>THIS position's own #offered_for sets"]
-        CS --> CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15,<br/>or the request could not be believed?"}
+        CS --> CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15,<br/>or a word of the line is a throw verb,<br/>or the request could not be believed?"}
         CG -->|"no: resolved_by = typed_model<br/>ENGINE COMPOSES the Intent -- no second model call"| C3
-        CG -->|"yes: resolved_by = typed_model_escalated<br/>(a flag fired) or typed_model_unavailable<br/>(missing key, timeout, bad body, out-of-list choice)"| C2
+        CG -->|"yes: resolved_by = typed_model_escalated<br/>(a flag fired, or the line names a throw) or typed_model_unavailable<br/>(missing key, timeout, bad body, out-of-list choice)"| C2
         C2["MODEL CALL, schema'd<br/>Playthrough::IntentSchema<br/>intent: move / talk / examine / take / drop / attack / use / other<br/>target: an enum of ONLY those names and physical tokens"]
         C3["Resolve the answer back to a RECORD or closed choice<br/>an unresolvable target leaves it nil<br/>AND writes a Playthrough::Drift row"]
         C2 --> C3
