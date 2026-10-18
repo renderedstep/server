@@ -573,12 +573,17 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   # today's request.
   USE_BEFORE = "classifier-use-before-20261018".freeze
   USE_AFTER = "classifier-use-after-20261018".freeze
+  # The after side's model call with System One's `use` narrowed to a fixed
+  # piece named in `physical_actions`. The System One request is in no digest,
+  # so it shares the after side's request identity.
+  USE_NARROWED = "classifier-use-narrowed-20261018".freeze
 
-  test "the use pair is one corpus and one arm either side of the request change, the after side today's" do
+  test "the use sets are one corpus and one arm either side of the request change, the after sides today's" do
     before = load_kept(USE_BEFORE)
     after = load_kept(USE_AFTER)
+    narrowed = load_kept(USE_NARROWED)
 
-    [ before, after ].each do |result|
+    [ before, after, narrowed ].each do |result|
       assert result.cascade, result.name
       assert_equal Eval::Classifier.digest, result.corpus_digest, result.name
       assert_equal Eval::Classifier.corpus.size, result.corpus_size, result.name
@@ -595,12 +600,13 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
       end
     end
     assert_equal Eval::Classifier::Version.offline, after.request_identity
+    assert_equal Eval::Classifier::Version.offline, narrowed.request_identity
     assert_not_equal before.request_identity, after.request_identity
   end
 
-  test "the use pair's floor can be recomputed offline" do
+  test "the use sets' floor can be recomputed offline" do
     floor = JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json)
-    [ USE_BEFORE, USE_AFTER ].each do |set|
+    [ USE_BEFORE, USE_AFTER, USE_NARROWED ].each do |set|
       kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
       assert_equal Eval::Classifier.digest, kept.fetch("corpus_digest"), set
       assert_equal floor, kept.fetch("floor"), set
