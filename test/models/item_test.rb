@@ -609,4 +609,22 @@ class ItemTest < ActiveSupport::TestCase
       assert_equal "the #{bare}", item.definite_name, name
     end
   end
+
+  # WHAT COULD BE BROKEN OFF, one line a piece with parts, in the words the
+  # engine's `facts::attached` writes -- its own plural, not `pluralize`.
+  test "the parts on each piece are counted with a word, and a piece with none says nothing" do
+    tree = create(:item, :fixture, name: "old tree")
+    log = create(:item, :fixture, location: tree.location, name: "fallen log")
+    pool = create(:item, :fixture, location: tree.location, name: "pool")
+    parts = [ create(:item, :part, within: tree), create(:item, :part, within: tree, name: "bark"),
+              create(:item, :part, within: tree), create(:item, :part, within: pool, name: "a moss"),
+              create(:item, :part, within: pool, name: "moss") ]
+
+    assert_equal [ "Attached to the old tree, and could be broken off: two branches, bark.",
+                   "Attached to the pool, and could be broken off: two mosses." ],
+                 Item.attached([ tree, log, pool ], parts)
+    assert_equal [ "Attached to the old tree, and could be broken off: branch." ],
+                 Item.attached([ tree ], parts.first(1))
+    assert_empty Item.attached([ log ], parts)
+  end
 end

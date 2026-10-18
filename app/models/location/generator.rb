@@ -713,11 +713,13 @@ class Location::Generator
   # applied to things: the engine decides and the writer is told. Every line is
   # a record read out, never the kit table: the fixtures standing here (a
   # closed one marked, since what is inside it is nobody's to say yet), what
-  # lies on or in each, and the kit's loose things -- never a piece's parts,
-  # which the engine's `realization.rs` leaves out too, so a tree's branches
-  # change no prompt. A seeded fixture reads the
-  # same as a kit's; the writer's own things and a seed file's loose ones are
-  # the items block's business, as they always were.
+  # lies on or in each, and the kit's loose things. A piece's parts are told on
+  # a line of their own after the fixed pieces (`Item.attached`, as the
+  # engine's `realization.rs` tells them), so a tree's branches are in the
+  # room before it is described; a room whose pieces carry none reads as it
+  # did. A seeded fixture reads the same as a kit's; the writer's own things
+  # and a seed file's loose ones are the items block's business, as they
+  # always were.
   #
   # IT IS THE INFORM HALF AND NOT THE VERIFY HALF. The rows exist whatever the
   # writer says; this is what raises the odds that the prose agrees with them.
@@ -737,6 +739,7 @@ class Location::Generator
               "to change, and it will tell the player so. Write the room around them, and do",
               "not add another piece of furniture or fixed thing a player could reach for." ]
     lines << "Fixed in place: #{fixed.map { |item| item.holds == "closed" ? "#{item.name} (unsearched)" : item.name }.join(", ")}." if fixed.any?
+    lines.concat(Item.attached(fixed, Item.lying_in(location).templates.parts.order(:id).to_a))
     fixed.each do |fixture|
       resting = here.select { |item| item.within_id == fixture.id }
       next if resting.empty?
