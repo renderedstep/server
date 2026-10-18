@@ -58,7 +58,7 @@ module Eval::Classifier::Version
   def requests(corpus = Eval::Classifier.corpus, shape: :schema)
     line = corpus.lines.min_by(&:id)
     request = nil
-    Eval::Classifier::Stage.open([ corpus.position(line.position) ]) do |stages|
+    Eval::Classifier::Stage.open([ corpus.position(line.position) ], roots: Eval::Classifier::WORLD_ROOTS) do |stages|
       playthrough = stages.fetch(line.position).playthrough
       rows = Playthrough::Requests.rows
       built = Playthrough::Requests.build(:classifier, rows: rows, playthrough: playthrough.id, line: line.typed)

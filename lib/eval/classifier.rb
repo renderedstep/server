@@ -57,6 +57,13 @@ module Eval::Classifier
   # closed set it was written against.
   CORPUS = Rails.root.join("test/fixtures/files/classifier_corpus.yml")
 
+  # WHERE A CORPUS POSITION'S WORLD IS LOOKED FOR, seeded worlds first so every
+  # position written before the second root keeps the file it always read. The
+  # second is there for The Furnished Rooms: no seeded world has a closed or
+  # hollow piece, so no seeded position is ever offered a search or an opening,
+  # and a corpus that stood only there could not ask whether one is read.
+  WORLD_ROOTS = [ WorldSeed::DIRECTORY, Rails.root.join("lib/engine_sweep/worlds") ].freeze
+
   # Where a bench run's numbers land, beside the `scores.json` an `eval:run`
   # set writes. A classifier set is its own file rather than a column in that
   # one, because the two measure different things over different corpora and a

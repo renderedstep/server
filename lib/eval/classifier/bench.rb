@@ -449,7 +449,7 @@ class Eval::Classifier::Bench
           arm.pinned do
             warmups << warm(arm)
             (1..reps).each do |rep|
-              Eval::Classifier::Stage.open(corpus.positions) do |stages|
+              Eval::Classifier::Stage.open(corpus.positions, roots: Eval::Classifier::WORLD_ROOTS) do |stages|
                 passes << play(arm, rep, stages, Playthrough::Requests.rows)
               end
             end
@@ -481,7 +481,7 @@ class Eval::Classifier::Bench
     seconds = nil
     error = nil
 
-    Eval::Classifier::Stage.open([ corpus.position(line.position) ]) do |stages|
+    Eval::Classifier::Stage.open([ corpus.position(line.position) ], roots: Eval::Classifier::WORLD_ROOTS) do |stages|
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       reading = read(line, stages.fetch(line.position), arm, 0, Playthrough::Requests.rows)
       seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started

@@ -10,7 +10,7 @@ class Eval::Classifier::StageTest < ActiveSupport::TestCase
   test "a staged position leaves the database exactly as it found it" do
     before = { Story.count => :stories, Playthrough.count => :playthroughs, Item.count => :items }
 
-    Eval::Classifier::Stage.open(Eval::Classifier.corpus.positions) do |stages|
+    Eval::Classifier::Stage.open(Eval::Classifier.corpus.positions, roots: Eval::Classifier::WORLD_ROOTS) do |stages|
       assert_equal Eval::Classifier.corpus.positions.size, stages.size
     end
 
