@@ -153,6 +153,9 @@ class PlayerNarratesControllerTest < ActionDispatch::IntegrationTest
   # depend on what this worker ran first, and some of its faces walk out of
   # the study; a line naming nothing in the room the player then stands in is
   # read by a model, which this suite has none of. The card holds for any act.
+  # One face searches the scuttle itself, and then the card rightly says what
+  # the search found; which face it was is read off the game's record of the
+  # scuttle, never off the card's words.
   test "the card names what the turn noticed, and a line naming an unnoticed thing is refused on the page" do
     story = WorldSeed::Loader.load_file(Rails.root.join("lib/engine_sweep/worlds/the-furnished-rooms.yml"))
     game = Playthrough::Session.begin!(story, mode: "player_narrates").playthrough
@@ -172,7 +175,11 @@ class PlayerNarratesControllerTest < ActionDispatch::IntegrationTest
     card = Playthrough::Session.new(game).facts_card(scene)
 
     get playthrough_path(game)
-    assert_select ".facts-card", text: /lump of coal/, count: 0
+    if game.items.find_by!(name: "coal scuttle").searched_at
+      assert_select ".facts-card", text: /lump of coal/
+    else
+      assert_select ".facts-card", text: /lump of coal/, count: 0
+    end
     if card.noticed.any?
       assert_select ".facts-card .sheet-note", "Noticed this turn: #{card.noticed.join(", ")}."
     else
