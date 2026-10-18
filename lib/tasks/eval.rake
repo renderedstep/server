@@ -164,6 +164,24 @@ namespace :eval do
     puts "Wrote #{path}."
   end
 
+  # Both SPEND MONEY: a writer call per room, then a classifier call per line.
+  # See `Eval::Classifier::Pointer::Paraphrases`; run a small COUNT first.
+  desc "Paid lines for the pointer classifier: a chat model writes them for generated rooms. " \
+       "Usage: rake eval:pointer_paraphrases OUT=dir ROOMS=rooms.jsonl COUNT=80 SEED=1"
+  task pointer_paraphrases: :environment do
+    paraphrases = PointerTasks.paraphrases
+    rows = paraphrases.write!(count: (ENV["COUNT"].presence || 80).to_i, seed: (ENV["SEED"].presence || 1).to_i)
+    puts "#{rows.sum { |row| row["lines"].size }} lines for #{rows.size} rooms in #{paraphrases.written_path}."
+  end
+
+  desc "Label the written pointer lines with the classifier call, in their own staged rooms. " \
+       "Usage: rake eval:pointer_labels OUT=dir ROOMS=rooms.jsonl"
+  task pointer_labels: :environment do
+    paraphrases = PointerTasks.paraphrases
+    paraphrases.label!.sort_by { |_why, count| -count }.each { |why, count| puts format("  %5d  %s", count, why) }
+    puts "Labels in #{paraphrases.labels_path}."
+  end
+
   desc "The `also_named` omission rate on its own -- the two-noun lines only. Usage: rake eval:classifier_omission REPS=1"
   task classifier_omission: :environment do
     ClassifierTasks.omission!
@@ -559,6 +577,24 @@ namespace :eval do
               "which needs nothing: `rake eval:prompt_score SET=<name>`."
       end
       abort "The bench must not run in the test environment." if Rails.env.test?
+    end
+  end
+
+  # THE POINTER MODEL'S PAID LINES. Both tasks write training data, so both
+  # refuse a directory inside the repository, and both spend, so both refuse
+  # to run without the key rather than fail line by line.
+  module PointerTasks
+    extend self
+
+    def paraphrases
+      out = ENV["OUT"].presence or abort "OUT=<directory> is where the lines are written; keep it outside the repository."
+      rooms = ENV["ROOMS"].presence or abort "ROOMS=<rooms.jsonl> is `rake eval:pointer_rooms`' output."
+      abort "OUT is inside the repository; training data does not belong in it." if
+        File.expand_path(out).start_with?("#{Rails.root}/")
+      abort "The paid lines must not be made in the test environment." if Rails.env.test?
+      abort "OPENROUTER_API_KEY is not set; both steps are hosted calls." if ENV["OPENROUTER_API_KEY"].blank?
+
+      Eval::Classifier::Pointer::Paraphrases.new(directory: out, rooms: rooms)
     end
   end
 
