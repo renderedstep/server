@@ -426,6 +426,14 @@ module Eval
     db/eval/classifier-cascade-throw-20261018/offline.json
     db/eval/classifier-cascade-throw-20261018/receipts.json
     db/eval/classifier-cascade-throw-20261018/README.md
+    db/eval/classifier-use-before-20261018/classifier.json
+    db/eval/classifier-use-before-20261018/offline.json
+    db/eval/classifier-use-before-20261018/receipts.json
+    db/eval/classifier-use-before-20261018/README.md
+    db/eval/classifier-use-after-20261018/classifier.json
+    db/eval/classifier-use-after-20261018/offline.json
+    db/eval/classifier-use-after-20261018/receipts.json
+    db/eval/classifier-use-after-20261018/README.md
     db/eval/classifier-throw-before-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/offline.json

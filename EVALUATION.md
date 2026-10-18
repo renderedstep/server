@@ -437,8 +437,13 @@ question and composes six of the throw lines wrong without escalating.
 `classifier-cascade-throw-20261018` is the same request after the engine began
 sending a line that names a throw on to the model call (`cascade::thrown`):
 BETTER, REAL against the 2026-10-17 set, NOISE on the lines with no throw verb,
-and level with the model call alone again. Read the READMEs before changing
-anything about the cascade.
+and level with the model call alone again. `classifier-use-before-20261018` and
+`classifier-use-after-20261018` are that cascade on the corpus with the clerk's
+study in it, either side of both readers describing `use` as searching, opening
+or breaking a part off something fixed here. The searches of the desk go from
+never right to always right, while intent accuracy is WORSE, REAL: System One
+now reads "close your door", "inventory that closet" and a bare noun as `use`.
+Read the READMEs before changing anything about the cascade.
 
 ### What it measures
 
@@ -1273,6 +1278,12 @@ digest. Its README has both verdicts and its receipts.
 `classifier-cascade-throw-20261018` replaces `classifier-cascade-state-20261017`
 as the cascade's before side: the same arm, transport and corpus, read through
 the engine that escalates a throw. Its README has both verdicts and its
+receipts.
+
+`classifier-use-after-20261018` replaces `classifier-cascade-throw-20261018` as
+the cascade's before side: the same arm and transport at the 366-line corpus,
+with today's description of `use`. `classifier-use-before-20261018` is the same
+corpus on the previous description. Their READMEs have the verdict and the
 receipts.
 
 `inscription-2026-10-02` and `prompt-ending-after-2026-10-02` replace
