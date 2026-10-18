@@ -178,9 +178,11 @@ class Playthrough::Classifier
   #
   #   model                     no System One key in this environment. One model
   #                             call, exactly as before any of this existed
-  #   typed_model               the cascade answered; neither flag fired
-  #   typed_model_escalated     the cascade flagged the line; the model call
-  #                             answered it
+  #   typed_model               the cascade answered; neither flag fired and
+  #                             the line names no throw
+  #   typed_model_escalated     the cascade flagged the line, or the line names
+  #                             a throw (the engine's `cascade::thrown`); the
+  #                             model call answered it
   #   typed_model_unavailable   the cascade was tried and could not be believed;
   #                             the model call answered it
   #

@@ -23,7 +23,8 @@
 # repository holds only the code that builds, trains and asks the model.
 #
 # ESCALATION, WITH NO KEY. A live cascade sends a line on to Mistral when
-# `named_more_than_one` >= 0.5 or `target_present` < 0.15. A local arm must run
+# `named_more_than_one` >= 0.5 or `target_present` < 0.15, or when a word of
+# the line is a throw verb (`cascade::THROW_VERBS`). A local arm must run
 # with no key and spend nothing, so it answers that call itself, with the
 # reading the engine would have composed with escalation OFF
 # (`cascade::compose`, `Escalation::Off`): the chosen intent, a reported move

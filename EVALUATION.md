@@ -433,8 +433,12 @@ alone was **inside the noise**. `classifier-cascade-state-20261017` is the
 cascade re-bought at today's corpus, with the `throw` lines in it: on the lines
 both sets scored it is NOISE against the 2026-09-27 set, and on the whole corpus
 it reads **behind** the model call alone, because the cascade asks no `throw`
-question and composes six of the throw lines wrong without escalating. Read the
-READMEs before changing anything about the cascade.
+question and composes six of the throw lines wrong without escalating.
+`classifier-cascade-throw-20261018` is the same request after the engine began
+sending a line that names a throw on to the model call (`cascade::thrown`):
+BETTER, REAL against the 2026-10-17 set, NOISE on the lines with no throw verb,
+and level with the model call alone again. Read the READMEs before changing
+anything about the cascade.
 
 ### What it measures
 
@@ -1265,6 +1269,11 @@ the scripts are under `doc/evidence/seed-world-arcs-rebuy/`.
 `classifier-cascade-state-20261017` replaces `classifier-cascade-state-20260927`
 as the cascade's before side: the same arm and transport at today's corpus
 digest. Its README has both verdicts and its receipts.
+
+`classifier-cascade-throw-20261018` replaces `classifier-cascade-state-20261017`
+as the cascade's before side: the same arm, transport and corpus, read through
+the engine that escalates a throw. Its README has both verdicts and its
+receipts.
 
 `inscription-2026-10-02` and `prompt-ending-after-2026-10-02` replace
 `inscription-2026-09-26` and `prompt-ending-2026-09-10` in turn. The Lunar
