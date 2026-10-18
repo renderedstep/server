@@ -112,6 +112,19 @@ class Eval::Arrival::Stage
         properties: "{}", tier: Item::FIXTURE, holds: "hollow", bulk: "immovable")
       Item.create!(playthrough: game, location: room, name: "lump of coal", description: "A lump of coal.", properties: "{}",
         within: scuttle, how: "in")
+    when "parts"
+      # A fixed piece born with parts, as the forest kit writes an old tree:
+      # two branches that hold firm and bark that holds loose. The arrival
+      # writer is told them on a line of their own after the fixed pieces.
+      room.update!(description: "A wood of old trees, one far older than the rest. Maren Vosk waits under it.",
+        lore: "The harbour cut its kindling here.")
+      @previous.update!(description: "You leave the market for the wood.", summary: "You leave the market for the wood.")
+      tree = Item.create!(playthrough: game, location: room, name: "old tree", description: "An old tree, far older than the rest.",
+        properties: "{}", tier: Item::FIXTURE, holds: "nothing", bulk: "immovable")
+      [ %w[branch firm], %w[branch firm], %w[bark loose] ].each do |name, hold|
+        Item.create!(playthrough: game, location: room, name: name, description: "A #{name} of the old tree.", properties: "{}",
+          tier: Item::PART, within: tree, how: Item::ATTACHED, hold: hold, bulk: "immovable")
+      end
     end
   end
 

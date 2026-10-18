@@ -17,6 +17,8 @@ module Eval::Arrival
   BASELINE = Rails.root.join("db/eval/arrival-fixed-after-2026-10-13")
 
   def self.cases = JSON.parse(CORPUS.read).fetch("cases")
+  # Every corpus an arrival set is bought over, each its own file and digest.
+  def self.suites = [ self, Reactions, Parts ]
   def self.stage = Stage
   def self.model = JSON.parse(STUDY.join("arrival-after.json").read).fetch("model")
   def self.digest = Digest::SHA256.hexdigest(CORPUS.read)

@@ -65,6 +65,19 @@ class Scene::ArrivalContextTest < ActiveSupport::TestCase
     assert_equal [ toll.id ], context.toll_ids
   end
 
+  test "what could be broken off a fixed piece follows it, counted from this game's copies" do
+    tree = create(:item, :fixture, location: @destination, name: "old tree")
+    2.times { create(:item, :part, within: tree) }
+    create(:item, :part, within: tree, name: "bark")
+    Item::Snapshot.new(@game).of_the_room!(@destination)
+    Item.of_playthrough(@game).parts.find_by!(name: "branch").update!(location: nil, within: nil, how: nil, hold: nil, tier: Item::PORTABLE)
+    facts = Scene::ArrivalContext.new(@game, location: @destination).facts
+
+    assert_equal [ "Fixed here, and not takeable: old tree.",
+                   "Attached to the old tree, and could be broken off: branch, bark.",
+                   "Lying here: nothing." ], facts.grep(/\A(Fixed|Attached|Lying)/)
+  end
+
   test "projects an agreed follower into the destination without moving their world row" do
     person = create(:character, story: @game.story, location: @game.current_location)
     state = create(:playthrough_npc_state, playthrough: @game, character: person,

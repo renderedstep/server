@@ -51,8 +51,11 @@ class Eval::Arrival::Result
   def compare(other)
     raise ArgumentError, "different corpora" unless data.fetch("corpus_digest") == other.data.fetch("corpus_digest")
     raise ArgumentError, "different models" unless data.fetch("model") == other.data.fetch("model")
+    # The cases of the corpus the sets were bought on, which is the arrival
+    # corpus unless the digest is another suite's (`Eval::Arrival.suites`).
+    suite = Eval::Arrival.suites.find { |candidate| candidate.digest == data.fetch("corpus_digest") } || Eval::Arrival
+    expected = suite.cases.map { |k| k.fetch("id") }.sort
     [ self, other ].each do |result|
-      expected = Eval::Arrival.cases.map { |k| k.fetch("id") }.sort
       groups = result.rows.group_by { |r| r.fetch("rep") }
       raise ArgumentError, "incomplete repetitions" unless groups.size >= Eval::Noise::MIN_RUNS &&
         groups.values.all? { |rs| rs.map { |r| r.fetch("id") }.sort == expected }

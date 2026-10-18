@@ -1,9 +1,10 @@
 # A sibling bench with the existing run/score/board/compare/digest vocabulary.
 # Paid runs require an explicit scratch database and a persistent budget ledger.
 # CORPUS=reactions buys and digests the room reacting to the arrival
-# (`Eval::Arrival::Reactions`) instead of the arrival corpus.
+# (`Eval::Arrival::Reactions`) instead of the arrival corpus, and CORPUS=parts
+# what could be broken off a fixed piece (`Eval::Arrival::Parts`).
 module ArrivalTasks
-  SUITES = { "main" => "Eval::Arrival", "reactions" => "Eval::Arrival::Reactions" }.freeze
+  SUITES = { "main" => "Eval::Arrival", "reactions" => "Eval::Arrival::Reactions", "parts" => "Eval::Arrival::Parts" }.freeze
 
   def self.suite
     SUITES.fetch(ENV.fetch("CORPUS", "main")) { |name| abort "No arrival corpus #{name.inspect}. There is: #{SUITES.keys.join(", ")}" }
@@ -12,7 +13,7 @@ module ArrivalTasks
 end
 
 namespace :eval do
-  desc "Buy fixed arrival calls: SET=name CORPUS=main|reactions EVAL_LIVE=1 EVAL_BUDGET_FILE=path DATABASE_URL=sqlite3:tmp/..."
+  desc "Buy fixed arrival calls: SET=name CORPUS=main|reactions|parts EVAL_LIVE=1 EVAL_BUDGET_FILE=path DATABASE_URL=sqlite3:tmp/..."
   task arrival: :environment do
     suite = ArrivalTasks.suite
     estimate = suite.estimate(reps: Integer(ENV.fetch("REPS", Eval::Noise::MIN_RUNS)))
@@ -38,7 +39,7 @@ namespace :eval do
     puts JSON.pretty_generate(before.compare(after))
   end
 
-  desc "Rebuild every arrival request identity offline, without a model call. CORPUS=main|reactions"
+  desc "Rebuild every arrival request identity offline, without a model call. CORPUS=main|reactions|parts"
   task arrival_digest: :environment do
     suite = ArrivalTasks.suite
     suite.cases.each do |kase|

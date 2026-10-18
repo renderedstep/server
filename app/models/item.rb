@@ -466,6 +466,30 @@ class Item < ApplicationRecord
   def bare_name = name.to_s.sub(LEADING_ARTICLE, "")
   def definite_name = "the #{bare_name}"
 
+  # WHAT IS STILL ATTACHED TO EACH FIXED PIECE TOLD, one line a piece in the
+  # order the pieces are told, a piece with nothing on it saying nothing:
+  # "Attached to the old tree, and could be broken off: two branches, bark."
+  # Every part counts, so a reader is told as many branches as a break could
+  # still take. The engine's `facts::attached`, byte for byte, its plural
+  # included: the engine's rule and not `String#pluralize`, so the two cannot
+  # disagree over a noun.
+  COUNT_WORDS = %w[no one two three four five six seven eight nine].freeze
+
+  def self.attached(pieces, parts)
+    pieces.filter_map do |piece|
+      sorts = parts.select { |part| part.within_id == piece.id }.map(&:bare_name).tally
+      next if sorts.empty?
+
+      named = sorts.map do |noun, count|
+        next noun if count == 1
+
+        plural = noun.end_with?("s", "sh", "ch", "x", "z") ? "#{noun}es" : "#{noun}s"
+        "#{COUNT_WORDS[count] || count} #{plural}"
+      end
+      "Attached to #{piece.definite_name}, and could be broken off: #{named.join(", ")}."
+    end
+  end
+
   # Where it is, in one sentence, for a report a person reads. THE LAYER IS PART
   # OF THE ANSWER: "lying in Ward Office 12" is two different facts depending on
   # whether it is the world's row or one game's copy of it, and a doctor finding

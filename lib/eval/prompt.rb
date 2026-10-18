@@ -78,8 +78,12 @@ module Eval::Prompt
   # a case added to `main` would cost its kept set its digest. See
   # `Eval::Prompt::Speech`.
   SPEECH_CORPUS = Rails.root.join("test/fixtures/files/prompt_speech_corpus.yml")
+  # WHAT COULD BE BROKEN OFF A FIXED PIECE, a fifth file for the same reason:
+  # no world the other four stage has a piece with parts, and a case added to
+  # one of them would cost its kept set its digest.
+  PARTS_CORPUS = Rails.root.join("test/fixtures/files/prompt_parts_corpus.yml")
   CORPORA = { "main" => CORPUS, "ending" => ENDING_CORPUS, "branches" => BRANCHES_CORPUS,
-              "speech" => SPEECH_CORPUS }.freeze
+              "speech" => SPEECH_CORPUS, "parts" => PARTS_CORPUS }.freeze
 
   # WHERE A STAGED WORLD IS READ FROM, IN ORDER, and the second root is what
   # makes an ending case possible at all.
@@ -119,7 +123,11 @@ module Eval::Prompt
   # ONLY -- not because anything stops the other cases using it, but because
   # every case in `prompt_corpus.yml` is hand-verified against a position in one
   # of the two seeded worlds and moving any of them would move the digest.
-  STORIES = [ "The Unrecorded Hour", "The Salt Assizes", "The Iron Gate Descends" ].freeze
+  #
+  # `The Rook Wood Gate` IS THE FOURTH AND THE PARTS CORPUS PLAYS IT ALONE: its
+  # wood is the one place a kit grows a piece with parts on, an old tree with
+  # two branches and bark.
+  STORIES = [ "The Unrecorded Hour", "The Salt Assizes", "The Iron Gate Descends", "The Rook Wood Gate" ].freeze
 
   # AND THE HELD-OUT WORLD IS STILL HELD OUT HERE, reported apart and never
   # pooled -- `Eval::HELD_OUT`, the same convention `Eval::Board` keeps. It

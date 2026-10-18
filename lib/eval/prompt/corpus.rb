@@ -62,9 +62,11 @@ class Eval::Prompt::Corpus
   # shape and read by exactly the same stager. Duplicated as a Data definition
   # rather than reused as a class because the two corpora are separate files
   # with separate ids; the STAGING is what is shared, and that is the expensive
-  # half.
-  Position = Data.define(:id, :story, :room, :cast, :setup, :why) do
-    def initialize(cast: {}, setup: [], why: nil, **rest) = super
+  # half. `written` is this corpus's alone: the description and lore of a stub
+  # the position stands in, written before anybody does
+  # (`Eval::Classifier::Stage#write_the_room!`).
+  Position = Data.define(:id, :story, :room, :cast, :setup, :written, :why) do
+    def initialize(cast: {}, setup: [], written: nil, why: nil, **rest) = super
   end
 
   # THE ONE SHAPE THAT IS ALSO A CLAIM. Every other `shape` is a label the board
@@ -124,7 +126,7 @@ class Eval::Prompt::Corpus
 
     Position.new(id: row["id"], story: row["story"], room: row["room"],
                  cast: (row["cast"] || {}).to_h { |name, room| [ name.to_s, room ] },
-                 setup: Array(row["setup"]), why: row["why"])
+                 setup: Array(row["setup"]), written: row["written"], why: row["why"])
   end
 
   def self.kase(row, path)
