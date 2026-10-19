@@ -1286,6 +1286,20 @@ class Location::GeneratorTest < ActiveSupport::TestCase
     assert_not_includes block, "Loose, and could be picked up"
   end
 
+  test "what could be broken off a piece follows the fixed pieces" do
+    location = stub_location(name: "Rook Wood")
+    tree = create(:item, :fixture, :top, location: location, name: "old tree")
+    create(:item, :fixture, :top, location: location, name: "fallen log")
+    2.times { create(:item, :part, within: tree) }
+    create(:item, :part, within: tree, name: "bark")
+
+    block = Location::Generator.new(location).send(:already_here)
+
+    assert_includes block, "Fixed in place: old tree, fallen log.\n" \
+                           "Attached to the old tree, and could be broken off: two branches, bark.\n"
+    assert_equal 1, block.scan("Attached").size, "the log has nothing on it, and says nothing"
+  end
+
   test "a realization picked up again after a failed call furnishes nothing twice" do
     location = stub_location(name: "The Reading Room", kind: "study", density: "lived-in")
     Location::Generator.new(location).furnish!

@@ -1,0 +1,37 @@
+# WHAT COULD BE BROKEN OFF A FIXED PIECE, AND A TURN THAT BREAKS ONE.
+#
+# `Eval::Prompt::PARTS_CORPUS`. The engine tells the narrator what is attached
+# to each fixed piece on a line of its own after the fixed pieces ("Attached to
+# the old tree, and could be broken off: two branches, bark."), and only in a
+# room whose pieces carry parts -- which no world the other corpora stage has.
+# No scorer reads the line, so what this measures is read by hand: whether the
+# prose names the parts, contradicts them (a bare trunk, a branch already
+# gone), or has one come away that the records do not say came away.
+#
+# THE ROOM IS THE SWEEP'S ROOK WOOD, written as the sweep's
+# `a-branch-broken-off-the-old-tree` writes it (`written`, the description and
+# lore its scripted reply gives) and furnished from its forest kit, so the old
+# tree, its two branches and its bark are the kit's own records.
+---
+positions:
+- id: rook-wood
+  story: The Rook Wood Gate
+  room: Rook Wood
+  written:
+    description: A wood of old trees, one far older than the rest.
+    lore: The porters cut their kindling here.
+  why: >-
+    The wood as the kit furnishes it: an old tree with two branches that hold
+    firm and bark that holds loose, undergrowth, a fallen log, and a snail
+    shell lying loose. Tamsin carries nothing.
+
+cases:
+- id: parts-break-a-branch
+  position: rook-wood
+  typed: "/break a branch off the old tree"
+  act: other
+  shape: break
+  why: >-
+    The turn the attached line is for: the engine throws the strength check,
+    and the narrator is told the tree's parts as they are after it, beside the
+    fact of what came away or held.

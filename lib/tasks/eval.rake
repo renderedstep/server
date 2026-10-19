@@ -356,8 +356,18 @@ namespace :eval do
 
     def set_name = ENV["SET"].presence || Time.current.utc.strftime("realization-%Y%m%d-%H%M%S")
 
+    # `CASES=a,b` names the cases to build, for a targeted buy of the few a
+    # change moves; `SAMPLE_CASES=n` takes the first n. The set's corpus digest
+    # is over the cases it built, so a targeted set is compared only with a set
+    # of the same cases.
     def corpus
       found = Eval::Realization.corpus
+      if (named = ENV["CASES"].presence&.split(",")&.map(&:strip))
+        unknown = named - found.cases.map(&:id)
+        abort "No realization case called #{unknown.join(", ")}." if unknown.any?
+
+        found = found.subset { |kase| named.include?(kase.id) }
+      end
       (sample = ENV["SAMPLE_CASES"].presence) ? found.sample(sample) : found
     end
 

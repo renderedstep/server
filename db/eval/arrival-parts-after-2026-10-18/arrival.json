@@ -1,0 +1,1191 @@
+{
+  "model": "mistralai/mistral-medium-3.1",
+  "reps": 4,
+  "corpus_digest": "e9cb922117bbdac812865065abf6693b24d49ad39769a700e928736f54e20463",
+  "recorded_at": "2026-10-18T20:17:58Z",
+  "estimate": {
+    "model": "mistralai/mistral-medium-3.1",
+    "cases": 1,
+    "reps": 4,
+    "calls": 4,
+    "input_per_case": 1112,
+    "output_per_case": 158,
+    "estimated_usd": 0.0030432,
+    "input_per_million": 0.4,
+    "output_per_million": 2.0
+  },
+  "rows": [
+    {
+      "id": "attached_parts",
+      "rep": 1,
+      "facts": {
+        "room": "Rook Wood",
+        "moved": true,
+        "protagonist": [
+          "Iri Calder",
+          "Iri"
+        ],
+        "places": {
+          "Rook Wood": "Rook Wood",
+          "Market": "Market"
+        },
+        "exits": [
+          "Market"
+        ],
+        "present": [
+          "Maren Vosk"
+        ],
+        "floor": [
+          "brass key",
+          "old tree"
+        ],
+        "carried": [],
+        "elsewhere": [
+          {
+            "name": "brass key",
+            "whereabouts": "Rook Wood",
+            "here": true
+          },
+          {
+            "name": "old tree",
+            "whereabouts": "Rook Wood",
+            "here": true
+          }
+        ],
+        "current": [
+          "You are unhurt.",
+          "Also here: Maren Vosk. Nobody else is alive here.",
+          "Fixed here, and not takeable: old tree.",
+          "Attached to the old tree, and could be broken off: two branches, bark.",
+          "Lying here: brass key.",
+          "You are carrying: nothing."
+        ],
+        "required": [],
+        "returning": false
+      },
+      "requests": [
+        {
+          "system": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "user": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": []
+        }
+      ],
+      "request_identity": {
+        "version": 1,
+        "digest": "6f5ceb48f0ab2677"
+      },
+      "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss and the faint tang of salt carried on a breeze from the harbor. Your boots sink slightly into the soft ground as you step beneath the canopy, where the light dims and the air cools. Maren Vosk stands beneath the ancient tree, her silhouette sharp against the gnarled trunk, watching you with quiet expectation. A brass key glints dully in the leaf litter at your feet, half-buried as if dropped in haste.",
+      "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key lying on the ground.",
+      "error": null,
+      "calls": [
+        {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 151,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005024,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005024,
+          "usage_upper_micros": 5525,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood hits you first, thick with the musk of moss and the faint tang of salt carried on a breeze from the harbor. Your boots sink slightly into the soft ground as you step beneath the canopy, where the light dims and the air cools. Maren Vosk stands beneath the ancient tree, her silhouette sharp against the gnarled trunk, watching you with quiet expectation. A brass key glints dully in the leaf litter at your feet, half-buried as if dropped in haste.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key lying on the ground.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss and the faint tang of salt carried on a breeze from the harbor. Your boots sink slightly into the soft ground as you step beneath the canopy, where the light dims and the air cools. Maren Vosk stands beneath the ancient tree, her silhouette sharp against the gnarled trunk, watching you with quiet expectation. A brass key glints dully in the leaf litter at your feet, half-buried as if dropped in haste.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key lying on the ground."
+          },
+          "seconds": 2.1198386370087974
+        }
+      ]
+    },
+    {
+      "id": "attached_parts",
+      "rep": 2,
+      "facts": {
+        "room": "Rook Wood",
+        "moved": true,
+        "protagonist": [
+          "Iri Calder",
+          "Iri"
+        ],
+        "places": {
+          "Rook Wood": "Rook Wood",
+          "Market": "Market"
+        },
+        "exits": [
+          "Market"
+        ],
+        "present": [
+          "Maren Vosk"
+        ],
+        "floor": [
+          "brass key",
+          "old tree"
+        ],
+        "carried": [],
+        "elsewhere": [
+          {
+            "name": "brass key",
+            "whereabouts": "Rook Wood",
+            "here": true
+          },
+          {
+            "name": "old tree",
+            "whereabouts": "Rook Wood",
+            "here": true
+          }
+        ],
+        "current": [
+          "You are unhurt.",
+          "Also here: Maren Vosk. Nobody else is alive here.",
+          "Fixed here, and not takeable: old tree.",
+          "Attached to the old tree, and could be broken off: two branches, bark.",
+          "Lying here: brass key.",
+          "You are carrying: nothing."
+        ],
+        "required": [],
+        "returning": false
+      },
+      "requests": [
+        {
+          "system": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "user": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": []
+        }
+      ],
+      "request_identity": {
+        "version": 1,
+        "digest": "6f5ceb48f0ab2677"
+      },
+      "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss clinging to gnarled roots. Then you see her—Maren Vosk, leaning against the ancient tree, its bark rough and dark with age, her presence as still as the shadows pooling beneath its sprawling branches. A brass key glints on the forest floor near your feet, half-buried in fallen leaves, as if dropped in haste. The air hums with the quiet weight of centuries, the wood’s silence broken only by the faint rustle of wind through the canopy above.",
+      "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree, a brass key on the ground, and the atmosphere heavy with age.",
+      "error": null,
+      "calls": [
+        {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 168,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005364,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005364,
+          "usage_upper_micros": 5865,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood hits you first, thick with the musk of moss clinging to gnarled roots. Then you see her—Maren Vosk, leaning against the ancient tree, its bark rough and dark with age, her presence as still as the shadows pooling beneath its sprawling branches. A brass key glints on the forest floor near your feet, half-buried in fallen leaves, as if dropped in haste. The air hums with the quiet weight of centuries, the wood’s silence broken only by the faint rustle of wind through the canopy above.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree, a brass key on the ground, and the atmosphere heavy with age.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss clinging to gnarled roots. Then you see her—Maren Vosk, leaning against the ancient tree, its bark rough and dark with age, her presence as still as the shadows pooling beneath its sprawling branches. A brass key glints on the forest floor near your feet, half-buried in fallen leaves, as if dropped in haste. The air hums with the quiet weight of centuries, the wood’s silence broken only by the faint rustle of wind through the canopy above.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree, a brass key on the ground, and the atmosphere heavy with age."
+          },
+          "seconds": 1.7765710550011136
+        }
+      ]
+    },
+    {
+      "id": "attached_parts",
+      "rep": 3,
+      "facts": {
+        "room": "Rook Wood",
+        "moved": true,
+        "protagonist": [
+          "Iri Calder",
+          "Iri"
+        ],
+        "places": {
+          "Rook Wood": "Rook Wood",
+          "Market": "Market"
+        },
+        "exits": [
+          "Market"
+        ],
+        "present": [
+          "Maren Vosk"
+        ],
+        "floor": [
+          "brass key",
+          "old tree"
+        ],
+        "carried": [],
+        "elsewhere": [
+          {
+            "name": "brass key",
+            "whereabouts": "Rook Wood",
+            "here": true
+          },
+          {
+            "name": "old tree",
+            "whereabouts": "Rook Wood",
+            "here": true
+          }
+        ],
+        "current": [
+          "You are unhurt.",
+          "Also here: Maren Vosk. Nobody else is alive here.",
+          "Fixed here, and not takeable: old tree.",
+          "Attached to the old tree, and could be broken off: two branches, bark.",
+          "Lying here: brass key.",
+          "You are carrying: nothing."
+        ],
+        "required": [],
+        "returning": false
+      },
+      "requests": [
+        {
+          "system": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "user": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": []
+        }
+      ],
+      "request_identity": {
+        "version": 1,
+        "digest": "6f5ceb48f0ab2677"
+      },
+      "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood thick in your lungs. Your gaze is drawn upward to the ancient tree at the heart of the wood, its gnarled trunk wider than three men, its branches heavy with secrets. Beneath it, Maren Vosk stands motionless, her sharp eyes fixed on you as if she’s been waiting for this moment for years. A brass key glints dully in the dim light near the tree’s roots, half-buried in the moss. The silence here feels deliberate, as though the wood itself is holding its breath.",
+      "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.",
+      "error": null,
+      "calls": [
+        {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 167,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005344,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005344,
+          "usage_upper_micros": 5845,
+          "raw_answer": "{\"description\": \"The air cools as you step beneath the canopy, the scent of damp earth and old wood thick in your lungs. Your gaze is drawn upward to the ancient tree at the heart of the wood, its gnarled trunk wider than three men, its branches heavy with secrets. Beneath it, Maren Vosk stands motionless, her sharp eyes fixed on you as if she’s been waiting for this moment for years. A brass key glints dully in the dim light near the tree’s roots, half-buried in the moss. The silence here feels deliberate, as though the wood itself is holding its breath.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood thick in your lungs. Your gaze is drawn upward to the ancient tree at the heart of the wood, its gnarled trunk wider than three men, its branches heavy with secrets. Beneath it, Maren Vosk stands motionless, her sharp eyes fixed on you as if she’s been waiting for this moment for years. A brass key glints dully in the dim light near the tree’s roots, half-buried in the moss. The silence here feels deliberate, as though the wood itself is holding its breath.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground."
+          },
+          "seconds": 1.6808789019996766
+        }
+      ]
+    },
+    {
+      "id": "attached_parts",
+      "rep": 4,
+      "facts": {
+        "room": "Rook Wood",
+        "moved": true,
+        "protagonist": [
+          "Iri Calder",
+          "Iri"
+        ],
+        "places": {
+          "Rook Wood": "Rook Wood",
+          "Market": "Market"
+        },
+        "exits": [
+          "Market"
+        ],
+        "present": [
+          "Maren Vosk"
+        ],
+        "floor": [
+          "brass key",
+          "old tree"
+        ],
+        "carried": [],
+        "elsewhere": [
+          {
+            "name": "brass key",
+            "whereabouts": "Rook Wood",
+            "here": true
+          },
+          {
+            "name": "old tree",
+            "whereabouts": "Rook Wood",
+            "here": true
+          }
+        ],
+        "current": [
+          "You are unhurt.",
+          "Also here: Maren Vosk. Nobody else is alive here.",
+          "Fixed here, and not takeable: old tree.",
+          "Attached to the old tree, and could be broken off: two branches, bark.",
+          "Lying here: brass key.",
+          "You are carrying: nothing."
+        ],
+        "required": [],
+        "returning": false
+      },
+      "requests": [
+        {
+          "system": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "user": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": []
+        }
+      ],
+      "request_identity": {
+        "version": 1,
+        "digest": "6f5ceb48f0ab2677"
+      },
+      "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood rising around you. Your boots sink slightly into the soft ground, and the first thing you notice is the ancient tree at the heart of the wood—its gnarled trunk wider than any you’ve seen, its bark rough and dark with age. Maren Vosk stands beneath it, still as the branches above, watching you with quiet expectation. A brass key glints faintly in the dappled light near the base of the tree, half-buried in the moss.",
+      "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.",
+      "error": null,
+      "calls": [
+        {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 157,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005144,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005144,
+          "usage_upper_micros": 5645,
+          "raw_answer": "{\"description\": \"The air cools as you step beneath the canopy, the scent of damp earth and old wood rising around you. Your boots sink slightly into the soft ground, and the first thing you notice is the ancient tree at the heart of the wood—its gnarled trunk wider than any you’ve seen, its bark rough and dark with age. Maren Vosk stands beneath it, still as the branches above, watching you with quiet expectation. A brass key glints faintly in the dappled light near the base of the tree, half-buried in the moss.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood rising around you. Your boots sink slightly into the soft ground, and the first thing you notice is the ancient tree at the heart of the wood—its gnarled trunk wider than any you’ve seen, its bark rough and dark with age. Maren Vosk stands beneath it, still as the branches above, watching you with quiet expectation. A brass key glints faintly in the dappled light near the base of the tree, half-buried in the moss.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground."
+          },
+          "seconds": 1.4882817009929568
+        }
+      ]
+    }
+  ],
+  "budget": {
+    "limit_micros": 2000000,
+    "model": "mistralai/mistral-medium-3.1",
+    "input_rate_bound": 5,
+    "output_rate_bound": 20,
+    "entries": [
+      {
+        "id": "8b97d8c3-eef7-4043-a94f-a794f639c5ec",
+        "label": "attached_parts:1:arrival",
+        "state": "settled",
+        "input_cap": 7015,
+        "output_cap": 2048,
+        "reserved_micros": 76035,
+        "accounted_micros": 512,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7015,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 483,
+          "output_tokens": 159,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005112,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005112,
+          "usage_upper_micros": 5595,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood greets you as you step beneath the canopy of Rook Wood, the air thick with the quiet hum of unseen life. Your eyes are drawn immediately to the ancient tree at its heart, its gnarled roots twisting like veins into the soil, and beneath it, the still figure of Maren Vosk watches you with an unreadable expression. A glint of brass catches the light near the base of the tree, half-buried in the moss. The wood feels older than the market you just left, as if time itself has slowed here.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk under the old tree and a brass key lying nearby.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood greets you as you step beneath the canopy of Rook Wood, the air thick with the quiet hum of unseen life. Your eyes are drawn immediately to the ancient tree at its heart, its gnarled roots twisting like veins into the soil, and beneath it, the still figure of Maren Vosk watches you with an unreadable expression. A glint of brass catches the light near the base of the tree, half-buried in the moss. The wood feels older than the market you just left, as if time itself has slowed here.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk under the old tree and a brass key lying nearby."
+          },
+          "seconds": 1.7936671919887885
+        }
+      },
+      {
+        "id": "90117bbe-c651-4127-b3bf-9d2e3239d5fb",
+        "label": "attached_parts:2:arrival",
+        "state": "settled",
+        "input_cap": 7015,
+        "output_cap": 2048,
+        "reserved_micros": 76035,
+        "accounted_micros": 466,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7015,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 483,
+          "output_tokens": 136,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0004652,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0004652,
+          "usage_upper_micros": 5135,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old leaves hits you first, then the hush of the wood, thick with the weight of centuries. Your boots press into soft moss as you step past the first gnarled trunks, and there, beneath the oldest tree—its bark blackened with age—Maren Vosk stands, still as the shadows around her. A brass key glints dully at the base of the tree, half-buried in the loam.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk beneath the ancient tree and a brass key lying on the ground.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old leaves hits you first, then the hush of the wood, thick with the weight of centuries. Your boots press into soft moss as you step past the first gnarled trunks, and there, beneath the oldest tree—its bark blackened with age—Maren Vosk stands, still as the shadows around her. A brass key glints dully at the base of the tree, half-buried in the loam.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk beneath the ancient tree and a brass key lying on the ground."
+          },
+          "seconds": 1.437236359983217
+        }
+      },
+      {
+        "id": "ec252e14-4c5b-4d42-964d-4be2bf5ab471",
+        "label": "attached_parts:3:arrival",
+        "state": "settled",
+        "input_cap": 7015,
+        "output_cap": 2048,
+        "reserved_micros": 76035,
+        "accounted_micros": 434,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7015,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 483,
+          "output_tokens": 120,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0004332,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0004332,
+          "usage_upper_micros": 4815,
+          "raw_answer": "{\"description\": \"The air cools as you step beneath the canopy, the scent of damp earth and old wood rising to meet you. A single brass key glints on the mossy ground near the base of the ancient tree, its gnarled roots twisting like veins into the soil. Maren Vosk stands motionless beneath its sprawling branches, her gaze fixed on something unseen in the dappled light.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood rising to meet you. A single brass key glints on the mossy ground near the base of the ancient tree, its gnarled roots twisting like veins into the soil. Maren Vosk stands motionless beneath its sprawling branches, her gaze fixed on something unseen in the dappled light.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key on the ground."
+          },
+          "seconds": 1.1824580460088328
+        }
+      },
+      {
+        "id": "336b0068-426a-4370-928f-1a752963350d",
+        "label": "attached_parts:4:arrival",
+        "state": "settled",
+        "input_cap": 7015,
+        "output_cap": 2048,
+        "reserved_micros": 76035,
+        "accounted_micros": 494,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7015,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 483,
+          "output_tokens": 150,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0004932,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0004932,
+          "usage_upper_micros": 5415,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood rises as you step from the cobbled market into the hush of Rook Wood, where the canopy swallows the light. A single tree, gnarled and ancient, dominates the clearing ahead, its roots twisting like the veins of some slumbering giant. Beneath it, a figure—Maren Vosk—stands motionless, her silhouette sharp against the dappled shade. A glint of brass catches your eye near her feet, half-buried in the leaf litter.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk under the old tree and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood rises as you step from the cobbled market into the hush of Rook Wood, where the canopy swallows the light. A single tree, gnarled and ancient, dominates the clearing ahead, its roots twisting like the veins of some slumbering giant. Beneath it, a figure—Maren Vosk—stands motionless, her silhouette sharp against the dappled shade. A glint of brass catches your eye near her feet, half-buried in the leaf litter.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk under the old tree and a brass key on the ground."
+          },
+          "seconds": 1.3608867339789867
+        }
+      },
+      {
+        "id": "e051e904-895f-4f09-910d-f3870503922d",
+        "label": "attached_parts:1:arrival",
+        "state": "settled",
+        "input_cap": 7087,
+        "output_cap": 2048,
+        "reserved_micros": 76395,
+        "accounted_micros": 503,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 151,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005024,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005024,
+          "usage_upper_micros": 5525,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood hits you first, thick with the musk of moss and the faint tang of salt carried on a breeze from the harbor. Your boots sink slightly into the soft ground as you step beneath the canopy, where the light dims and the air cools. Maren Vosk stands beneath the ancient tree, her silhouette sharp against the gnarled trunk, watching you with quiet expectation. A brass key glints dully in the leaf litter at your feet, half-buried as if dropped in haste.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key lying on the ground.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss and the faint tang of salt carried on a breeze from the harbor. Your boots sink slightly into the soft ground as you step beneath the canopy, where the light dims and the air cools. Maren Vosk stands beneath the ancient tree, her silhouette sharp against the gnarled trunk, watching you with quiet expectation. A brass key glints dully in the leaf litter at your feet, half-buried as if dropped in haste.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree and a brass key lying on the ground."
+          },
+          "seconds": 2.1198386370087974
+        }
+      },
+      {
+        "id": "ce8bc984-c3a2-4bac-9122-8da3706c0fae",
+        "label": "attached_parts:2:arrival",
+        "state": "settled",
+        "input_cap": 7087,
+        "output_cap": 2048,
+        "reserved_micros": 76395,
+        "accounted_micros": 537,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 168,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005364,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005364,
+          "usage_upper_micros": 5865,
+          "raw_answer": "{\"description\": \"The scent of damp earth and old wood hits you first, thick with the musk of moss clinging to gnarled roots. Then you see her—Maren Vosk, leaning against the ancient tree, its bark rough and dark with age, her presence as still as the shadows pooling beneath its sprawling branches. A brass key glints on the forest floor near your feet, half-buried in fallen leaves, as if dropped in haste. The air hums with the quiet weight of centuries, the wood’s silence broken only by the faint rustle of wind through the canopy above.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree, a brass key on the ground, and the atmosphere heavy with age.\"}",
+          "answer": {
+            "description": "The scent of damp earth and old wood hits you first, thick with the musk of moss clinging to gnarled roots. Then you see her—Maren Vosk, leaning against the ancient tree, its bark rough and dark with age, her presence as still as the shadows pooling beneath its sprawling branches. A brass key glints on the forest floor near your feet, half-buried in fallen leaves, as if dropped in haste. The air hums with the quiet weight of centuries, the wood’s silence broken only by the faint rustle of wind through the canopy above.",
+            "summary": "Iri Calder enters Rook Wood for the first time, finding Maren Vosk under the old tree, a brass key on the ground, and the atmosphere heavy with age."
+          },
+          "seconds": 1.7765710550011136
+        }
+      },
+      {
+        "id": "f3088425-5d72-4628-9536-727f1fd97d32",
+        "label": "attached_parts:3:arrival",
+        "state": "settled",
+        "input_cap": 7087,
+        "output_cap": 2048,
+        "reserved_micros": 76395,
+        "accounted_micros": 535,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 167,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005344,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005344,
+          "usage_upper_micros": 5845,
+          "raw_answer": "{\"description\": \"The air cools as you step beneath the canopy, the scent of damp earth and old wood thick in your lungs. Your gaze is drawn upward to the ancient tree at the heart of the wood, its gnarled trunk wider than three men, its branches heavy with secrets. Beneath it, Maren Vosk stands motionless, her sharp eyes fixed on you as if she’s been waiting for this moment for years. A brass key glints dully in the dim light near the tree’s roots, half-buried in the moss. The silence here feels deliberate, as though the wood itself is holding its breath.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood thick in your lungs. Your gaze is drawn upward to the ancient tree at the heart of the wood, its gnarled trunk wider than three men, its branches heavy with secrets. Beneath it, Maren Vosk stands motionless, her sharp eyes fixed on you as if she’s been waiting for this moment for years. A brass key glints dully in the dim light near the tree’s roots, half-buried in the moss. The silence here feels deliberate, as though the wood itself is holding its breath.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground."
+          },
+          "seconds": 1.6808789019996766
+        }
+      },
+      {
+        "id": "34130a73-8ed3-41ee-84c5-2710a841f74c",
+        "label": "attached_parts:4:arrival",
+        "state": "settled",
+        "input_cap": 7087,
+        "output_cap": 2048,
+        "reserved_micros": 76395,
+        "accounted_micros": 515,
+        "receipt": {
+          "purpose": "arrival",
+          "prompt": "## Universe Details\nphysics: Standard physics with magical exceptions allowing for spells and enchantments\ntechnology: Medieval level with magical enhancements\n\n## Story Details\ntitle: The Drowned Ledger\ngenre: mystery\nsummary: You are tracing a missing ship's account through the flooded counting house.\n\n## The Place\nname: Rook Wood\ndescription: A wood of old trees, one far older than the rest. Maren Vosk waits under it.\nlore: The harbour cut its kindling here.\nways out: Market\n\n## Who Is Here\nIri Calder (Iri), Human -- the player, the one arriving\nMaren Vosk (Maren), Elf\n\n## Just Before This\nThe player has come from Market. You leave the market for the wood.\n\n## Instructions\n- The player has never been here. This is the first time they have set\n  foot in it\n- Narrate discovery: what catches them on the way in, before they\n  have made sense of the rest\n- Address the player as \"you\", in the present tense\n- One paragraph. Do not re-describe the place item by item -- the\n  description above is already what is here, and your job is the moment\n  of coming into it\n- Anyone listed above is here; write them as already present, not as\n  arriving. Do not add a person who is not on that list\n- Do not name a way out that is not on the list above\n- Respect the stated length of each field\n\n## Current State On Arrival\nThe place description is the world's original account. These current records\ntake precedence over its claims about people, items and wounds. Narrate the\nrecorded crossing result as part of this arrival.\nYou are unhurt.\nAlso here: Maren Vosk. Nobody else is alive here.\nFixed here, and not takeable: old tree.\nAttached to the old tree, and could be broken off: two branches, bark.\nLying here: brass key.\nYou are carrying: nothing.\n",
+          "instructions": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n",
+          "schema": {
+            "name": "Scene::Schema",
+            "description": null,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "What the player experiences as they arrive here, right now. Second person, present tense. One paragraph, 3 to 5 sentences.",
+                  "maxLength": 900
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What happened in this moment, for the game engine rather than the player. Third person. One sentence.",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "description",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "strict": true
+            }
+          },
+          "history": [
+            {
+              "role": "system",
+              "content": "You narrate a text adventure. You write the moment a player walks into a\nplace: what reaches them first, in the second person and the present\ntense. You never break character, never offer a numbered menu, and never\nmention that you are a narrator.\n\nDO NOT INCLUDE EMOJIS IN YOUR RESPONSE.\n"
+            }
+          ],
+          "requested_model": "mistralai/mistral-medium-3.1",
+          "provider": "openrouter",
+          "input_cap": 7087,
+          "output_cap": 2048,
+          "registry_rates": {
+            "input_per_million": 0.4,
+            "output_per_million": 2,
+            "cache_read_input_per_million": 0.04
+          },
+          "input_tokens": 501,
+          "output_tokens": 157,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "thinking_tokens": 0,
+          "actual_model": "mistralai/mistral-medium-3.1",
+          "provider_cost_usd": 0.0005144,
+          "provider_cost_metadata_error": null,
+          "registry_cost_usd": 0.0005144,
+          "usage_upper_micros": 5645,
+          "raw_answer": "{\"description\": \"The air cools as you step beneath the canopy, the scent of damp earth and old wood rising around you. Your boots sink slightly into the soft ground, and the first thing you notice is the ancient tree at the heart of the wood—its gnarled trunk wider than any you’ve seen, its bark rough and dark with age. Maren Vosk stands beneath it, still as the branches above, watching you with quiet expectation. A brass key glints faintly in the dappled light near the base of the tree, half-buried in the moss.\", \"summary\": \"Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground.\"}",
+          "answer": {
+            "description": "The air cools as you step beneath the canopy, the scent of damp earth and old wood rising around you. Your boots sink slightly into the soft ground, and the first thing you notice is the ancient tree at the heart of the wood—its gnarled trunk wider than any you’ve seen, its bark rough and dark with age. Maren Vosk stands beneath it, still as the branches above, watching you with quiet expectation. A brass key glints faintly in the dappled light near the base of the tree, half-buried in the moss.",
+            "summary": "Iri Calder enters Rook Wood for the first time, noticing Maren Vosk, the old tree, and a brass key on the ground."
+          },
+          "seconds": 1.4882817009929568
+        }
+      }
+    ]
+  }
+}
