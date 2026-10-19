@@ -81,7 +81,7 @@ class Eval::Classifier::Offline
   # measuring the model.
   def run
     EngineSweep.without_a_model do
-      Eval::Classifier::Stage.open(corpus.positions) do |stages|
+      Eval::Classifier::Stage.open(corpus.positions, roots: Eval::Classifier::WORLD_ROOTS) do |stages|
         corpus.lines.map { |line| read(line, stages.fetch(line.position)) }
       end
     end

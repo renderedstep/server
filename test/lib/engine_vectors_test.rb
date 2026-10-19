@@ -51,10 +51,12 @@ class EngineVectorsTest < ActiveSupport::TestCase
     assert_equal "grammar", throw.dig("output", "reading_first", "resolved_by")
   end
 
-  test "every line of the labelled classifier corpus is a vector" do
+  # A line standing in a sweep world is the bench's alone: see
+  # `EngineVectors::GrammarCorpus.stage`.
+  test "every line of the labelled classifier corpus in a seeded world is a vector" do
     ids = JSON.parse(DIRECTORY.join("grammar_corpus.json").read).fetch("cases").map { |one| one.dig("input", "id") }
 
-    assert_equal Eval::Classifier.corpus.lines.map(&:id), ids
+    assert_equal Eval::Classifier.corpus.seeded.lines.map(&:id), ids
   end
 
   # The two System One requests the game keeps as fixtures are cases of the

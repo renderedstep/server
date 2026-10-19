@@ -212,6 +212,12 @@ class Eval::Classifier::Corpus
 
   def by_shape = lines.group_by(&:shape)
 
+  # THE LINES WHOSE POSITION STANDS IN A SEEDED WORLD, which is every line
+  # written before `Eval::Classifier::WORLD_ROOTS` had a second root.
+  def seeded
+    subset { |line| WorldSeed::DIRECTORY.join("#{WorldSeed.slug(position(line.position).story)}.yml").exist? }
+  end
+
   # THE LINES THAT ANSWER ONE QUESTION, and only the positions they need. Used
   # by `Eval::Classifier::Omission` to run a targeted probe for a few cents
   # rather than the whole corpus -- and by anybody debugging one shape.
@@ -237,7 +243,7 @@ class Eval::Classifier::Corpus
     found.concat(structural_problems)
     return found if found.any?
 
-    Eval::Classifier::Stage.open(positions) do |stages|
+    Eval::Classifier::Stage.open(positions, roots: Eval::Classifier::WORLD_ROOTS) do |stages|
       lines.each { |line| found.concat(problems_for(line, stages[line.position])) }
     end
     found
@@ -313,8 +319,12 @@ class Eval::Classifier::Corpus
   def name_problems(line, standing, intent, name, field)
     return [] if name.nil?
 
-    records = intent == :throw ? throw_sets(standing).fetch(field, []) : standing.offered_for(intent)
-    offered = records.flat_map { |record| names_of(record) }
+    offered = if intent == :use
+      physical_names(standing)
+    else
+      records = intent == :throw ? throw_sets(standing).fetch(field, []) : standing.offered_for(intent)
+      records.flat_map { |record| names_of(record) }
+    end
     if offered.empty?
       return [ "#{line.id}: #{field} #{name.inspect} on a #{intent} -- that intent resolves no record, " \
                "so the label can only ever be nothing" ]
@@ -323,6 +333,16 @@ class Eval::Classifier::Corpus
 
     [ "#{line.id}: #{field} #{name.inspect} is not in the closed set a #{intent} reads against at " \
       "#{standing.position.id} -- that set is [#{offered.join(", ")}]" ]
+  end
+
+  # A `use` LABEL IS CHECKED AGAINST THE ENGINE'S OWN ATTEMPTS, by the names
+  # the request shows the model and the bench reads its answer back as. The
+  # engine offers attempts the Ruby table (`Playthrough::PhysicalAction`) does
+  # not have -- a search, an opening of a fixed piece -- and a label naming one
+  # would otherwise read as naming nothing.
+  def physical_names(standing)
+    Playthrough::Requests.build(:room, rows: Playthrough::Requests.rows, playthrough: standing.playthrough.id)
+                         .fetch("physical").map { |choice| choice.fetch("name") }
   end
 
   def names_of(record)

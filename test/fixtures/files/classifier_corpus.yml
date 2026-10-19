@@ -181,6 +181,18 @@ positions:
     closed set with anything in it. Reached by walking two realized rooms, which
     costs no model call and no generation.
 
+- id: study
+  story: The Furnished Rooms
+  room: The Clerk's Study
+  why: >-
+    THE ONE POSITION OFFERED A SEARCH. The world is a sweep world
+    (`lib/engine_sweep/worlds`), because no seeded world has a closed or hollow
+    piece: the desk is shut, so it is offered both `Search the desk` and `Open
+    the desk`; the coal scuttle is hollow, so it is offered a search and no
+    opening; the windowsill is a top, offered neither. Nobody here and nothing
+    in the hands, so the physical attempts are the searches and the openings
+    alone.
+
 lines:
 # ===========================================================================
 # ONE ACT: A MOVE THAT RESOLVES
@@ -4052,3 +4064,142 @@ lines:
   why: >-
     "throw a bolt" is to shoot it home; no carried thing leaves the hands. Too
     far from any listed barrier to be sure of a `use`, so it is `other`
+
+# ===========================================================================
+# A SEARCH OR AN OPENING OF SOMETHING FIXED HERE
+#
+# A closed piece is offered a search and an opening, a hollow one a search
+# alone, and a top neither. Each is a `use` token like any other physical
+# attempt. The controls beside them are a look at the piece, which stays
+# `examine`, and a take of something not yet found, which stays `take`.
+# ===========================================================================
+- id: use-search-desk
+  position: study
+  typed: search the desk
+  intent: use
+  target: Search the desk
+  shape: use-search
+  why: the plain form, the verb the attempt is named for, on the closed piece
+
+- id: use-search-desk-rummage
+  position: study
+  typed: rummage through the desk drawers
+  intent: use
+  target: Search the desk
+  shape: use-search
+  why: >-
+    a synonym, and the drawers named rather than the desk. The drawers are the
+    desk's, so the search is the desk's search
+
+- id: use-search-desk-go-through
+  position: study
+  typed: go through the clerk's desk
+  intent: use
+  target: Search the desk
+  shape: use-search
+  why: >-
+    "go through" is a search here, not a `move`: no way out is named, and the
+    desk is the object
+
+- id: use-open-desk
+  position: study
+  typed: open the desk
+  intent: use
+  target: Open the desk
+  shape: use-open
+  why: >-
+    the opening, named by its own verb, with the search offered beside it. The
+    two tokens are different attempts and the line names this one
+
+- id: use-open-desk-drawers
+  position: study
+  typed: pull open the desk drawers
+  intent: use
+  target: Open the desk
+  shape: use-open
+  why: the opening by its drawers, as the rummage line names the search by them
+
+- id: use-search-scuttle
+  position: study
+  typed: search the coal scuttle
+  intent: use
+  target: Search the coal scuttle
+  shape: use-search
+  why: the plain form on the hollow piece, whose only attempt is a search
+
+- id: use-search-scuttle-look-inside
+  position: study
+  typed: look inside the coal scuttle
+  intent: use
+  target: Search the coal scuttle
+  shape: use-search
+  why: >-
+    looking INTO a piece to see what is in it is a search; looking AT it is
+    `examine`. Arguable, because what lies in a hollow piece is in plain view,
+    so the look at the scuttle is accepted too
+  also_accept:
+  - intent: examine
+    target: coal scuttle
+
+- id: unresolved-use-open-scuttle
+  position: study
+  typed: open the coal scuttle
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use
+  why: >-
+    the scuttle is hollow and has no lid to open, so no opening is offered.
+    The rule for a barrier already open applies: `use` with nothing. A search
+    is the nearest attempt and is accepted, since it is what an opening of
+    the scuttle would do
+  also_accept:
+  - intent: use
+    target: Search the coal scuttle
+
+- id: unresolved-use-search-windowsill
+  position: study
+  typed: search the windowsill
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use
+  why: >-
+    a top has no inside and is offered no search. The search is still asked
+    for, so the intent stays and the target is nothing; it must not land on
+    the desk's or the scuttle's search. A look at the sill is accepted too
+  also_accept:
+  - intent: examine
+    target: windowsill
+
+- id: examine-search-room
+  position: study
+  typed: search the room
+  intent: examine
+  shape: examine-nothing
+  why: >-
+    the room is not a piece and no list holds it, so this is the look around
+    the place that `examine` with no target already is. It must not land on
+    one of the pieces' searches. `other` is accepted too
+  also_accept:
+  - intent: other
+    target:
+
+- id: examine-not-search-desk
+  position: study
+  typed: look at the desk
+  intent: examine
+  target: desk
+  shape: examine
+  why: >-
+    THE CONTROL: a look at the closed piece, with its search and its opening
+    offered beside it, stays `examine`. A wider `use` must not pull it in
+
+- id: take-not-search-desk-papers
+  position: study
+  typed: take the papers out of the desk
+  intent: take
+  refusal: unresolved
+  shape: unresolved-take
+  why: >-
+    nothing has been found in the desk yet, so there are no papers on any list.
+    The line asks to take, not to search; it stays `take` with nothing and must
+    not be read as the desk's search

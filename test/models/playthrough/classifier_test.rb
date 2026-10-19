@@ -264,7 +264,7 @@ class Playthrough::ClassifierTest < ActiveSupport::TestCase
   test "the instructions offer throw after use and say a thrown switch is other" do
     _intent, agent = classify({ "intent" => "other", "target" => "nothing" })
 
-    assert_match(/use     - consume.*\n  throw   - they are throwing/, agent.instructions)
+    assert_match(/use     - consume.*\n(?: {12}\S.*\n)*  throw   - they are throwing/, agent.instructions)
     assert_match(/"Throw the switch" or "throw a party" is not\s+a throw of a thing: answer `other`\./,
                  agent.instructions)
   end

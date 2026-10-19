@@ -28,8 +28,12 @@ module EngineVectors::GrammarCorpus
     [ { "worlds" => worlds.to_a }, cases ]
   end
 
+  # THE SEEDED POSITIONS ONLY. A position in a sweep world stands among fixed
+  # pieces, which the Ruby grammar this vector runs predates and the room a
+  # vector writes down does not carry, so its lines are the bench's and not
+  # this portion's.
   def self.stage
-    corpus = Eval::Classifier.corpus
+    corpus = Eval::Classifier.corpus.seeded
     worlds = {}
     # The staged rooms are read and rolled back before the rebuilt ones exist.
     rows = Eval::Classifier::Stage.open(corpus.positions) do |stages|

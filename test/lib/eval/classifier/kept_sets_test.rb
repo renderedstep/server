@@ -204,7 +204,18 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
                                  lines: kept.lines.map { |line| FORMER_ACCEPTS[line.id] ? line.with(also_accept: FORMER_ACCEPTS[line.id]) : line })
   end
 
-  def current_corpus = before_the_reported_intent_relabel(Eval::Classifier.corpus)
+  # THE STUDY'S LINES, after the cascade's sets at the 354-line corpus were
+  # bought: the first position offered a search or an opening of a fixed piece.
+  # Those sets did not score them, so each is checked against today's corpus
+  # less these.
+  ADDED_SINCE_TODAY = %w[use-search-desk use-search-desk-rummage use-search-desk-go-through use-open-desk
+                         use-open-desk-drawers use-search-scuttle use-search-scuttle-look-inside
+                         unresolved-use-open-scuttle unresolved-use-search-windowsill examine-search-room
+                         examine-not-search-desk take-not-search-desk-papers].freeze
+
+  def today_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_TODAY.include?(line.id) }
+
+  def current_corpus = before_the_reported_intent_relabel(today_corpus)
 
   def labelled_before_the_writ(corpus)
     Eval::Classifier::Corpus.new(path: corpus.path, positions: corpus.positions,
@@ -265,7 +276,7 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     result = load_kept(CURRENT)
     assert_equal Eval::Classifier.digest(current_corpus), result.corpus_digest
     assert_equal current_corpus.size, result.corpus_size
-    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal request_before_use, result.request_identity
     assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms
     assert_equal result.arms, result.answered_by
     assert_equal Eval::Noise::MIN_RUNS, result.reps
@@ -490,12 +501,12 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     result = load_kept(TODAY_CASCADE)
 
     assert result.cascade
-    assert_equal Eval::Classifier.digest, result.corpus_digest
-    assert_equal Eval::Classifier.corpus.size, result.corpus_size
-    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal Eval::Classifier.digest(today_corpus), result.corpus_digest
+    assert_equal today_corpus.size, result.corpus_size
+    assert_equal request_before_use, result.request_identity
     assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms
     assert_equal Eval::Noise::MIN_RUNS, result.reps
-    assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size
+    assert_equal Eval::Noise::MIN_RUNS * today_corpus.size, result.rows.size
     assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq
     result.rows.each do |row|
       flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
@@ -518,8 +529,8 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
 
   test "the floor of the cascade at today's corpus can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(TODAY_CASCADE, "offline.json").read)
-    assert_equal Eval::Classifier.digest, floor.fetch("corpus_digest")
-    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json), floor.fetch("floor")
+    assert_equal Eval::Classifier.digest(today_corpus), floor.fetch("corpus_digest")
+    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
   end
 
   # THE CASCADE THAT ESCALATES A THROW: today's request and corpus, read
@@ -538,12 +549,12 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     result = load_kept(THROW_CASCADE)
 
     assert result.cascade
-    assert_equal Eval::Classifier.digest, result.corpus_digest
-    assert_equal Eval::Classifier.corpus.size, result.corpus_size
-    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal Eval::Classifier.digest(today_corpus), result.corpus_digest
+    assert_equal today_corpus.size, result.corpus_size
+    assert_equal request_before_use, result.request_identity
     assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms
     assert_equal Eval::Noise::MIN_RUNS, result.reps
-    assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size
+    assert_equal Eval::Noise::MIN_RUNS * today_corpus.size, result.rows.size
     assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq
     result.rows.each do |row|
       flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
@@ -553,6 +564,57 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
       assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{THROW_CASCADE}/#{file}"
     end
   end
+
+  # THE USE PAIR: the throw cascade's arm and transport on the corpus with the
+  # study's lines, either side of both readers' description of `use` widening
+  # to searching, opening and breaking a part off something fixed here. Its
+  # READMEs have the verdicts; what is asserted here is that the two sides
+  # differ in the request and in nothing else, and that the after side is
+  # today's request.
+  USE_BEFORE = "classifier-use-before-20261018".freeze
+  USE_AFTER = "classifier-use-after-20261018".freeze
+  # The after side's model call with System One's `use` narrowed to a fixed
+  # piece named in `physical_actions`. The System One request is in no digest,
+  # so it shares the after side's request identity.
+  USE_NARROWED = "classifier-use-narrowed-20261018".freeze
+
+  test "the use sets are one corpus and one arm either side of the request change, the after sides today's" do
+    before = load_kept(USE_BEFORE)
+    after = load_kept(USE_AFTER)
+    narrowed = load_kept(USE_NARROWED)
+
+    [ before, after, narrowed ].each do |result|
+      assert result.cascade, result.name
+      assert_equal Eval::Classifier.digest, result.corpus_digest, result.name
+      assert_equal Eval::Classifier.corpus.size, result.corpus_size, result.name
+      assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms, result.name
+      assert_equal Eval::Noise::MIN_RUNS, result.reps, result.name
+      assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size, result.name
+      assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq, result.name
+      result.rows.each do |row|
+        flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
+        assert_equal flagged || thrown?(row["typed"]), row["resolved_by"] == "typed_model_escalated", row["id"]
+      end
+      %w[classifier.json offline.json receipts.json README.md].each do |file|
+        assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{result.name}/#{file}"
+      end
+    end
+    assert_equal Eval::Classifier::Version.offline, after.request_identity
+    assert_equal Eval::Classifier::Version.offline, narrowed.request_identity
+    assert_not_equal before.request_identity, after.request_identity
+  end
+
+  test "the use sets' floor can be recomputed offline" do
+    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json)
+    [ USE_BEFORE, USE_AFTER, USE_NARROWED ].each do |set|
+      kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
+      assert_equal Eval::Classifier.digest, kept.fetch("corpus_digest"), set
+      assert_equal floor, kept.fetch("floor"), set
+    end
+  end
+
+  # The request the sets before the use pair's after side were bought on.
+  def request_before_use = load_kept(USE_BEFORE).request_identity
 
   test "the throw cascade reads every throw line right and the other lines NOISE against the set before it" do
     before = load_kept(TODAY_CASCADE)
@@ -568,8 +630,8 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
 
   test "the floor of the throw cascade can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(THROW_CASCADE, "offline.json").read)
-    assert_equal Eval::Classifier.digest, floor.fetch("corpus_digest")
-    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json), floor.fetch("floor")
+    assert_equal Eval::Classifier.digest(today_corpus), floor.fetch("corpus_digest")
+    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
   end
 
   test "the current classifier floor can be recomputed offline" do
