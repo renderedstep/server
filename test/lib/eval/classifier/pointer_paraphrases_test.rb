@@ -63,6 +63,25 @@ class Eval::Classifier::Pointer::ParaphrasesTest < ActiveSupport::TestCase
     assert_equal [ "lines" ], Eval::Classifier::Pointer::Paraphrases::Schema.new.to_json_schema.dig(:schema, :properties).keys.map(&:to_s)
   end
 
+  test "a second purchase writes with its own instructions, for rooms the first did not write for" do
+    Dir.mktmpdir do |directory|
+      rooms = Eval::Classifier::Pointer::Rooms.new(directory: File.join(directory, "rooms"), seed: 3, count: 3, io: nil).write!
+      first = Eval::Classifier::Pointer::Paraphrases.new(directory: directory, rooms: rooms, io: nil).chosen(1, seed: 1).sole
+      writer = FakeAgent.new({ "lines" => [ "head out" ] }, { "lines" => [ "wait" ] })
+      paraphrases = Eval::Classifier::Pointer::Paraphrases.new(directory: File.join(directory, "out"), rooms: rooms,
+                                                               shape: "play", exclude: [ first["room"] ],
+                                                               io: nil, threads: 1)
+
+      BaseAgent.stub(:new, ->(**_options) { writer }) { paraphrases.write!(count: 2, seed: 1) }
+
+      assert_equal Eval::Classifier::Pointer::Paraphrases::WRITER_PLAY, writer.instructions
+      written = File.readlines(paraphrases.written_path).map { |row| JSON.parse(row)["room"] }
+      assert_equal 2, written.size
+      assert_not_includes written, first["room"], "an excluded room is not written for again"
+    end
+    assert_raises(ArgumentError) { Eval::Classifier::Pointer::Paraphrases.new(directory: "x", rooms: "y", shape: "prose") }
+  end
+
   test "lines are written, the corpus line among them is dropped, and the rest are read in their own room" do
     Dir.mktmpdir do |directory|
       rooms = Eval::Classifier::Pointer::Rooms.new(directory: File.join(directory, "rooms"), seed: 3, count: 1, io: nil).write!

@@ -8,7 +8,8 @@ rooms (`templates.py`, labelled by construction), so no two epochs see the same
 sentences. `--live` adds the owner's model-read lines (`live_lines.py`),
 repeated `--live-repeat` times because there are few of them. `--paid` adds the
 written-and-labelled lines (`rake eval:pointer_labels`), repeated
-`--paid-repeat` times, less a held-out slice of their rooms. A slice of the
+`--paid-repeat` times, less a held-out slice of their rooms; give it once per
+purchase, and each file is split by its own rooms. A slice of the
 rooms is held back and scored after every epoch; the classifier corpus is
 never read here -- it is the yardstick, and `rake eval:classifier` is where it
 is used.
@@ -159,7 +160,8 @@ def main():
     parser.add_argument("--out", required=True)
     parser.add_argument("--live")
     parser.add_argument("--live-repeat", type=int, default=6)
-    parser.add_argument("--paid", help="labels.jsonl from `rake eval:pointer_labels`")
+    parser.add_argument("--paid", action="append", default=[],
+                        help="labels.jsonl from `rake eval:pointer_labels`; once per purchase")
     parser.add_argument("--paid-repeat", type=int, default=4)
     parser.add_argument("--paid-held-out", type=float, default=0.1, help="share of the paid ROOMS held out")
     parser.add_argument("--encoder", default="jhu-clsp/ettin-encoder-17m")
@@ -187,8 +189,15 @@ def main():
     held, train_rooms = rooms[:cut], rooms[cut:]
     held_examples = examples_for(held, words, arguments.seed - 1, arguments.per_room)
     live = live_examples(arguments.live, arguments.live_repeat) if arguments.live else []
-    paid, paid_held = (paid_examples(arguments.paid, arguments.paid_held_out, arguments.seed,
-                                     {room["room"] for room in held}) if arguments.paid else ([], []))
+    # EACH PURCHASE SPLIT BY ITS OWN ROOMS, so adding a second file leaves the
+    # first file's held-out rooms exactly what they were without it.
+    paid, paid_held, paid_held_by_file = [], [], {}
+    for path in arguments.paid:
+        trained, scored_only = paid_examples(path, arguments.paid_held_out, arguments.seed,
+                                             {room["room"] for room in held})
+        paid += trained
+        paid_held += scored_only
+        paid_held_by_file[path] = scored_only
     live += paid * arguments.paid_repeat
 
     model = PointerClassifier(base)
@@ -260,6 +269,9 @@ def main():
         log["epochs"].append({"epoch": epoch, "held_out": scored, "minutes": round((time.time() - started) / 60, 1)})
         if paid_held:
             log["epochs"][-1]["paid_held_out"] = score(model, tokenizer, paid_held)
+        if len(paid_held_by_file) > 1:
+            log["epochs"][-1]["paid_held_out_by_file"] = {
+                path: score(model, tokenizer, rows) for path, rows in paid_held_by_file.items() if rows}
         print(json.dumps(log["epochs"][-1]), flush=True)
         save(model, tokenizer, arguments.out, log)
         keep()
