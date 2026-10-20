@@ -167,7 +167,8 @@ namespace :eval do
   # Both SPEND MONEY: a writer call per room, then a classifier call per line.
   # See `Eval::Classifier::Pointer::Paraphrases`; run a small COUNT first.
   desc "Paid lines for the pointer classifier: a chat model writes them for generated rooms. " \
-       "Usage: rake eval:pointer_paraphrases OUT=dir ROOMS=rooms.jsonl COUNT=80 SEED=1"
+       "Usage: rake eval:pointer_paraphrases OUT=dir ROOMS=rooms.jsonl COUNT=80 SEED=1 [SHAPE=stage2|play] " \
+       "[EXCLUDE=earlier/written.jsonl,...]"
   task pointer_paraphrases: :environment do
     paraphrases = PointerTasks.paraphrases
     rows = paraphrases.write!(count: (ENV["COUNT"].presence || 80).to_i, seed: (ENV["SEED"].presence || 1).to_i)
@@ -604,7 +605,15 @@ namespace :eval do
       abort "The paid lines must not be made in the test environment." if Rails.env.test?
       abort "OPENROUTER_API_KEY is not set; both steps are hosted calls." if ENV["OPENROUTER_API_KEY"].blank?
 
-      Eval::Classifier::Pointer::Paraphrases.new(directory: out, rooms: rooms)
+      # EXCLUDE names an earlier purchase's `written.jsonl` files; their rooms
+      # are not written for again.
+      exclude = ENV["EXCLUDE"].to_s.split(",").map(&:strip).reject(&:blank?).flat_map do |path|
+        File.readlines(path).map { |row| JSON.parse(row).fetch("room") }
+      end
+      Eval::Classifier::Pointer::Paraphrases.new(directory: out, rooms: rooms, shape: ENV["SHAPE"].presence || "stage2",
+                                                 exclude: exclude)
+    rescue ArgumentError => error
+      abort error.message
     end
   end
 

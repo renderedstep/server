@@ -33,10 +33,13 @@ $DATA/venv/bin/python script/pointer_classifier/live_lines.py \
 #     Each step resumes, so nothing is bought twice; run a small COUNT first.
 OUT=$DATA/paid ROOMS=$DATA/rooms/rooms.jsonl COUNT=80 SEED=1 bin/rails eval:pointer_paraphrases
 OUT=$DATA/paid ROOMS=$DATA/rooms/rooms.jsonl bin/rails eval:pointer_labels
+#     A second purchase goes in its own OUT, with SHAPE=play (whole sentences,
+#     attacks, absent names, plain named exits, few attempts) and
+#     EXCLUDE=$DATA/paid/written.jsonl so it writes for rooms the first did not.
 
 # 3. Train (CPU; about an hour on 8 threads of a busy laptop, ~3 GB of memory).
 #    It checkpoints every 50 steps; run the same command again to resume.
-#    Add `--paid $DATA/paid/labels.jsonl` if step 2b was run.
+#    Add `--paid $DATA/paid/labels.jsonl` if step 2b was run, once per purchase.
 $DATA/venv/bin/python script/pointer_classifier/train.py \
   --rooms $DATA/rooms/rooms.jsonl --live $DATA/live.jsonl --out $DATA/model
 

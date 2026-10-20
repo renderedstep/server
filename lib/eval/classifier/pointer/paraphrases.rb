@@ -90,6 +90,52 @@ class Eval::Classifier::Pointer::Paraphrases
     them, and do not say which kind each one is.
   TEXT
 
+  # The second purchase's writer. `WRITER`'s lines came back short (4.2 words
+  # on average) and mostly `use`, with almost no attacks, while the pointer
+  # model's misses on the corpus were whole sentences, attacks, names that are
+  # not in the room and plain named exits. So this one asks for those, in
+  # shares, and holds the listed attempts to two lines a call. The shares are
+  # the writer's to keep or not: what was actually bought is the labeller's
+  # tally, so count the intents in `labels.jsonl` before training on them.
+  WRITER_PLAY = <<~TEXT.freeze
+    You write test lines for a parser in a text adventure game. You are shown one
+    room exactly as the player sees it, and you write lines a real player might
+    type there in the middle of a game, one command or remark per line.
+
+    These players type whole sentences, not two-word commands. Not "take lamp"
+    but "I lift the lamp off its hook before the guard turns round"; not "go
+    north" but "head up the north stairs and see who is shouting". Nearly every
+    line is six to fifteen words, a few are longer, and no more than three in a
+    call are under five words. Bare commands or first person, casual or wordy,
+    a reason or a condition tucked into the same sentence, a misspelling or a
+    missing word now and then.
+
+    Spread the lines across these kinds, in about these shares:
+    - about a quarter go somewhere: a listed way out named plainly, by its full
+      name or part of it, with whatever verb fits (go, head, climb, cross,
+      leave, follow, step); now and then a place that is not listed;
+    - about a fifth are violence toward someone who is here: plain words and
+      slang or idiom for hitting, grabbing, rushing or hurting them, not only
+      the word "attack";
+    - about a fifth name a person, a thing or a place that is NOT in the room:
+      someone who is elsewhere or was only mentioned, a thing not lying here,
+      a room not listed; talking to them, hitting them, taking it, going there;
+    - the rest: talking to and asking the people here, looking at and reading
+      things, taking and dropping things, and lines that are none of these:
+      impossible or fanciful acts, waiting, feelings, questions about the game.
+
+    At most two lines may try one of the "Things The Player Could Try"; giving or
+    offering something to someone, eating and drinking count as those.
+
+    Mix them; do not write the kinds in order, and do not write the same verb
+    twice in a row. Every line stands alone. Do not number them, do not explain
+    them, and do not say which kind each one is.
+  TEXT
+
+  # The writer instructions by name, for `SHAPE=`. `stage2` is the first
+  # purchase's, kept so that purchase can be read and repeated.
+  SHAPES = { "stage2" => WRITER, "play" => WRITER_PLAY }.freeze
+
   # Only the lines. A label would be the writer's opinion, and the writer is
   # not the reader being imitated.
   class Schema < RubyLLM::Schema
@@ -99,13 +145,17 @@ class Eval::Classifier::Pointer::Paraphrases
   # A row of `labels.jsonl` built from one reading, or the reason it was not.
   Label = Data.define(:row, :skipped)
 
-  attr_reader :directory, :rooms, :worlds
+  attr_reader :directory, :rooms, :worlds, :writer
 
   # `rooms` is `Pointer::Rooms`' output, `rooms.jsonl` beside its `worlds/`.
-  def initialize(directory:, rooms:, io: $stdout, threads: Eval::Concurrency.requested)
+  # `exclude` is room ids an earlier purchase already wrote for, so a second
+  # purchase buys lines for rooms the first did not.
+  def initialize(directory:, rooms:, shape: "stage2", exclude: [], io: $stdout, threads: Eval::Concurrency.requested)
     @directory = Pathname.new(directory)
     @rooms = Pathname.new(rooms)
     @worlds = @rooms.dirname.join("worlds")
+    @writer = SHAPES.fetch(shape) { raise ArgumentError, "No writer shape #{shape.inspect}; there are #{SHAPES.keys.join(", ")}." }
+    @exclude = exclude.to_set
     @io = io
     @threads = threads
     @append = Mutex.new
@@ -114,10 +164,12 @@ class Eval::Classifier::Pointer::Paraphrases
   def written_path = directory.join("written.jsonl")
   def labels_path = directory.join("labels.jsonl")
 
-  # The first `count` rooms of a seeded shuffle, so a larger run is a superset
-  # of a smaller one and a trial's rooms are the first rooms of the full run.
+  # The first `count` rooms of a seeded shuffle, less the excluded ones, so a
+  # larger run is a superset of a smaller one and a trial's rooms are the
+  # first rooms of the full run.
   def chosen(count, seed:)
-    File.readlines(rooms).map { |row| JSON.parse(row) }.shuffle(random: Random.new(seed)).first(count)
+    File.readlines(rooms).map { |row| JSON.parse(row) }.shuffle(random: Random.new(seed))
+        .reject { |room| @exclude.include?(room["room"]) }.first(count)
   end
 
   # STEP 1: lines for each chosen room not yet written, one call each.
@@ -247,7 +299,7 @@ class Eval::Classifier::Pointer::Paraphrases
   private
 
   def write_room(room)
-    content = BaseAgent.new(purpose: "world").with_instructions(WRITER).with_temperature(TEMPERATURE)
+    content = BaseAgent.new(purpose: "world").with_instructions(writer).with_temperature(TEMPERATURE)
                        .with_schema(Schema).ask(self.class.prompt(room.fetch("state"))).content
     Array(content["lines"]).map { |line| line.to_s.squish }.reject(&:blank?).uniq
   rescue StandardError => error
