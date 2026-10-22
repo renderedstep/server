@@ -47,8 +47,21 @@
 # nothing it does goes through `BaseAgent`: its rotation is pinned EMPTY for
 # the pass, so a chat call reached by mistake fails loudly instead of
 # spending.
+#
+# `jev` IS JEV ALONE: the cascade's System One request, sent and composed
+# exactly as the cascade's first step sends and composes it, with no
+# escalation behind it. A line Jev's own readings would send on to Mistral is
+# answered from those readings, as a pointer arm answers it
+# (`Eval::Classifier::Pointer.escalated_reading`), and still records
+# `typed_model_escalated`. It is hosted and paid -- `jev+typesafe-direct` pins
+# the transport as a cascade arm's suffix does -- but it never asks a chat
+# model, so it needs no chat key and its rotation is pinned empty like a
+# pointer arm's.
 class Eval::Classifier::Arm
-  PROVIDERS = %i[openrouter ollama pointer].freeze
+  PROVIDERS = %i[openrouter ollama pointer jev].freeze
+
+  # The spec, and model name, of Jev alone.
+  JEV = "jev".freeze
 
   # The precisions a pointer arm may ask for; `+int8` is the suffix.
   POINTER_PRECISIONS = %w[fp32 int8].freeze
@@ -161,6 +174,11 @@ class Eval::Classifier::Arm
       text = text.delete_suffix(TOOL_SUFFIX)
     end
 
+    if text == JEV
+      return new(provider: :jev, model: JEV, provider_params: params, shape: shape,
+                 system_one_transport: system_one_transport)
+    end
+
     prefix, rest = text.split(":", 2)
 
     if rest.present? && PROVIDERS.include?(prefix.to_sym)
@@ -202,6 +220,9 @@ class Eval::Classifier::Arm
       raise UnknownProvider, "provider params are only for a local arm; #{id} is hosted, and changing " \
                              "the shape of a remote request is not what the seam is for"
     end
+    if jev? && !shape_schema?
+      raise UnknownProvider, "#{id} asks System One alone, so it has no classifier request to reshape"
+    end
   end
 
   # THE NAME A SET RECORDS AND A BOARD PRINTS. A local model keeps its provider
@@ -240,6 +261,18 @@ class Eval::Classifier::Arm
   def local? = %i[ollama pointer].include?(provider)
 
   def pointer? = provider == :pointer
+
+  def jev? = provider == :jev
+
+  # Whether this arm's lines go through the cascade whatever the bench was
+  # told: a pinned transport implies it, and a pointer arm and Jev alone are
+  # System One readers with nothing else to measure.
+  def reads_system_one? = pins_system_one_transport? || pointer? || jev?
+
+  # Whether any of this arm's calls is a chat call. Neither a pointer arm nor
+  # Jev alone makes one, so neither needs a chat key, and each has its
+  # rotation pinned empty (`#pinned`).
+  def chat? = !pointer? && !jev?
 
   def to_s = id
 
@@ -317,7 +350,7 @@ class Eval::Classifier::Arm
   def pinned
     was_options = BaseAgent.method(:default_model_options)
     was_params = BaseAgent.method(:default_provider_params)
-    options = pointer? ? [] : [ model_options ]
+    options = chat? ? [ model_options ] : []
     params = provider_params
 
     BaseAgent.singleton_class.send(:define_method, :default_model_options) { options }

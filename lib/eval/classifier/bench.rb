@@ -102,8 +102,14 @@ class Eval::Classifier::Bench
   # `seconds` is the wall clock of the one call, `CLOCK_MONOTONIC`, including
   # the schema build and the resolution back to records -- which is what a turn
   # actually waits for, and both are microseconds beside a provider round trip.
+  #
+  # `system_one_receipt` is what this line's System One request cost, booked
+  # off the provider's own `usage` (`Eval::Classifier::SystemOneSpend`), and
+  # nil where no request was answered. It is the only record of the spend: the
+  # `SystemOneReceipt` row the request wrote is rolled back with the pass.
   Reading = Data.define(:line, :arm, :rep, :answer, :answered_by, :raw, :seconds, :error, :resolved_by,
-                        :target_present, :named_more_than_one, :out_of_set, :system_one_transport) do
+                        :target_present, :named_more_than_one, :out_of_set, :system_one_transport,
+                        :system_one_receipt) do
     # `resolved_by`, `target_present` AND `named_more_than_one` DEFAULT TO NIL,
     # so every call site that predates the cascade -- and every fixture in this
     # test suite -- keeps working with no change. They are only ever non-nil
@@ -115,8 +121,9 @@ class Eval::Classifier::Bench
     # rather than as a new `scenes` column, because a typed call leaves no chat
     # receipt and `scenes.resolved_by` already names the path family.
     def initialize(resolved_by: nil, target_present: nil, named_more_than_one: nil, out_of_set: nil,
-                   system_one_transport: nil, **rest) =
-      super(resolved_by:, target_present:, named_more_than_one:, out_of_set:, system_one_transport:, **rest)
+                   system_one_transport: nil, system_one_receipt: nil, **rest) =
+      super(resolved_by:, target_present:, named_more_than_one:, out_of_set:, system_one_transport:,
+            system_one_receipt:, **rest)
 
     def id = line.id
     def shape = line.shape
@@ -308,7 +315,8 @@ class Eval::Classifier::Bench
         answered_by: reading.answered_by, seconds: reading.seconds&.round(4), error: reading.error,
         resolved_by: reading.resolved_by, target_present: reading.target_present,
         named_more_than_one: reading.named_more_than_one,
-        system_one_transport: reading.system_one_transport }
+        system_one_transport: reading.system_one_transport,
+        **(reading.system_one_receipt ? { system_one_receipt: reading.system_one_receipt } : {}) }
     end
   end
 
@@ -349,7 +357,7 @@ class Eval::Classifier::Bench
     end
   end
 
-  attr_reader :corpus, :arms, :reps, :io, :concurrency
+  attr_reader :corpus, :arms, :reps, :io, :concurrency, :system_one_spend
 
   # `reps` defaults to `Eval::Noise::MIN_RUNS` and not to a number of its own,
   # for the reason the rake task states: a run taken at the default has to be a
@@ -379,21 +387,26 @@ class Eval::Classifier::Bench
   # selected transport measures the model-only path, which is a setup mistake
   # this class cannot see -- `rake eval:classifier` aborts on it so the mistake
   # is caught before a call is made.
+  #
+  # `system_one_cap` is a ceiling in USD on the run's System One requests,
+  # booked off their own receipts (`Eval::Classifier::SystemOneSpend`); a
+  # request that could cross it is not sent and its line is a failure.
   def initialize(corpus: Eval::Classifier.corpus, arms: nil, reps: Eval::Noise::MIN_RUNS, io: $stdout,
-                 concurrency: Eval::Concurrency.requested, cascade: false)
+                 concurrency: Eval::Concurrency.requested, cascade: false, system_one_cap: nil)
     @corpus = corpus
     @arms = Eval::Classifier::Arm.all(arms.presence || BaseAgent::REMOTE_MODEL_IDS)
     @reps = reps
     @io = io
     @concurrency = [ concurrency.to_i, 1 ].max
     @cascade = cascade
+    @system_one_spend = Eval::Classifier::SystemOneSpend.new(cap: system_one_cap)
   end
 
   # Whether this arm's lines may reach the cascade. True for an ambient
   # `cascade: true` bench and for any arm that pinned a System One transport.
-  # A pointer arm IS a System One reader, so its lines always go through the
-  # cascade; see `Eval::Classifier::Pointer`.
-  def cascade_for?(arm) = @cascade || arm.pins_system_one_transport? || arm.pointer?
+  # A pointer arm and Jev alone ARE System One readers, so their lines always
+  # go through the cascade; see `Eval::Classifier::Arm#reads_system_one?`.
+  def cascade_for?(arm) = @cascade || arm.reads_system_one?
 
   # The pointer model's process for this arm, started on first use and closed
   # when the run ends. One per arm, so fp32 and int8 never share a process.
@@ -462,7 +475,7 @@ class Eval::Classifier::Bench
       request_identity: request_identity,
                                  arms: arms.map(&:id), reps: reps, passes: passes, warmups: warmups,
                                  concurrency: concurrency,
-                                 cascade: @cascade || arms.any? { |arm| arm.pins_system_one_transport? || arm.pointer? })
+                                 cascade: @cascade || arms.any?(&:reads_system_one?))
   ensure
     @pointers&.each_value(&:close)
   end
@@ -543,6 +556,7 @@ class Eval::Classifier::Bench
                   answered_by: answering.answered_by, raw: answering.raw, resolved_by: read["resolved_by"],
                   target_present: read["target_present"], named_more_than_one: read["named_more_than_one"],
                   out_of_set: intent["reached_for_nothing"], system_one_transport: answering.transport,
+                  system_one_receipt: answering.receipt,
                   answer: Eval::Classifier::Corpus::Answer.new(intent: intent.fetch("action").to_sym,
                                                               target: intent["target"], also_named: intent["also_named"],
                                                               thrown_at: intent["thrown_at"]))
@@ -553,7 +567,8 @@ class Eval::Classifier::Bench
       # flaky. The failure count and its error classes are the figure for it.
       Reading.new(line: line, arm: arm.id, rep: rep, answer: nil, answered_by: nil, raw: nil,
                   seconds: nil, error: "#{error.class}: #{error.message}", resolved_by: nil,
-                  target_present: nil, named_more_than_one: nil, system_one_transport: answering.transport)
+                  target_present: nil, named_more_than_one: nil, system_one_transport: answering.transport,
+                  system_one_receipt: answering.receipt)
     end
   end
 
@@ -570,9 +585,16 @@ class Eval::Classifier::Bench
   # tool arm, `Eval::Classifier::ToolAgent`, the only place a tool arm differs
   # from a schema arm -- with the engine's schema, instructions and
   # temperature. A failed classifier call is answered as the failure it was
-  # and kept (`#failure`) for the reading.
+  # and kept (`#failure`) for the reading. A System One request the run's cap
+  # refused (`Eval::Classifier::SystemOneSpend::Reached`) is kept the same
+  # way, and nothing further is asked for that line -- an escalation the cap
+  # caused must not buy a Mistral call instead.
   class Answering
-    attr_reader :failure, :transport
+    # A Jev-alone line the engine sent to the classifier with no answer from
+    # Jev to read it from.
+    class JevUnanswered < StandardError; end
+
+    attr_reader :failure, :transport, :receipt
 
     def initialize(bench, arm, playthrough, rows)
       @bench = bench
@@ -583,11 +605,13 @@ class Eval::Classifier::Bench
 
     def call(request)
       return pointer(request) if @arm.pointer?
+      return failed(@failure) if @failure
+      return questions(request) if request["kind"] == "system_one"
 
-      request["kind"] == "system_one" ? questions(request) : classifier(request)
+      @arm.jev? ? jev(request) : classifier(request)
     end
 
-    def answered_by = @arm.pointer? ? @arm.model : @agent&.current_model&.dig(:model)
+    def answered_by = @arm.chat? ? @agent&.current_model&.dig(:model) : @arm.model
 
     # THE PROVIDER'S OWN JSON for the call just made. `#recorded_chat` is the
     # non-building reader on purpose -- looking for a conversation must not
@@ -634,12 +658,39 @@ class Eval::Classifier::Bench
       { "failure" => { "kind" => "provider", "message" => "#{e.class}: #{e.message}" } }
     end
 
+    # The System One request, sent through the arm's agent and booked against
+    # the run's spend. Its state and answer are kept for Jev alone (`#jev`).
     def questions(request)
       agent = @bench.system_one_for(@arm) || SystemOneAgent.new(purpose: "classifier")
       @transport = agent.transport_name
-      agent.ask_questions(state: request.fetch("state"), questions: request.fetch("questions")).payload
-    rescue SystemOneAgent::Unavailable, Timeout::Error => e
+      @state = request.fetch("state")
+      @body, @receipt = @bench.system_one_spend.charge(@transport) do
+        agent.ask_questions(state: @state, questions: request.fetch("questions")).payload
+      end
+      @body
+    rescue Eval::Classifier::SystemOneSpend::Reached => e
+      @failure = e
       { "unavailable" => "#{e.class}: #{e.message}" }
+    rescue SystemOneAgent::Unavailable, Timeout::Error => e
+      @unavailable = "#{e.class}: #{e.message}"
+      { "unavailable" => @unavailable }
+    end
+
+    # JEV ALONE'S CLASSIFIER CALL, which is not a call. The engine asks it only
+    # when it escalated Jev's readings, or when Jev did not answer; the first
+    # is answered from Jev's own readings, composed as the engine composes them
+    # with escalation off (`Pointer.escalated_reading`), and the second is the
+    # failed line it was. No chat model is asked.
+    def jev(request)
+      return failed(JevUnanswered.new(@unavailable || "the classifier was asked before Jev answered")) unless @body
+
+      { "content" => Eval::Classifier::Pointer.escalated_reading(@state, @body, request["user"]),
+        "model" => @arm.model }
+    end
+
+    def failed(error)
+      @failure = error
+      { "failure" => { "kind" => "provider", "message" => "#{error.class}: #{error.message}" } }
     end
 
     def classifier(request)
