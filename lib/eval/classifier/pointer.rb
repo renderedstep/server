@@ -81,6 +81,8 @@ class Eval::Classifier::Pointer
   # engine escalated: see ESCALATION above. `state` and `body` are what this
   # line was just asked and answered; `user` is the classifier request's
   # prompt, read only for the token each physical attempt is listed under.
+  # Jev alone (`Eval::Classifier::Arm#jev?`) answers its escalated lines the
+  # same way, from Jev's body, which has this shape.
   def self.escalated_reading(state, body, user)
     answers = body.fetch("answers")
     action = answers.dig("intent", "choice").to_s

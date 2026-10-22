@@ -178,7 +178,19 @@ class Eval::Classifier::Report
     billed(arm, total) == total ? "" : " -- the #{total - billed(arm, total)} the cascade composed never reached it"
   end
 
-  def counted?(metric) = Eval::Classifier::Result::COUNTED.include?(metric)
+  # JEV ALONE IS PRICED OFF ITS OWN RECEIPTS, which each row keeps
+  # (`Eval::Classifier::SystemOneSpend`), because the registry has no row for
+  # System One and the arm makes no chat call to price.
+  def receipted(passes)
+    receipts = passes.flat_map(&:rows).filter_map { |row| row.transform_keys(&:to_s)["system_one_receipt"] }
+    return "not recorded -- no System One receipt in these rows" if receipts.empty?
+
+    estimated = receipts.count { |receipt| receipt["cost_source"] != Eval::Classifier::SystemOneSpend::REPORTED }
+    format("$%.4f over %d System One requests, off their receipts%s", receipts.sum { |receipt| receipt["cost_usd"].to_f },
+           receipts.size, estimated.positive? ? " (#{estimated} estimated)" : "")
+  end
+
+  def counted?(metric) =Eval::Classifier::Result::COUNTED.include?(metric)
   def seconds?(metric) = Eval::Classifier::Result::SECONDS.include?(metric)
 
   # SPEED AND FLAKINESS TOGETHER, because they are the two ways a model can cost
@@ -192,11 +204,16 @@ class Eval::Classifier::Report
     failures = passes.sum(&:failures)
     total = answered + failures
 
-    say format("  %-20s %s", "cost", parsed.local? ?
-      "nothing -- a local model on the local hardware, and slow" :
+    cost = if parsed.local?
+      "nothing -- a local model on the local hardware, and slow"
+    elsif parsed.jev?
+      receipted(passes)
+    else
       "#{format("$%.4f", parsed.price.of(Eval::Classifier::PER_CALL[:input] * billed(arm, total),
                                          Eval::Classifier::PER_CALL[:output] * billed(arm, total)))} " \
-      "over #{billed(arm, total)} calls#{billed_note(arm, total)}")
+      "over #{billed(arm, total)} calls#{billed_note(arm, total)}"
+    end
+    say format("  %-20s %s", "cost", cost)
     cold = result.warmup(arm)
     if cold
       say format("  %-20s %s   %s", "first call",

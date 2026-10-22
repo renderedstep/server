@@ -188,6 +188,7 @@ class Eval::Classifier::Board
     def cost(column)
       price = Eval::Classifier::Arm.parse(column.arm).price
       return "free (the local hardware)" if column.local?
+      return "System One only -- priced off the set's own receipts" if Eval::Classifier::Arm.parse(column.arm).jev?
       return "unpriced -- the registry has no row" if price == Eval::Cost::UNKNOWN
 
       per_call = Eval::Classifier::PER_CALL

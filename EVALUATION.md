@@ -350,6 +350,7 @@ rake eval:classifier_compare BEFORE=a AFTER=b
 | `SET=name` | where the numbers land (`tmp/eval/<set>/classifier.json`). Defaults to a timestamp |
 | `SAMPLE=20` | how many missed lines the board prints in full |
 | `CASCADE=1` | **measure the typed-line cascade, not the model call alone.** See below |
+| `CAP=0.20` | a ceiling in USD on the run's System One requests, booked off each request's own receipt; a request that could cross it is not sent. Required for Jev alone |
 | `YES=1` | spend past the $0.50 ceiling |
 
 ### Measuring the cascade, and what a cascade set must carry
@@ -373,6 +374,13 @@ a cross-model table cannot show two identical headers over two different things.
 The task refuses to start without the selected transport's credential, because a
 cascade run with no key measures the Mistral-only path and files itself under
 the cascade's name.
+
+`MODELS=jev+typesafe-direct` is **Jev alone**: the cascade's System One request
+and composition with no escalation behind it. A line Jev's readings would send
+on is scored on Jev's own reading and still records `typed_model_escalated`, so
+the set says how many lines a live turn would have escalated. It makes no chat
+call and needs no chat key. The registry cannot price it, so it needs `CAP=`,
+and each row keeps its `system_one_receipt` (`Eval::Classifier::SystemOneSpend`).
 
 **A cascade set keeps its per-line rows, and no other kept classifier set does.**
 Each row carries `resolved_by`, the two probabilities the cascade acted on

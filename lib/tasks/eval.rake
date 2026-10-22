@@ -682,7 +682,24 @@ namespace :eval do
     # cascade run with no key would silently measure the Mistral-only path and
     # record itself as the cascade, which is exactly the kind of mistake this
     # bench exists to make loud instead of quiet.
-    def cascade? = ENV["CASCADE"] == "1" || arms.any?(&:pins_system_one_transport?)
+    #
+    # `MODELS=jev+typesafe-direct` is Jev alone: the cascade's System One
+    # request with no escalation behind it (`Eval::Classifier::Arm#jev?`). It
+    # needs the transport's credential and no chat key, and it needs CAP=, a
+    # ceiling in USD on the run's System One spend booked off each request's
+    # own receipt (`Eval::Classifier::SystemOneSpend`), because the registry
+    # cannot price it and the estimate above reads $0 for it. CAP= caps any
+    # cascade run's System One requests the same way.
+    def cascade? = ENV["CASCADE"] == "1" || arms.any? { |arm| arm.pins_system_one_transport? || arm.jev? }
+
+    def system_one_cap = ENV["CAP"].presence&.to_f
+
+    def abort_without_a_cap
+      return if system_one_cap&.positive? || arms.none?(&:jev?)
+
+      abort "#{arms.select(&:jev?).map(&:id).join(", ")} spends on System One, which the estimate cannot price -- " \
+            "name a ceiling in USD with CAP=, and the run stops before a request could cross it."
+    end
 
     def abort_without_a_cascade_key
       return unless cascade?
@@ -723,6 +740,7 @@ namespace :eval do
       end
       abort_without_a_key(arms)
       abort_without_a_cascade_key
+      abort_without_a_cap
       if priced > SPEND_CEILING && ENV["YES"] != "1"
         abort "That is over the $#{format("%.2f", SPEND_CEILING)} this task will spend unattended. " \
               "Re-run with YES=1, or lower REPS."
@@ -735,12 +753,18 @@ namespace :eval do
       puts "A local arm always runs one at a time; see EVALUATION.md -> Concurrency." if arms.any?(&:local?)
       puts "WARNING: #{advice}" if advice
       puts
-      result = Eval::Classifier::Bench.new(corpus: corpus, arms: arms, reps: reps, cascade: cascade?).run
+      bench = Eval::Classifier::Bench.new(corpus: corpus, arms: arms, reps: reps, cascade: cascade?,
+                                          system_one_cap: system_one_cap)
+      result = bench.run
 
       directory = Eval.set_path(set_name)
       written = result.write!(directory, name: set_name)
       puts
       puts "Wrote #{written}."
+      spend = bench.system_one_spend.to_h
+      puts format("System One: %d request%s, $%.6f booked off their receipts (%d estimated)%s.",
+                  spend[:calls], spend[:calls] == 1 ? "" : "s", spend[:spent_usd], spend[:estimated],
+                  spend[:cap_usd] ? format(", cap $%.4f", spend[:cap_usd]) : "") if spend[:calls].positive?
       puts
 
       Eval::Classifier::Report.new(result, floor: Eval::Classifier::Offline.new(corpus: corpus).summary)
@@ -781,10 +805,13 @@ namespace :eval do
     # A KEY IS ONLY NEEDED FOR A HOSTED ARM. A run of nothing but local models
     # asks the maintainer's own daemon and needs no key at all, so demanding one
     # would refuse a free measurement.
+    # Jev alone is hosted and makes no chat call, so it needs no chat key;
+    # `abort_without_a_cascade_key` asks for its own.
     def abort_without_a_key(arms)
-      if arms.any? { |arm| !arm.local? } && ENV["OPENROUTER_API_KEY"].blank?
-        abort "OPENROUTER_API_KEY is not set and #{arms.reject(&:local?).map(&:id).join(", ")} " \
-              "#{arms.reject(&:local?).one? ? "is" : "are"} hosted. Name local arms instead " \
+      chatting = arms.select { |arm| arm.chat? && !arm.local? }
+      if chatting.any? && ENV["OPENROUTER_API_KEY"].blank?
+        abort "OPENROUTER_API_KEY is not set and #{chatting.map(&:id).join(", ")} " \
+              "#{chatting.one? ? "is" : "are"} hosted. Name local arms instead " \
               "(MODELS=ollama:qwen3:4b), or run the offline floor, which needs nothing: " \
               "`rake eval:classifier_offline`."
       end
