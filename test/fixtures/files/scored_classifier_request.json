@@ -168,7 +168,7 @@
     },
     "also_named": {
       "type": "choice",
-      "instructions": "Independently inspect `player_action` and the state. Does the same requested intent explicitly name or unambiguously include at least two distinct records from that intent's appropriate state list? If so, choose one listed record distinct from the likely main target; for an ordinary two-record request, choose the other record rather than `nothing`. Words such as `both`, `all`, `everything`, `all of it`, `the lot`, `them`, or `each`, and a second record added with `and then`, include every fitting record in the corresponding list; the main target takes one of them and you name another. Choose `nothing` when fewer than two fitting records are requested. Objects, tools, and recipients already bound inside one complete `physical_actions` attempt are not a second act.",
+      "instructions": "Independently inspect `player_action` and the state. Does the same requested intent explicitly name or unambiguously include at least two distinct records from that intent's appropriate state list? If so, choose one listed record distinct from the likely main target; for an ordinary two-record request, choose the other record rather than `nothing`. Words such as `both`, `all`, `everything`, `all of it`, `the lot`, `them`, or `each`, and a second record added with `and then`, include every fitting record in the corresponding list; the main target takes one of them and you name another. Choose `nothing` when fewer than two fitting records are requested. Objects, tools, and recipients already bound inside one complete `physical_actions` attempt are not a second act. For talk, only a second person being spoken to counts; a person who is only talked about, or named inside what is said or asked of the listener, is not a second act.",
       "criteria": {
         "way_1": "The Supply Closet",
         "way_2": "The Long Hallway",
@@ -184,10 +184,10 @@
     },
     "named_more_than_one": {
       "type": "noul",
-      "instructions": "First identify the one requested intent. Return a high yes probability only when that same intent requests at least two distinct eligible records: move counts `ways_out`; talk or attack counts `other_characters`; take counts `available_items`; drop counts `player_items`; examine counts either item list. A talk command that directly names two present people counts both even when one is addressed and the other appears inside the requested message. A record listed only for a different intent does not count. If the intent is `other`, the answer is no. Collective words such as `both`, `all`, `everything`, `the lot`, or `them` count only when context unambiguously selects at least two eligible records. A single `physical_actions` attempt is one act even when it binds several parts.",
+      "instructions": "First identify the one requested intent. Return a high yes probability only when that same intent requests at least two distinct eligible records: move counts `ways_out`; talk or attack counts `other_characters`; take counts `available_items`; drop counts `player_items`; examine counts either item list. For talk, count only the people the player is speaking to: a present person who is only talked about, or named inside what is said or asked of the listener, does not count. A record listed only for a different intent does not count. If the intent is `other`, the answer is no. Collective words such as `both`, `all`, `everything`, `the lot`, or `them` count only when context unambiguously selects at least two eligible records. A single `physical_actions` attempt is one act even when it binds several parts.",
       "criteria": {
-        "true": "The same non-other requested intent explicitly names or unambiguously includes at least two distinct records from its eligible state list.",
-        "false": "The line has at most one eligible listed record for its requested intent, refers only to absent or differently eligible records, is other, or names parts already bound inside one complete physical action."
+        "true": "The same non-other requested intent explicitly names or unambiguously includes at least two distinct records from its eligible state list; for talk, at least two people being spoken to.",
+        "false": "The line has at most one eligible listed record for its requested intent, refers only to absent or differently eligible records, is other, names parts already bound inside one complete physical action, or speaks to one person about another."
       }
     },
     "target_present": {
