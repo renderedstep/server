@@ -629,6 +629,55 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     end
   end
 
+  # THE TALK-ABOUT-ANOTHER PAIR: the use pair's arm and transport on today's
+  # corpus, either side of System One's talk wording counting only the people
+  # spoken to. The model call's request did not move, and System One's is in no
+  # digest, so both sides share today's request identity. Their READMEs have
+  # the verdicts.
+  ABOUT_BEFORE = "classifier-about-before-20261022".freeze
+  ABOUT_AFTER = "classifier-about-after-20261022".freeze
+  TWO_LISTENERS = %w[two-names-talk-two-people two-names-talk-both two-names-talk-court two-names-talk-court-full
+                     two-names-talk-court-and talk-about-another-control].freeze
+
+  test "the talk-about-another sets are today's corpus and request either side of the talk wording" do
+    [ load_kept(ABOUT_BEFORE), load_kept(ABOUT_AFTER) ].each do |result|
+      assert result.cascade, result.name
+      assert_equal Eval::Classifier.digest, result.corpus_digest, result.name
+      assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size, result.name
+      assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms, result.name
+      assert_equal Eval::Classifier::Version.offline, result.request_identity, result.name
+      assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq, result.name
+      result.rows.each do |row|
+        flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
+        assert_equal flagged || thrown?(row["typed"]), row["resolved_by"] == "typed_model_escalated", row["id"]
+      end
+      %w[classifier.json offline.json receipts.json README.md].each do |file|
+        assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{result.name}/#{file}"
+      end
+    end
+  end
+
+  test "after the talk wording, a person talked about plays and two listeners are still refused" do
+    rows = load_kept(ABOUT_AFTER).rows
+    about = rows.select { |row| row["shape"] == "talk-about-another" || row["id"] == "two-names-talk-perrin" }
+    listeners = rows.select { |row| TWO_LISTENERS.include?(row["id"]) }
+
+    assert_equal 6 * Eval::Noise::MIN_RUNS, about.size
+    assert about.all? { |row| row["right"] }, about.reject { |row| row["right"] }.map { |row| row["id"] }.inspect
+    assert_equal TWO_LISTENERS.size * Eval::Noise::MIN_RUNS, listeners.size
+    assert listeners.all? { |row| row["right"] && row["got_refusal"] == "named_more_than_one" },
+           listeners.reject { |row| row["right"] }.map { |row| row["id"] }.inspect
+  end
+
+  test "the talk-about-another sets' floor can be recomputed offline" do
+    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json)
+    [ ABOUT_BEFORE, ABOUT_AFTER ].each do |set|
+      kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
+      assert_equal Eval::Classifier.digest, kept.fetch("corpus_digest"), set
+      assert_equal floor, kept.fetch("floor"), set
+    end
+  end
+
   # The request the sets before the use pair's after side were bought on.
   def request_before_use = load_kept(USE_BEFORE).request_identity
 
