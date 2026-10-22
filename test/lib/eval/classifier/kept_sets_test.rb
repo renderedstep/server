@@ -213,7 +213,23 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
                          unresolved-use-open-scuttle unresolved-use-search-windowsill examine-search-room
                          examine-not-search-desk take-not-search-desk-papers].freeze
 
-  def today_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_TODAY.include?(line.id) }
+  # THE TALK-ABOUT-ANOTHER RULING, after the use pair was bought: on a talk only
+  # the people spoken to count, so one line stopped being refused and six joined
+  # it. The use pair scored neither, so it is checked against today's corpus
+  # less the six and with the old label put back.
+  ADDED_SINCE_USE = %w[talk-about-another-what-he-makes talk-about-another-truth talk-about-another-signed
+                       talk-about-another-ebb talk-about-another-keep-clear talk-about-another-control].freeze
+  FORMER_TALK_LABELS = {
+    "two-names-talk-perrin" => { also_named: "Halkett Rowe", refusal: :named_more_than_one, shape: "two-names-one-set" }
+  }.freeze
+
+  def use_corpus
+    kept = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_USE.include?(line.id) }
+    Eval::Classifier::Corpus.new(path: kept.path, positions: kept.positions,
+                                 lines: kept.lines.map { |line| FORMER_TALK_LABELS[line.id] ? line.with(**FORMER_TALK_LABELS[line.id]) : line })
+  end
+
+  def today_corpus = use_corpus.subset { |line| !ADDED_SINCE_TODAY.include?(line.id) }
 
   def current_corpus = before_the_reported_intent_relabel(today_corpus)
 
@@ -585,11 +601,11 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
 
     [ before, after, narrowed ].each do |result|
       assert result.cascade, result.name
-      assert_equal Eval::Classifier.digest, result.corpus_digest, result.name
-      assert_equal Eval::Classifier.corpus.size, result.corpus_size, result.name
+      assert_equal Eval::Classifier.digest(use_corpus), result.corpus_digest, result.name
+      assert_equal use_corpus.size, result.corpus_size, result.name
       assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms, result.name
       assert_equal Eval::Noise::MIN_RUNS, result.reps, result.name
-      assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size, result.name
+      assert_equal Eval::Noise::MIN_RUNS * use_corpus.size, result.rows.size, result.name
       assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq, result.name
       result.rows.each do |row|
         flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
@@ -605,10 +621,10 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   end
 
   test "the use sets' floor can be recomputed offline" do
-    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json)
+    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: use_corpus).summary.to_h.to_json)
     [ USE_BEFORE, USE_AFTER, USE_NARROWED ].each do |set|
       kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
-      assert_equal Eval::Classifier.digest, kept.fetch("corpus_digest"), set
+      assert_equal Eval::Classifier.digest(use_corpus), kept.fetch("corpus_digest"), set
       assert_equal floor, kept.fetch("floor"), set
     end
   end

@@ -1,0 +1,33 @@
+{
+  "script": "asking-one-person-about-another",
+  "doctor": {
+    "headline": "playable, 1 warning",
+    "findings": [
+      [
+        "no_arc",
+        "warning",
+        "this story has no arc, so no playthrough of it can ever reach an ending: there is no quest for a beat to belong to and no outcome to select. A world file's `quests:` block is where one is written",
+        "manual"
+      ]
+    ]
+  },
+  "audit": {
+    "headline": "2 scenes: 0 contradictions, 0 defects, 0 drifts, 0 still turns",
+    "flags": [
+      [
+        "named_more_than_one",
+        1000000002,
+        "the player typed \"ask Tamsin and Rowe where my father's watch is\", which named two things the records have, and a turn can talk only one of them",
+        {
+          "action": "talk",
+          "typed": "ask Tamsin and Rowe where my father's watch is",
+          "resolved to": "Tamsin Gale",
+          "also named": "Rowe Harker",
+          "where": "The Pawn Counter",
+          "at": "2026-09-24T19:15:00.000Z"
+        }
+      ]
+    ],
+    "unjudged": []
+  }
+}

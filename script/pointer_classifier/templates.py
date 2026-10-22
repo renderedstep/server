@@ -309,6 +309,8 @@ class Lines:
     def talk(self):
         if not self.room.people:
             return None
+        if len(self.room.people) >= 2 and self.rng.random() < 0.25:
+            return self.talk_about_another()
         key, entry = self.pick(self.room.people)
         who = self.ref(key)
         topic = self.topic()
@@ -323,6 +325,16 @@ class Lines:
             f"threaten {who}", f"tell {who} I will hurt them if they lie", f"ask {who} to give me {topic}",
             f"insult {who}", f"beg {who} for a coin", f"question {who} about the door"])
         return text, label("talk", [key])
+
+    def talk_about_another(self):
+        # ON A TALK ONLY THE PEOPLE SPOKEN TO COUNT. A second person present
+        # and only talked about -- or named inside what the listener is told or
+        # asked to do -- is not a second act, so the line is one talk to A.
+        (a, _), (b, _) = self.rng.sample(self.room.people, 2)
+        text = self.pick([f"tell {self.ref(a)} that {self.ref(b)} is lying",
+                          f"ask {self.ref(a)} about {self.ref(b)}",
+                          f"introduce {self.ref(a)} to {self.ref(b)}"])
+        return text, label("talk", [a])
 
     def talk_absent(self):
         who = self.absent("person")
@@ -573,10 +585,6 @@ class Lines:
         if intent == "move":
             text = f"{verb} {self.ref(a)}{joiner}{verb} {self.ref(b)}" if self.rng.random() < 0.5 \
                 else f"{verb} {self.ref(a)} and then on to {self.ref(b)}"
-        elif intent == "talk" and self.rng.random() < 0.5:
-            text = self.pick([f"tell {self.ref(a)} that {self.ref(b)} is lying",
-                              f"ask {self.ref(a)} about {self.ref(b)}",
-                              f"introduce {self.ref(a)} to {self.ref(b)}"])
         else:
             second = self.pick([self.ref(b), f"{verb} {self.ref(b)}"])
             text = f"{verb} {self.ref(a)}{joiner}{second}"

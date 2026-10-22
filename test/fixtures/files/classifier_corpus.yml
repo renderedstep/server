@@ -1783,14 +1783,79 @@ lines:
   typed: Perrin, tell Rowe what you found in the amendments
   intent: talk
   target: Perrin Lasco
-  also_named: Halkett Rowe
+  shape: talk-about-another
+  why: >-
+    one person addressed and the other named inside what they are asked to pass
+    on. ON A TALK ONLY THE PEOPLE SPOKEN TO COUNT: a person present and only
+    talked about, or named inside what is said or asked of the listener, is not
+    a second act. So this is one talk to Perrin, and it plays. It was labelled
+    refused until the owner's ruling of 2026-10-22; every kept cascade run had
+    already answered it this way
+
+- id: talk-about-another-what-he-makes
+  position: office-with-perrin
+  typed: ask Rowe what he makes of Perrin
+  intent: talk
+  target: Halkett Rowe
+  shape: talk-about-another
+  why: >-
+    the plainest form of the rule: Perrin stands in the room and is only the
+    subject of the question, so the line speaks to Rowe alone
+
+- id: talk-about-another-truth
+  position: office-with-perrin
+  typed: Rowe, is Perrin telling the truth?
+  intent: talk
+  target: Halkett Rowe
+  shape: talk-about-another
+  why: >-
+    addressed by a leading name, with the second person inside the question --
+    the shape a reader is likeliest to count twice
+
+- id: talk-about-another-signed
+  position: office-with-perrin
+  typed: tell Perrin I know Rowe signed it
+  intent: talk
+  target: Perrin Lasco
+  shape: talk-about-another
+  why: >-
+    the second person is named inside what is said, and here it is Rowe who is
+    talked about, so the rule is not read off which of the pair comes first in
+    the cast
+
+- id: talk-about-another-ebb
+  position: court-with-both
+  typed: ask Brace whether Neb was on the post at the ebb
+  intent: talk
+  target: Ammon Brace
+  shape: talk-about-another
+  why: >-
+    the held-out world and two nicknames: Neb is present and only asked about,
+    so this is one talk to Brace
+
+- id: talk-about-another-keep-clear
+  position: court-with-both
+  typed: tell Neb to keep clear of the Justicar
+  intent: talk
+  target: Neb Halloran
+  shape: talk-about-another
+  why: >-
+    the second person named inside what the listener is asked to do. The player
+    does one thing -- speaks to Neb -- and what Neb may do in answer is the
+    engine's closed set of talk choices, so nothing here acts on the Justicar
+
+- id: talk-about-another-control
+  position: court-with-both
+  typed: tell Neb and the Justicar the water is rising
+  intent: talk
+  target: Neb Halloran
+  also_named: Ammon Brace
   refusal: named_more_than_one
   shape: two-names-one-set
   why: >-
-    one person addressed and the other named inside what is said to them, which
-    is the hardest two-name talk to be sure about -- and the app's answer is
-    that a line naming two people it can resolve is refused whichever way round.
-    No `also_accept` is needed for the swap: the pair is scored as a SET
+    THE CONTROL for the lines above: the same room and a near wording, but both
+    people are spoken to, so it is still two conversations on one line and still
+    refused. The pair is scored as a SET, so no `also_accept` for the swap
 
 - id: two-names-talk-both
   position: office-with-perrin

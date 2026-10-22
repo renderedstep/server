@@ -1,0 +1,71 @@
+# ASKING ONE PERSON ABOUT ANOTHER IS ONE TALK.
+#
+# The owner's ruling of 2026-10-22: on a talk, only the people the player is
+# speaking to count. A second person present and only talked about -- or named
+# inside what the listener is told or asked to do -- is not a second act, so
+# "ask Tamsin about Rowe" plays as a talk to Tamsin. Nothing in the engine
+# changed for it: the engine refuses whenever a reader names a second person,
+# and what changed is what the readers are asked to name. So this walk records
+# the reader answering the way the ruling says and shows what the engine then
+# does with that answer.
+#
+# WHAT EACH STEP IS FOR:
+#
+#   1  The line a fixed grammar cannot read -- both names appear in it, so a
+#      slashed `/ask Tamsin about Rowe` is refused as matching more than one
+#      person -- typed free and read by the classifier as one talk. Tamsin
+#      answers, the player's words reach her as typed, and Rowe is not dropped:
+#      he is in her moment as somebody else in the room, so she answers about
+#      him knowing he is standing there.
+#   2  The control: both of them spoken to. A reader that names the second
+#      listener still refuses the line whole, and nothing is written.
+#
+# WHAT IS DELIBERATELY NOT ASSERTED: that a model reads the line this way. That
+# is the classifier bench's question (`rake eval:classifier`, the corpus's
+# `talk-about-another` shape), never a walk's.
+story: Two Clerks at One Counter
+steps:
+- id: asking-tamsin-about-rowe-is-a-talk-to-tamsin
+  type: ask Tamsin about Rowe
+  why: a person who is only talked about is not a second act, so the line plays as one talk
+  browser:
+    token: about
+    replies:
+    - purpose: classifier
+      prompt_includes: [ask Tamsin about Rowe, Tamsin Gale, Rowe Harker]
+      content: {intent: talk, target: Tamsin Gale, also_named: nothing}
+    - purpose: character
+      prompt_includes:
+      - ask Tamsin about Rowe
+      - 'Also here, besides the two of you: Rowe Harker'
+      content:
+        pre_thought: He wants to know about Rowe, with Rowe standing right there.
+        pre_feeling: wary
+        action: Tamsin glances at Rowe and lowers her voice.
+        post_thought: Better he hears it from me than from the book.
+        post_feeling: careful
+        inner_resolution: I will tell him Rowe keeps the pledges.
+        engine_action: none
+    - purpose: interaction-narration
+      content: Tamsin glances sideways at Rowe before she answers you, low.
+  expect:
+    changed: true
+    refused: false
+    resolved_by: model
+    carrying: [pawn ticket]
+    present: [Rowe Harker, Tamsin Gale]
+
+- id: speaking-to-both-is-still-refused
+  type: ask Tamsin and Rowe where my father's watch is
+  why: two people spoken to on one line is two conversations, and a reader naming the second refuses it whole
+  browser:
+    token: both
+    replies:
+    - purpose: classifier
+      content: {intent: talk, target: Tamsin Gale, also_named: Rowe Harker}
+  expect:
+    refused: true
+    changed: false
+    offers: [Tamsin Gale, Rowe Harker]
+    carrying: [pawn ticket]
+    present: [Rowe Harker, Tamsin Gale]
