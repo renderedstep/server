@@ -360,7 +360,7 @@ through nothing else** (`PointerClassifierAgent`; the engine's
 `classifier::read_locally`). The Mistral call and the Jev cascade below are no
 longer what a player gets; their sets are history, kept to judge a new reader
 against. The classifier's baseline of record is
-**`db/eval/classifier-pointer-m68-both-20261023`**: the m68-both weights at
+**`db/eval/classifier-pointer-m68-step1-20261023`**: the m68-step1 weights at
 fp32, read through the running sidecar, four repetitions of the whole corpus.
 Its README has the figures and which reader answered each line.
 
@@ -368,7 +368,7 @@ Its README has the figures and which reader answered each line.
 bin/pointer-classifier &     # or bin/dev; needs POINTER_CLASSIFIER_URL and the weights
 MODELS=pointer:local REPS=4 SET=<name> bin/rails eval:classifier
 MODELS=pointer:<weights dir> REPS=4 SET=<name> bin/rails eval:classifier   # a model not yet serving
-rake eval:classifier_compare BEFORE=classifier-pointer-m68-both-20261023 AFTER=<name>
+rake eval:classifier_compare BEFORE=classifier-pointer-m68-step1-20261023 AFTER=<name>
 ```
 
 **A pointer arm reads each line as play reads it**, through the engine's own

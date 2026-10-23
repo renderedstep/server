@@ -740,13 +740,13 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   # through, read as play reads it. EVALUATION.md and the set's README quote
   # these figures; every reading is kept, as a cascade set's are.
   test "the local reader's set is the baseline of record, read as play reads it" do
-    result = load_kept("classifier-pointer-m68-both-20261023")
+    result = load_kept("classifier-pointer-m68-step1-20261023")
 
     assert_equal [ "pointer:local" ], result.arms
     assert_equal Eval::Noise::MIN_RUNS, result.reps
     assert_equal 372, result.corpus_size
     assert_equal Eval::Noise::MIN_RUNS * 372, result.rows.size
-    assert_equal({ "typed_model" => 4 * 282, "typed_model_unsure" => 4 * 82, "typed_model_throw" => 4 * 8 },
+    assert_equal({ "typed_model" => 4 * 284, "typed_model_unsure" => 4 * 80, "typed_model_throw" => 4 * 8 },
                  result.resolved_by_counts("pointer:local"))
     assert_equal 4 * 323, result.rows.count { |row| row["right"] }, "323 of 372 right in every repetition"
   end
