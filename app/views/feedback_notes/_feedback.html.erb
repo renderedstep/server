@@ -1,0 +1,26 @@
+<%# A NOTE TO THE MAINTAINER -- see `FeedbackNotesController`. Absent unless
+    `FeedbackNotesController.enabled?`. Only the screen and the playthrough's id
+    ride with the text; the controller looks the room up itself. %>
+<% if FeedbackNotesController.enabled? %>
+  <div id="feedback" class="feedback" data-controller="feedback">
+    <% if local_assigns[:status] == :sent %><span class="feedback-sent" role="status">Sent</span><% end %>
+    <button type="button" class="feedback-toggle" title="Send feedback" aria-label="Send feedback"
+            data-action="feedback#open"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none"
+      stroke="currentColor" stroke-width="1.4"><path d="M2 3h12v8H7l-3 3v-3H2z"/></svg></button>
+    <dialog class="feedback-dialog" data-feedback-target="dialog" aria-label="Send feedback">
+      <%= form_with url: feedback_note_path, class: "feedback-form" do |form| %>
+        <%= form.hidden_field :screen, value: screen, id: nil %>
+        <%= form.hidden_field :playthrough_id, value: playthrough_id, id: nil if playthrough_id.present? %>
+        <%= form.hidden_field :request_id, value: SecureRandom.uuid, id: nil %>
+        <%= form.text_area :text, rows: 5, maxlength: FeedbackNotesController::MAX_LENGTH, required: true,
+                                  id: "feedback_text", placeholder: "What would make the game better?",
+                                  "aria-label": "Feedback" %>
+        <%= render "feedback_notes/status", status: nil %>
+        <div class="feedback-buttons">
+          <button type="button" data-action="feedback#close">Cancel</button>
+          <%= form.submit "Send" %>
+        </div>
+      <% end %>
+    </dialog>
+  </div>
+<% end %>
