@@ -192,6 +192,15 @@ step — deliberately outside the Gemfile, installed on demand by `bin/dev`. The
 one build is the Rust engine's extension, which plays every turn
 ([The Rust engine](#the-rust-engine)).
 
+`FEEDBACK_COMMAND`, when set, puts a feedback button at the top of every page
+for the owner — only where `Playthrough::Debug.enabled?` (local, or
+`TA_DEBUG_VIEW`). Sending runs the command, split like a shell word list but
+with no shell, with `--request-id ta-feedback-<uuid> --json -` appended and the
+note on stdin: the screen as `controller#action`, on a game screen the
+playthrough's id and the room's name, a blank line, then the typed text. Only
+exit status 0 counts as sent. Notes are capped at 2,000 characters and five a
+minute. Unset, the button is absent and `POST /feedback_note` is a 404.
+
 ### Use things and open passages
 
 Describe your attempt in ordinary text, or use a slash command to select it
