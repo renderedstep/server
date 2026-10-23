@@ -1,0 +1,9 @@
+<%# The logo's tiles, served straight out of public/: the SVG for browsers that
+    take one, the .ico for those that do not, and the PNGs a home screen asks
+    for. Only the icons carry the logo's colours; theme-color is the page's own
+    background, passed in by the layout. %>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="<%= theme %>">
