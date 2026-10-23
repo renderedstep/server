@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+
+# THE CLASSIFIER'S LOCAL READER: the pointer model, as a sidecar answering
+# free-typed lines for the engine (`PointerClassifierAgent` has the whole of
+# it). `Procfile.dev` runs it as `classifier`.
+#
+# It binds the port of POINTER_CLASSIFIER_URL, on 127.0.0.1 only, because that
+# address is what the engine posts to; `bin/dev` sets the URL when it is not
+# set. The weights and the Python come from POINTER_CLASSIFIER_WEIGHTS and
+# POINTER_CLASSIFIER_PYTHON, or `storage/pointer_classifier/`. They are not in
+# the repository: `bin/update` says how to get them.
+#
+# NOT SET UP IS NOT A CRASH. Foreman stops every process when one exits, so a
+# checkout without the weights would lose the whole formation. Instead this
+# says, once and loudly, that free-typed lines will be refused, and waits.
+# POINTER_CLASSIFIER_THREADS (default 2) is the model's thread count.
+
+cd "$(dirname "$0")/.." || exit 1
+
+home=storage/pointer_classifier
+weights=${POINTER_CLASSIFIER_WEIGHTS:-$home/weights}
+python=${POINTER_CLASSIFIER_PYTHON:-$home/venv/bin/python}
+port=$(printf '%s' "${POINTER_CLASSIFIER_URL:-}" | sed -n 's|^https\{0,1\}://[^/:]*:\([0-9][0-9]*\).*|\1|p')
+
+idle() {
+  echo "pointer classifier: NOT RUNNING -- $1. Every free-typed line is refused until it is; slashed commands still play. bin/update says how to set it up." >&2
+  trap 'exit 0' TERM INT
+  while :; do sleep 3600 & wait $!; done
+}
+
+[ -n "$port" ] || idle "POINTER_CLASSIFIER_URL names no port"
+[ -x "$python" ] || idle "no Python at $python"
+[ -f "$weights/pointer.pt" ] || idle "no weights at $weights"
+
+export OMP_NUM_THREADS="${POINTER_CLASSIFIER_THREADS:-2}" TOKENIZERS_PARALLELISM=false HF_HUB_OFFLINE=1
+exec "$python" script/pointer_classifier/serve.py "$weights" --http "$port" --threads "$OMP_NUM_THREADS"

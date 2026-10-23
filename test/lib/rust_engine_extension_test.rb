@@ -140,6 +140,64 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     end
   end
 
+  # THE CLASSIFIER'S LOCAL READER, over a real socket, with the live models
+  # document a turn builds from the environment: the engine posts its request
+  # to the address, names the weights by digest, and plays what comes back. No
+  # address is the reader down, refused in the engine's words, and never a
+  # model call: there is no key here, so a model call would fail the turn.
+  test "a free-typed line is read by the local reader at its address, and refused without one" do
+    script = EngineSweep.scripts.find { |candidate| candidate.name == "two-readers-of-one-typed-line" }
+    posted = Queue.new
+    reader = TCPServer.new("127.0.0.1", 0)
+    answering = Thread.new do
+      loop do
+        client = reader.accept
+        head = +""
+        head << client.gets until head.end_with?("\r\n\r\n")
+        request = JSON.parse(client.read(head[/content-length: (\d+)/i, 1].to_i))
+        posted << request
+        # Every question answered, as the model does: a take it reads as absent.
+        answers = request.fetch("questions").to_h do |id, question|
+          next [ id, { type: "noul", noul: id == "target_present" ? 0.04 : 0.0 } ] if question["type"] == "noul"
+
+          [ id, { type: "choice", choice: id == "intent" ? "take" : "nothing" } ]
+        end
+        body = { answers: answers, usage: { cost: 0 } }.to_json
+        client.write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}")
+        client.close
+      end
+    end
+
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "local.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      File.binwrite(File.join(directory, "pointer.pt"), "weights")
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        walk = EngineSweep::Walk.new(script)
+        walk.prepare!
+        game = walk.game_of(script.steps.first.player)
+
+        with_reader("http://127.0.0.1:#{reader.addr[1]}/", directory) do
+          refusal = Playthrough::RustEngine.submit(game, "take the brass key", "absent")["turned"]["refusal"]
+          assert_equal "unresolved", refusal["kind"], refusal.inspect
+          assert_includes refusal["offer"], "red coin"
+        end
+        request = posted.pop
+        assert_equal "pointer-#{Digest::SHA256.hexdigest("weights").first(16)}", request["model"]
+        assert_equal "take the brass key", request.dig("state", "player_action")
+
+        with_reader(nil, directory) do
+          refusal = Playthrough::RustEngine.submit(game, "take the brass key", "down")["turned"]["refusal"]
+          assert_equal "unreadable", refusal["kind"]
+          assert_match(/slash menu lists them/, refusal["fact"])
+        end
+      end
+    end
+  ensure
+    answering&.kill
+    reader&.close
+  end
+
   # TWO COPIES OF SQLITE IN ONE PROCESS, the `sqlite3` gem's and the
   # extension's, on one file in write-ahead-log mode. The engine's connection
   # closing must leave the log to this process's own connection: a checkpoint
@@ -184,5 +242,24 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
         assert_equal before, Dir.children(directory).sort
       end
     end
+  end
+
+  private
+
+  # A live models document, which the sweep's guard refuses: with no key in
+  # the suite's environment it names no model, only the local reader.
+  def with_reader(url, weights)
+    saved = ENV.to_h.slice("POINTER_CLASSIFIER_URL", "POINTER_CLASSIFIER_WEIGHTS")
+    guard = Playthrough::RustEngine.live_models_guard
+    Playthrough::RustEngine.live_models_guard = nil
+    url ? ENV["POINTER_CLASSIFIER_URL"] = url : ENV.delete("POINTER_CLASSIFIER_URL")
+    ENV["POINTER_CLASSIFIER_WEIGHTS"] = weights
+    assert_not_predicate Playthrough::RustEngine, :model_configured?
+    yield
+  ensure
+    Playthrough::RustEngine.live_models_guard = guard
+    ENV.delete("POINTER_CLASSIFIER_URL")
+    ENV.delete("POINTER_CLASSIFIER_WEIGHTS")
+    ENV.update(saved)
   end
 end

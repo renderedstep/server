@@ -74,11 +74,13 @@
 #                   that a slashed or verb-first line was read offline and cost
 #                   nothing at all. A `browser:` step runs the real
 #                   `Playthrough::Turn` against declared provider replies, so
-#                   the four values the two MODEL readers write are reachable
-#                   there and nowhere else: `model` (no System One key),
-#                   `typed_model`, `typed_model_escalated` and
-#                   `typed_model_unavailable`. See
-#                   `two-readers-of-one-typed-line.yml`
+#                   the values the MODEL readers write are reachable there
+#                   and nowhere else: the local reader's `typed_model` and
+#                   `typed_model_unsure` (a `local_classifier` reply; its
+#                   refusals write no scene), and, on the model call's path,
+#                   `model` (no System One key), `typed_model`,
+#                   `typed_model_escalated` and `typed_model_unavailable`.
+#                   See `two-readers-of-one-typed-line.yml`
 #   note            text the note has to contain
 #   drifts          `Playthrough::Drift` rows this line wrote
 #   blows           `Playthrough::Blow` rows this line wrote -- the player's own

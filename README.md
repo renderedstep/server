@@ -124,9 +124,13 @@ bin/rails db:seed      # the checked-in worlds, no model needed
 bin/dev                # then open http://localhost:3000
 ```
 
-`bin/dev` runs both processes the game needs — the web server and the job worker
-— under foreman, with both logs interleaved. `PORT=3142 bin/dev` moves the whole
-formation if something else already has 3000.
+`bin/dev` runs the three processes the game needs — the web server, the job
+worker and the classifier's local reader — under foreman, with their logs
+interleaved. `PORT=3142 bin/dev` moves the whole formation if something else
+already has 3000; the reader listens two hundred above it, on 127.0.0.1 only.
+The reader's Python and weights are not in the repository: `bin/update` says
+whether they are there and how to get them, and without them every free-typed
+line is refused while slashed commands still play.
 
 For the terminal client `ta` (renderedstep/terminal),
 start it with `bin/dev --ta`: the same two processes on port 3100, which is the
@@ -559,7 +563,9 @@ does not play yet, a database failure, a panic it caught. A model failure is
 not an engine error; the player is told what they have always been told (the
 crisis notice, the setup notice, the failure copy). The engine's model calls
 use the credentials the app uses: `OPENROUTER_API_KEY` as its Direct route,
-`OPENROUTER_MODEL`, and the System One keys; neither side logs them. The local
+`OPENROUTER_MODEL`, and the System One keys; neither side logs them. The
+classifier's reader is the local one at `POINTER_CLASSIFIER_URL`, named by its
+weights' digest, and no key reaches it. The local
 rotation (`TA_LOCAL_MODELS`) is not the engine's, so it never reaches a turn.
 `app/models/playthrough/rust_engine.rb` says all of this at the source.
 
@@ -649,17 +655,20 @@ and is stripped before the line is read, so `Scene#typed` and every instrument
 that reads it go on seeing ordinary English; the browser's box writes it
 (`Playthrough::SlashMenu`), which makes the shortcut opt-in and visible.
 
-**The key is the switch, and there is no feature flag.** Where either
-`TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` is in this environment, a line that
-reaches the classifier is read first by the engine's System One cascade —
-one System One request, composed into an `Intent` by the engine and never
-trusted as one. TypeSafe direct is preferred when its key is present; otherwise
-OpenRouter Decisions answers. Where neither key is present there is no cascade
-at all: the classifier is byte for byte what it has always been, which is what
-every test run and every keyless checkout exercises. See
-`Playthrough::Classifier::PATHS`, the engine's `src/cascade.rs` for the two
-thresholds, and `EVALUATION.md` -> The classifier bench -> Measuring the
-cascade for the failure policy and the kept set.
+**A line that reaches the classifier is read by the small local model, and by
+nothing else.** The classifier's reader is a pointer model running as a
+sidecar on the server's own machine (`PointerClassifierAgent`,
+`bin/pointer-classifier`, the `classifier` line of `Procfile.dev`): one request
+of typed questions, built from the room's own sets and composed into an
+`Intent` by the engine, never trusted as one. It takes no key and costs
+nothing. **The address is the switch** (`POINTER_CLASSIFIER_URL`, with the
+weights it names): with no reader set up, or one that is down, a free-typed
+line is refused with a pointer to the slash commands — never handed to a model
+call instead — and a slashed line still plays. A free-typed throw is never
+asked, and is pointed at `/throw`. The System One keys switch Jev for speech,
+bystander acts and arrival only. See `Playthrough::Classifier::PATHS`, the
+engine's `src/classifier.rs` (`read_locally`) and `src/cascade.rs` for the two
+thresholds, and `EVALUATION.md` -> The classifier bench for the kept set.
 
 ```mermaid
 flowchart TD
@@ -680,18 +689,18 @@ flowchart TD
     G2 -->|"no: a physical slash command<br/>whose whole attempt is unavailable"| R
     G2 -->|"yes: resolved_by = grammar"| R
 
-    subgraph CL["Playthrough::Classifier#classify"]
+    subgraph CL["the classifier's local reader (the engine's classifier::read_locally)"]
         C1["Build the candidates FROM RECORDS<br/>the room's exits, who is standing in it,<br/>what is lying here, what the player carries,<br/>and complete physical attempts possible now"]
-        CK{"SystemOneAgent.configured?<br/>is TYPESAFE_API_KEY or OPENROUTER_API_KEY in this environment?"}
-        C1 --> CK
-        CK -->|"no: resolved_by = model, byte for byte today's path"| C2
-        CK -->|"yes"| CS["MODEL CALL, typed questions, not a chat<br/>the System One cascade -- one System One<br/>request, 6-11 Choice/Noul questions built from<br/>THIS position's own #offered_for sets"]
-        CS --> CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15,<br/>or a word of the line is a throw verb,<br/>or the request could not be believed?"}
-        CG -->|"no: resolved_by = typed_model<br/>ENGINE COMPOSES the Intent -- no second model call"| C3
-        CG -->|"yes: resolved_by = typed_model_escalated<br/>(a flag fired, or the line names a throw) or typed_model_unavailable<br/>(missing key, timeout, bad body, out-of-list choice)"| C2
-        C2["MODEL CALL, schema'd<br/>Playthrough::IntentSchema<br/>intent: move / talk / examine / take / drop / attack / use / other<br/>target: an enum of ONLY those names and physical tokens"]
-        C3["Resolve the answer back to a RECORD or closed choice<br/>an unresolvable target leaves it nil<br/>AND writes a Playthrough::Drift row"]
-        C2 --> C3
+        CT{"does a word of the line name a throw?"}
+        C1 --> CT
+        CT -->|"yes: resolved_by = typed_model_throw<br/>not asked: refused, pointed at /throw"| R
+        CT -->|"no"| CS["MODEL CALL, typed questions, not a chat<br/>the LOCAL POINTER MODEL, a sidecar on this machine<br/>at POINTER_CLASSIFIER_URL, no key, no cost<br/>6-11 Choice/Noul questions built from<br/>THIS position's own sets"]
+        CS --> CK{"did it answer, with answers the engine can compose?"}
+        CK -->|"no: resolved_by = typed_model_down<br/>(not set up, loading, down, bad body)<br/>refused, pointed at the slash commands<br/>NO OTHER READER IS ASKED"| R
+        CK -->|"yes"| CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15?"}
+        CG -->|"no: resolved_by = typed_model"| C3
+        CG -->|"yes: resolved_by = typed_model_unsure<br/>played on its own reading all the same"| C3
+        C3["ENGINE COMPOSES the Intent and resolves it<br/>to a RECORD or closed choice; a target read<br/>as absent leaves it nil, which is refused<br/>with the list of what is here"]
     end
 
     C3 --> R{"Will the engine play this line at all?<br/>two acts, a reach that found nothing, an unreadable answer,<br/>an immovable item, or a still-closed passage"}
@@ -775,10 +784,10 @@ flowchart TD
     classDef gap fill:#7c2d12,stroke:#fdba74,stroke-width:2px,color:#ffffff
     classDef io fill:#1e293b,stroke:#94a3b8,stroke-width:1px,color:#ffffff
 
-    class C2,M3,M4,M6,T1,T2,P3,I2,N2,A3 llm
+    class CS,M3,M4,M6,T1,T2,P3,I2,N2,A3 llm
     class W0,C1,C3,G1,M1,M3N,M3A,M3B,M3C,M5,M7,M8,TE,T5,T6,T7,P2,I1,I3,N3,X1,V0,A0,A2 rec
     class N1 gap
-    class IN,SSE,OUT,OUT2,D,R,G0,G2,P1,A1 io
+    class IN,SSE,OUT,OUT2,D,R,G0,G2,P1,A1,CT,CK,CG io
 ```
 
 **The teal box above the arc is everybody else in the room, and it is teal for

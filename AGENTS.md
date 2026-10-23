@@ -261,13 +261,14 @@ bin/brakeman --no-pager    # CI fails on a warning; a new view is where they com
   for direnv) is strongly preferred for interactive work. `BaseAgent` works down
   `BaseAgent::REMOTE_MODEL_IDS`; `OPENROUTER_MODEL` overrides the front of it.
 - **Either System One credential is a switch and not a credential detail.**
-  `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` present alone turns the classifier's
-  System One cascade on — there is no feature flag — so a shell that has either
-  reads every typed line through a second model reader, and anything measured
-  there is measured on a different path. TypeSafe direct wins when its key is
-  present; otherwise OpenRouter Decisions answers.
-  `scenes.resolved_by` is where that is visible; `SystemOneAgent.configured?` is
-  the whole of the switch.
+  `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` present alone turns Jev on for
+  speech, bystander acts and arrival — there is no feature flag — so anything
+  measured in a shell that has either is measured on a different path. TypeSafe
+  direct wins when its key is present; otherwise OpenRouter Decisions answers.
+  `SystemOneAgent.configured?` is the whole of that switch. The classifier is
+  not on it: it reads free-typed lines through the local reader whenever
+  `POINTER_CLASSIFIER_URL` and its weights are set (`PointerClassifierAgent`),
+  and refuses them when not; `scenes.resolved_by` is where that is visible.
 - **Start the app with `bin/dev`**, not `bin/rails server` alone: a turn is a
   job, so a web process on its own accepts a command and narrates nothing.
 

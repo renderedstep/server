@@ -353,6 +353,47 @@ rake eval:classifier_compare BEFORE=a AFTER=b
 | `CAP=0.20` | a ceiling in USD on the run's System One requests, booked off each request's own receipt; a request that could cross it is not sent. Required for Jev alone |
 | `YES=1` | spend past the $0.50 ceiling |
 
+### The classifier of record: the local reader
+
+**Play reads every free-typed line through the small local pointer model, and
+through nothing else** (`PointerClassifierAgent`; the engine's
+`classifier::read_locally`). The Mistral call and the Jev cascade below are no
+longer what a player gets; their sets are history, kept to judge a new reader
+against. The classifier's baseline of record is
+**`db/eval/classifier-pointer-m68-both-20261023`**: the m68-both weights at
+fp32, read through the running sidecar, four repetitions of the whole corpus.
+Its README has the figures and which reader answered each line.
+
+```bash
+bin/pointer-classifier &     # or bin/dev; needs POINTER_CLASSIFIER_URL and the weights
+MODELS=pointer:local REPS=4 SET=<name> bin/rails eval:classifier
+MODELS=pointer:<weights dir> REPS=4 SET=<name> bin/rails eval:classifier   # a model not yet serving
+rake eval:classifier_compare BEFORE=classifier-pointer-m68-both-20261023 AFTER=<name>
+```
+
+**A pointer arm reads each line as play reads it**, through the engine's own
+local composition (`Playthrough::Requests.read_line(local: true)`), so a
+reading on the bench is the reading a turn makes:
+
+* a line the model is sure of plays, `typed_model`;
+* a line it is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
+  0.15) plays on its own reading, `typed_model_unsure`; a target it reads as
+  absent is refused with what is here;
+* a free throw is never asked and is refused with the pointer to `/throw`,
+  `typed_model_throw`;
+* a reader that does not answer is `typed_model_down` in play, and a FAILURE on
+  the bench rather than a reading, so an outage is never scored as misses.
+
+It is free: no key, no model call, nothing spent. The model is deterministic,
+so the four repetitions agree reading for reading; four are taken anyway
+because a verdict needs four a side. The set names the weights by the digest
+play records (`pointer-` and the first sixteen hex digits of `pointer.pt`'s
+SHA-256), never the weights themselves: they are not in this repository.
+
+**Do not tune the 0.15 presence threshold against the corpus.** That fits the
+yardstick, not the game. Raise accuracy by training, and judge each new model
+against this set.
+
 ### Measuring the cascade, and what a cascade set must carry
 
 Every set above pins the reader OFF (`system_one: false`), so the figures are

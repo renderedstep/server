@@ -1407,15 +1407,16 @@ test/models/playthrough/mechanics_test.rb:
   a take goes through the classifier to the same engine write, and asks for nothing more:
     pins: a classified take writes the take; one model call only
     by:
-    - sweep two-readers-of-one-typed-line#no-key-is-the-one-call-it-always-made
-    partial: 'served path: classifier reply then the take (carrying red coin, resolved_by
-      model); the no-narration call count is Mechanics'' classifier mode (model: true,
-      prose-free) is ruby-only; Rust has only the offline turn and the served turn'
+    - sweep two-readers-of-one-typed-line#a-sure-reading-is-played
+    partial: 'served path: the local reader''s reply then the take (carrying red coin,
+      resolved_by typed_model), which is the one reader play asks; the no-narration
+      call count is Mechanics'' classifier mode (model: true, prose-free) is ruby-only;
+      Rust has only the offline turn and the served turn'
   a drop goes through the classifier to the same engine write, and asks for nothing more:
     pins: a classified drop writes the drop; one model call only
     by:
-    - sweep two-readers-of-one-typed-line#the-cascade-composes-and-the-model-call-never-happens
-    partial: 'served path drop through a model reader (typed_model); the classifier-only
+    - sweep two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
+    partial: 'served path drop through the local reader (typed_model_unsure); the classifier-only
       call count is Mechanics'' classifier mode (model: true, prose-free) is ruby-only;
       Rust has only the offline turn and the served turn'
   walking into a stub realizes it and writes the arrival, as the real game does:
@@ -1628,7 +1629,7 @@ test/models/playthrough/mechanics_test.rb:
   a line that names one thing is played:
     pins: a classified single-target take is played
     by:
-    - sweep two-readers-of-one-typed-line#no-key-is-the-one-call-it-always-made
+    - sweep two-readers-of-one-typed-line#a-sure-reading-is-played
     partial: 'served path plays a classified take; Mechanics'' classifier mode (model:
       true, prose-free) is ruby-only; Rust has only the offline turn and the served
       turn'
@@ -1684,7 +1685,7 @@ test/models/playthrough/mechanics_test.rb:
   the same line without a slash still goes to the classifier:
     pins: an unslashed verb-first line still costs a classifier call
     by:
-    - sweep a-free-typed-throw#a-free-throw-at-somebody-here-is-played
+    - sweep two-readers-of-one-typed-line#a-sure-reading-is-played
   an engine-view verb is answered by the engine and named as such:
     pins: stats is resolved_by engine_view with no call
     by:
@@ -3005,7 +3006,7 @@ test/models/playthrough/turn_routing_test.rb:
     pins: a free sentence is read by the classifier (with the line in its prompt)
       and acted on, resolved_by model
     by:
-    - sweep two-readers-of-one-typed-line#no-key-is-the-one-call-it-always-made
+    - sweep asking-one-person-about-another#asking-tamsin-about-rowe-is-a-talk-to-tamsin
     - rust tests/engine.rs::a_line_is_read_over_rows_as_a_turn_reads_it
   a slashed line whose noun the grammar cannot place falls back to the classifier:
     pins: a slashed line with an unplaceable noun goes on to the classifier and is
@@ -3016,13 +3017,13 @@ test/models/playthrough/turn_routing_test.rb:
     pins: a verb-first line without a slash is not claimed by the grammar and costs
       a classifier call
     by:
-    - sweep a-free-typed-throw#a-free-throw-at-somebody-here-is-played
+    - sweep two-readers-of-one-typed-line#a-sure-reading-is-played
     - vector grammar
   an ordinary line whose first word is a command verb is left to the classifier:
     pins: unslashed lines starting with a command verb all reach the classifier
     by:
     - vector grammar
-    - sweep two-readers-of-one-typed-line#no-key-is-the-one-call-it-always-made
+    - sweep two-readers-of-one-typed-line#a-sure-reading-is-played
   a slashed line the grammar cannot read at all falls back to the classifier:
     pins: a slashed unknown verb goes to the classifier, handed the line without its
       slash
@@ -3129,7 +3130,7 @@ test/models/playthrough/turn_routing_test.rb:
   a throw is one turn and one Scene whatever the die did:
     pins: a throw writes a Scene and costs story time even when the lift fails
     by:
-    - golden a-free-typed-throw#a-free-throw-at-somebody-here-is-played
+    - golden a-free-typed-throw#the-command-is-played
   the narrator is handed the throw as a fact:
     pins: the narration prompt carries the thrower, the thing and whether it left
       the hands
@@ -3147,17 +3148,15 @@ test/models/playthrough/turn_routing_test.rb:
   an unslashed throw goes to the classifier and is written before it is narrated:
     pins: a free throw is read by the classifier as throw and narrated with the engine's
       throw fact
-    by:
-    - sweep a-free-typed-throw#a-free-throw-at-somebody-here-is-played
-    partial: classifier then narration, resolved_by model, understood throw -> ward
-      stamp; the narration reply has no prompt_includes -- the golden is a fumble
-      on the floor, so add prompt_includes ['NOTHING WAS THROWN', 'still lying exactly
-      where it was']
+    obsolete: play no longer reads a free throw; the local reader refuses it with the
+      pointer to /throw (sweep a-free-typed-throw#a-free-throw-is-pointed-at-the-command),
+      and the command is written before it is narrated (#the-command-is-played)
   an unslashed throw at scenery is refused and the thing stays carried:
     pins: a classifier throw with thrown_at nothing is refused (Nothing was thrown
       ... stays in your hands), classifier only, no time
-    by:
-    - sweep a-free-typed-throw#a-free-throw-at-scenery-is-refused
+    obsolete: play no longer reads a free throw; the local reader refuses it before
+      any reader is asked, and the thing stays carried (sweep
+      a-free-typed-throw#a-free-throw-is-pointed-at-the-command)
   a dead playthrough is refused in front of both readers:
     pins: an ended playthrough refuses any line (game over) before the grammar or
       classifier is asked
@@ -3446,7 +3445,7 @@ test/models/playthrough/turn_test.rb:
     - rust src/prompt_version.rs::every_branch_of_every_fact_sentence_is_rendered
     partial: 'moment vector ''handled'' marks a floor row dropped; facts::dropped
       wording is rendered; no turn-level request is checked. Port: prompt_includes
-      on two-readers-of-one-typed-line#the-cascade-composes-and-the-model-call-never-happens
+      on two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
       narration reply (''put down just now, on this turn'', ''put the red coin down'',
       ''Do not write them picking it up'')'
   the narrator cannot grant an item the app did not resolve:
@@ -3502,7 +3501,7 @@ test/models/playthrough/turn_test.rb:
   a drop costs the story one beat in the room:
     pins: a drop advances story time by 5 minutes
     by:
-    - golden two-readers-of-one-typed-line#the-cascade-composes-and-the-model-call-never-happens
+    - golden two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
   the narrator cannot put down an item the app did not resolve:
     pins: drop->nothing moves nothing (now refused); the item stays carried
     by:
@@ -3573,7 +3572,7 @@ test/models/playthrough/turn_test.rb:
   a dropping turn records the drop and the item it moved:
     pins: a drop scene has resolved_action drop and acted_on the item
     by:
-    - golden two-readers-of-one-typed-line#the-cascade-composes-and-the-model-call-never-happens
+    - golden two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
   a narrated turn records the action it was read as and no record:
     pins: an examine->nothing scene has resolved_action examine and no acted_on
     by:
@@ -3846,7 +3845,7 @@ test/models/playthrough/turn_throw_test.rb:
     by:
     - rust src/prompt_version.rs::every_placeholder_is_rendered_and_no_record_is
     partial: 'asserts ''is still lying exactly where it was'' (Fumbled{carried: false});
-      the mapping from a lying fumble is unwalked -- add that prompt_includes to a-free-typed-throw#a-free-throw-at-somebody-here-is-played
+      the mapping from a lying fumble is unwalked -- add that prompt_includes to a-free-typed-throw#the-command-is-played
       (its golden is a floor fumble)'
   the hit fact names the person and puts the thing at their feet:
     pins: the hit fact names the target, says NO LONGER CARRIED and at their feet

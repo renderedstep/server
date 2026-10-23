@@ -94,6 +94,7 @@ module Update
     Update::Steps::StampResolvedBy,
     Update::Steps::FoldOneRoomPlaces,
     Update::Steps::SafeRepairs,
+    Update::Steps::PointerReader,
     Update::Steps::Doctor
   ].freeze
 end

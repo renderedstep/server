@@ -160,8 +160,11 @@ class EngineSweep::Script
   # running. It is the only way a walk can reach the case where a later job
   # takes the lock first, which is the whole of what it exists for.
   def self.read_browser(value, where)
-    unless value.is_a?(Hash) && (value.keys - %w[token fail replies raises realizes accepted_first interrupt_after]).empty? && value["token"].is_a?(String) && value["token"].present?
+    unless value.is_a?(Hash) && (value.keys - %w[token fail replies raises realizes accepted_first interrupt_after local_reader]).empty? && value["token"].is_a?(String) && value["token"].present?
       raise EngineSweep::InvalidScript, "#{where}: browser expects a token and optional fail: narration or arrival"
+    end
+    if value.key?("local_reader") && value["local_reader"] != true
+      raise EngineSweep::InvalidScript, "#{where}: browser local_reader is `true` or absent"
     end
     if value.key?("interrupt_after") && !%w[take arrival_cost physical_effect speech narrated riposte].include?(value["interrupt_after"])
       raise EngineSweep::InvalidScript, "#{where}: interrupt_after must name a supported committed turn boundary"
@@ -191,9 +194,9 @@ class EngineSweep::Script
             ((reply.key?("content") && !reply.key?("unavailable")) || (reply["unavailable"] == true && !reply.key?("content")))
           raise EngineSweep::InvalidScript, "#{where}: browser reply needs a purpose and either content or unavailable: true"
         end
-        if reply["purpose"] == EngineSweep::BrowserTurn::TypedAgent::PURPOSE && reply.key?("content") &&
-            !reply["content"].is_a?(Hash)
-          raise EngineSweep::InvalidScript, "#{where}: a system_one reply answers questions by id, as a mapping"
+        if [ EngineSweep::BrowserTurn::TypedAgent::PURPOSE, LOCAL_CLASSIFIER ].include?(reply["purpose"]) &&
+            reply.key?("content") && !reply["content"].is_a?(Hash)
+          raise EngineSweep::InvalidScript, "#{where}: a #{reply["purpose"]} reply answers questions by id, as a mapping"
         end
         %w[prompt_includes prompt_excludes].each do |key|
           next unless reply.key?(key)
@@ -223,13 +226,22 @@ class EngineSweep::Script
   # one step -- see `EngineSweep::BrowserTurn#without_provider` -- so a step
   # without one walks the keyless path, which is what every other script does.
   #
+  # `local_classifier` is the classifier's local reader (`PointerClassifierAgent`),
+  # which play reads every free-typed line through and nothing else: a step
+  # that declares one reads its line the way play does, answered as a
+  # `system_one` reply is, and `unavailable: true` is the reader being down. A
+  # line the local reader leaves unread asks nothing, so a step for one says
+  # `browser.local_reader: true` instead. Only the Rust engine plays either;
+  # the Ruby loop has no local reader.
+  #
   # `ending` and `inscription` are the two passes a turn makes after its own:
   # the last paragraph of a game the arc has just concluded (`Scene::Ending`),
   # and the words on a readable thing nobody has written them for yet
   # (`Item::Inscriber`).
-  REPLY_PURPOSES = %w[
+  LOCAL_CLASSIFIER = "local_classifier".freeze
+  REPLY_PURPOSES = %W[
     location narration arrival character interaction-narration
-    classifier system_one ending inscription
+    classifier system_one #{LOCAL_CLASSIFIER} ending inscription
   ].freeze
 
   # `true` for the same file again, or a mapping of what this load renames.

@@ -72,7 +72,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("scaffold", function!(scaffold, 0))?;
     module.define_module_function("data", function!(data, 0))?;
     module.define_module_function("request", function!(request, 3))?;
-    module.define_module_function("read_line", function!(read_line, 4))?;
+    module.define_module_function("read_line", function!(read_line, 5))?;
     module.define_module_function("submit_fixed", function!(submit_fixed, 6))?;
     module.define_module_function("act", function!(act, 5))?;
     module.define_module_function("facts_card", function!(facts_card, 3))?;
@@ -366,6 +366,11 @@ fn submitted(
                 None => return glue_error("replay is a list of replies"),
             };
             let mut replay = Replay::new(replies);
+            // A step whose line the local reader leaves unread declares no
+            // reply for it, and names the reader instead.
+            if config["local_reader"].as_bool().unwrap_or(false) {
+                replay = replay.with_local_classifier();
+            }
             let result = play_one(
                 &mut engine,
                 playthrough,
@@ -419,6 +424,10 @@ fn play_one(
 
 /// Where the live calls go, as the Ruby side read it off the environment
 /// (`Playthrough::RustEngine.models`).
+///
+/// The classifier is always the local reader's, set up or not: with no
+/// address a free-typed line is refused as the reader being down, and is
+/// never handed to the model call instead.
 fn live(config: &Value) -> Live {
     let secret = |key: &str| {
         config[key]
@@ -435,7 +444,14 @@ fn live(config: &Value) -> Live {
         (Some("decisions"), _) if !route.is_none() => SystemOne::Decisions,
         _ => SystemOne::Off,
     };
-    let live = Live::new(route).with_system_one(system_one);
+    let text = |key: &str| config[key].as_str().unwrap_or_default().to_string();
+    let classifier = SystemOne::Local {
+        endpoint: text("classifier_endpoint"),
+        model: text("classifier_model"),
+    };
+    let live = Live::new(route)
+        .with_system_one(system_one)
+        .with_classifier(classifier);
     match config["model"].as_str() {
         Some(first) => live.with_model(first),
         None => live,
@@ -735,19 +751,23 @@ fn room_json(room: &Room) -> Value {
     })
 }
 
-/// `RenderedStep.read_line(records_json, playthrough_id, line, system_one)
-/// { |call| ... }`: the line read the way a turn reads it
+/// `RenderedStep.read_line(records_json, playthrough_id, line, system_one,
+/// local) { |call| ... }`: the line read the way a turn reads it
 /// (`classifier::read`), over a staged position's rows, with each call the
-/// reading makes handed to the block (see [`Hosted`]). Writes nothing.
+/// reading makes handed to the block (see [`Hosted`]). With `local` the
+/// block is the local reader, and the line is read as play reads it once the
+/// server names one (`classifier::read_locally`). Writes nothing.
 fn read_line(
     ruby: &Ruby,
     records: String,
     playthrough: i64,
     line: String,
     system_one: bool,
+    local: bool,
 ) -> Result<String, RubyError> {
     let block = ruby.block_proc()?;
     let mut host = Hosted::new(block, system_one);
+    host.local = local;
     let answer = panic::catch_unwind(AssertUnwindSafe(|| {
         let records = match serde_json::from_str::<Value>(&records) {
             Ok(dump) => Records::from_json(&dump),
@@ -844,6 +864,8 @@ fn submit_fixed(
 struct Hosted {
     block: Proc,
     system_one: bool,
+    /// Whether the block is the local reader ([`classifier::Reader::local`]).
+    local: bool,
     calls: Vec<Value>,
     raised: Option<RubyError>,
 }
@@ -853,6 +875,7 @@ impl Hosted {
         Hosted {
             block,
             system_one,
+            local: false,
             calls: Vec::new(),
             raised: None,
         }
@@ -969,6 +992,10 @@ impl Models for Hosted {
 impl classifier::Reader for Hosted {
     fn system_one(&self) -> bool {
         self.system_one
+    }
+
+    fn local(&self) -> bool {
+        self.local
     }
 
     fn questions(&mut self, state: &Value, questions: &Value) -> Result<Value, Unavailable> {

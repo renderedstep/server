@@ -1,52 +1,49 @@
-# A THROW TYPED WITHOUT A SLASH, READ BY THE CLASSIFIER.
+# A THROW TYPED WITHOUT A SLASH IS POINTED AT THE COMMAND.
 #
 # `a-thing-can-be-thrown.yml` walks the fixed grammar, which reads a slashed or
-# verb-first throw offline. A free line goes to `Playthrough::Classifier`, and
-# until `throw` was in `Playthrough::IntentSchema::INTENTS` the classifier had
-# no word for it: "throw the access panel at the core" came back `other`, no
-# engine fact was written, the narrator described a drop, and the panel stayed
-# carried (issue #202). This walk types two free throws through the browser path
-# with the classifier's reply declared as a fixture:
+# verb-first throw offline. A free line goes to the classifier's local reader
+# (`PointerClassifierAgent`), and that reader has no word for a throw: asked,
+# it read "throw the daybook at Halkett Rowe" as a drop, "hurl the daybook at
+# Rowe" as an attack, and a toss through the door as a gift -- three wrong acts
+# that change the game. So a free line that names a throw (the engine's
+# `cascade::thrown`) is not read at all, and the player is told the command
+# that does read one. (Before that, issue #202 was the classifier with no
+# `throw` intent: "throw the access panel at the core" came back `other` and
+# the panel stayed carried.)
 #
-#   * one aimed at scenery, which the classifier answers `throw` with
-#     `thrown_at: nothing`. The engine refuses it, nothing is narrated and the
-#     daybook stays in the hands;
-#   * one aimed at the person standing here, which resolves both names and goes
-#     down the same write-before-prose path a slashed throw does. The ward stamp
-#     is lying in this room and Halkett Rowe is standing in it, so whichever way
-#     the die falls it is still lying in Ward Office 12 afterwards.
+#   * a free throw is refused with the sentence pointing at `/throw`, nothing
+#     is asked, nothing is narrated, and the daybook stays in the hands;
+#   * the same throw as the command is played by the grammar, down the same
+#     write-before-prose path every throw takes. The ward stamp is lying in
+#     this room and Halkett Rowe is standing in it, so whichever way the die
+#     falls it is still lying in Ward Office 12 afterwards.
 #
-# Offline throughout: the classifier and the narrator are fixtures, and the
-# resolution, the refusal, the branch and the rows are the real ones.
+# Offline throughout: the narrator is a fixture, and the refusal, the branch
+# and the rows are the real ones.
 story: The Unrecorded Hour
-why: a free-typed throw is read by the classifier as a throw, and one aimed at scenery is refused
+why: a free-typed throw is refused with the command that reads one, and the command plays
 steps:
-- id: a-free-throw-at-scenery-is-refused
+- id: a-free-throw-is-pointed-at-the-command
   type: throw the daybook at the window
-  why: the aim is on neither list, so nothing is thrown and nothing is narrated
+  why: no reader reads a throw right, so nothing is asked, nothing is thrown and nothing is narrated
   browser:
-    token: scenery
-    replies:
-    - purpose: classifier
-      prompt_includes: [Ward Office 12 daybook, Halkett Rowe]
-      content: {intent: throw, target: Ward Office 12 daybook, also_named: nothing, thrown_at: nothing}
+    token: free
+    local_reader: true
   expect:
     refused: true
     changed: false
+    offers: [/throw <thing> at <somebody here, or a way out>]
     carrying: [Ward Office 12 daybook]
 
-- id: a-free-throw-at-somebody-here-is-played
-  type: throw the ward stamp at Halkett Rowe
+- id: the-command-is-played
+  type: /throw ward stamp at Halkett Rowe
   why: both names resolve, so the engine throws before the narrator is asked for a word
   browser:
     token: at-rowe
     replies:
-    - purpose: classifier
-      prompt_includes: [ward stamp, Halkett Rowe]
-      content: {intent: throw, target: ward stamp, also_named: nothing, thrown_at: Halkett Rowe}
     - purpose: narration
       content: The stamp flies across the office.
   expect:
-    resolved_by: model
+    resolved_by: grammar
     refused: false
     carrying: [Ward Office 12 daybook]

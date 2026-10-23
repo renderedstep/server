@@ -169,7 +169,8 @@ class Playthrough::Grammar
   #
   # AND EVERYTHING BETWEEN THEM BELONGS TO THE OTHER READER. There is more than
   # one of those since the System One cascade landed -- `model`, `typed_model`,
-  # `typed_model_escalated`, `typed_model_unavailable` -- and the list is
+  # `typed_model_escalated`, `typed_model_unavailable`, and the local reader's
+  # `typed_model_unsure`, `typed_model_throw`, `typed_model_down` -- and the list is
   # `Playthrough::Classifier::PATHS`, spliced in here rather than copied, so the
   # class that produces those values is the one that names them. See that
   # constant for what each means and why the column is the only instrument the
