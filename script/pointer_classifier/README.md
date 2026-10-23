@@ -12,8 +12,9 @@ how to serve it.
 `POINTER_CLASSIFIER_PYTHON` and the weights at `POINTER_CLASSIFIER_WEIGHTS`
 (both default under `storage/pointer_classifier/`, which is gitignored). The
 weights directory holds `pointer.pt`, `config.json`, `tokenizer.json` and
-`tokenizer_config.json` — never `checkpoint.pt` — and comes from the owner's
-private release; `bin/update` says what is missing. It answers 503 until the
+`tokenizer_config.json` — never `checkpoint.pt` — and comes from a public
+release on renderedstep/server, which `bin/update` fetches with no login and
+checks by SHA-256 (`Update::Steps::PointerReader`). It answers 503 until the
 model is loaded (about ten seconds), then one request at a time.
 
 Nothing here makes a model call or needs a key, except the optional paid step

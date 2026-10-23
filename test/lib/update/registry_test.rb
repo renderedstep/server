@@ -63,8 +63,8 @@ class Update::RegistryTest < ActiveSupport::TestCase
                  "a step wants a model call. That gate is opt-in for a reason -- see lib/update.rb's header."
   end
 
-  test "only the doctor and the local reader's check report without writing, so nothing else can hide behind that flag" do
-    assert_equal [ Update::Steps::PointerReader, Update::Steps::Doctor ], Update::REGISTRY.select(&:reports_only?)
+  test "only the doctor reports without writing, so nothing else can hide behind that flag" do
+    assert_equal [ Update::Steps::Doctor ], Update::REGISTRY.select(&:reports_only?)
   end
 
   private
