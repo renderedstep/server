@@ -1,167 +1,102 @@
-# THE FOUR WAYS A FREE-TYPED LINE CAN BE READ, walked in one game.
+# THE WAYS A FREE-TYPED LINE CAN BE READ, walked in one game.
 #
 # Every other script in this directory types a slashed or verb-first line, which
-# the fixed grammar answers offline -- so nothing here walked the model readers
-# at all. Since the System One cascade landed there are FOUR values
-# `scenes.resolved_by` can hold on a typed line, the key is the only switch, and
-# a step that declares a `system_one` reply is what puts a key in this walk's
-# environment for that one line. So this script is one game in one room, typing
-# four lines, each read a different way:
+# the fixed grammar answers offline -- so nothing here walked the reader of a
+# free line at all. Play reads every free-typed line through the classifier's
+# local reader, the small pointer model (`PointerClassifierAgent`), and through
+# nothing else: the model call is never made for one. A step that declares a
+# `local_classifier` reply is that reader answering. So this script is one
+# game in one room, typing four lines, each read a different way:
 #
-#   model                     no key at all. The one model call, exactly as
-#                             before any of this existed -- and exactly what a
-#                             key that has gone missing produces in production
-#   typed_model               the cascade composed the answer; the model call
-#                             never happened, which the declared replies prove
-#   typed_model_escalated     the cascade flagged the line and the model call
-#                             answered it, in that order, on one submission
-#   typed_model_unavailable   the cascade could not be believed and the model
-#                             call answered it. NOT a refusal: the turn plays
+#   typed_model           the reader was sure, and the line was played on its
+#                         reading
+#   typed_model_unsure    the two-name flag read high, and the line was played
+#                         on the reader's own reading all the same: no second
+#                         reader is asked
+#   a throw               a free-typed throw is not read at all and is pointed
+#                         at `/throw`; nothing is asked
+#   the reader down       the line is refused with a pointer to the slash
+#                         commands, never handed to a model call instead
 #
-# Offline throughout: both providers are fixtures, and the composition, the
-# resolution, the branch and the row that moves are the real ones.
+# A refused line writes no scene, so the last two are asserted by the sentence
+# the player is shown.
+#
+# Offline throughout: the reader and the narrator are fixtures, and the
+# composition, the resolution, the branch and the row that moves are the real
+# ones.
 story: A Turn at the Gate
 steps:
-- id: no-key-is-the-one-call-it-always-made
-  why: A free line with no `system_one` reply walks the keyless path end to end.
+- id: a-sure-reading-is-played
+  why: Neither flag fires, so the reader's answer is the turn's.
   type: pick up that red coin
   browser:
-    token: keyless
+    token: sure
     replies:
-    - purpose: classifier
-      prompt_includes: [red coin, Maren]
-      content: {intent: take, target: red coin, also_named: nothing}
+    - purpose: local_classifier
+      prompt_includes: [red coin, pick up that red coin]
+      content:
+        intent: take
+        target_take: available_item_1
+        named_more_than_one: 0.02
+        target_present: 0.95
     - purpose: narration
       content: You stoop and close your hand around the coin.
   expect:
     carrying: [red coin]
     here: []
-    resolved_by: model
-    changed: true
-    refused: false
-
-- id: the-cascade-composes-and-the-model-call-never-happens
-  why: Neither flag fires, so the engine composes and pays for nothing else.
-  type: put the coin back down
-  browser:
-    token: composed
-    replies:
-    - purpose: system_one
-      prompt_includes: [red coin, put the coin back down]
-      content:
-        intent: drop
-        target_drop: player_item_1
-        named_more_than_one: 0.02
-        target_present: 0.95
-    - purpose: narration
-      content: You set the coin back on the flagstones.
-  expect:
-    carrying: []
-    here: [red coin]
     resolved_by: typed_model
     changed: true
     refused: false
 
-- id: a-flagged-line-goes-on-to-the-model-call
+- id: an-unsure-reading-is-played-on-its-own
   why: >-
-    The two-name flag reads high, so the line escalates: System One first, the
-    model call second, and the model call's answer is what the turn acts on.
-  type: take the coin and have a word with Maren
-  browser:
-    token: escalated
-    replies:
-    - purpose: system_one
-      content:
-        intent: take
-        target_take: available_item_1
-        also_named: person_1
-        named_more_than_one: 0.91
-        target_present: 0.88
-    - purpose: classifier
-      content: {intent: take, target: red coin, also_named: nothing}
-    - purpose: narration
-      content: You take the coin without looking away from her.
-  expect:
-    carrying: [red coin]
-    here: []
-    resolved_by: typed_model_escalated
-    changed: true
-    refused: false
-
-- id: a-provider-that-fails-never-costs-the-turn
-  why: >-
-    An unavailable provider is a fact about the network and not a reading of the
-    line, so the turn plays on the reader that was always there.
-  type: leave the coin on the stones
-  browser:
-    token: unavailable
-    replies:
-    - purpose: system_one
-      unavailable: true
-    - purpose: classifier
-      content: {intent: drop, target: red coin, also_named: nothing}
-    - purpose: narration
-      content: You let it fall back where you found it.
-  expect:
-    carrying: []
-    here: [red coin]
-    resolved_by: typed_model_unavailable
-    changed: true
-    refused: false
-
-# THE TWO FLAGS, EACH WALKED ON ITS OWN. The step above escalates on a two-name
-# reading that ALSO resolved a second record, so it cannot tell "the engine read
-# the flag" from "the engine noticed two names survived". These two can: one
-# reads each flag with the other clear and the second name resolving to nothing.
-- id: the-presence-flag-escalates-on-its-own
-  why: >-
-    A low `target_present` reading sends the line on with the two-name flag
-    clear, which is the half of the rule the step above cannot show.
-  type: pick up whatever the gatekeeper left on the stones
-  browser:
-    token: presence
-    replies:
-    - purpose: system_one
-      content:
-        intent: take
-        target_take: available_item_1
-        named_more_than_one: 0.02
-        target_present: 0.04
-    - purpose: classifier
-      content: {intent: take, target: red coin, also_named: nothing}
-    - purpose: narration
-      content: You lift the coin off the flagstones again.
-  expect:
-    carrying: [red coin]
-    here: []
-    resolved_by: typed_model_escalated
-    changed: true
-    refused: false
-
-- id: the-two-name-flag-escalates-with-no-second-record
-  why: >-
-    The Noul reads high and `also_named` resolves to NOTHING. The line still
-    escalates, because the flag is read off the answer and not off whether a
-    second record survived the composition -- if it were gated on that, this
-    line would compose and the walk would read `typed_model`.
+    The two-name flag reads high and `also_named` resolves to nothing. Where a
+    second reader once answered, the line is now played as the reader read it,
+    and the path says so.
   type: put down the coin and the key
   browser:
-    token: two-name-alone
+    token: unsure
     replies:
-    - purpose: system_one
+    - purpose: local_classifier
       content:
         intent: drop
         target_drop: player_item_1
         also_named: nothing
         named_more_than_one: 0.91
         target_present: 0.9
-    - purpose: classifier
-      content: {intent: drop, target: red coin, also_named: nothing}
     - purpose: narration
       content: You set the coin down and keep your hands to yourself.
   expect:
     carrying: []
     here: [red coin]
-    resolved_by: typed_model_escalated
+    resolved_by: typed_model_unsure
     changed: true
     refused: false
+
+- id: a-free-throw-is-pointed-at-the-command
+  why: No reader reads a throw right, so the reader is not asked and the player is told how to throw.
+  type: throw the coin at Maren
+  browser:
+    token: throw
+    local_reader: true
+  expect:
+    refused: true
+    changed: false
+    offers: [/throw <thing> at <somebody here, or a way out>]
+    here: [red coin]
+
+- id: a-reader-that-is-down-refuses-the-line
+  why: >-
+    A down reader is not a reading, and no second reader stands behind it: the
+    line is refused with a pointer to the slash commands.
+  type: pick the coin up again
+  browser:
+    token: down
+    replies:
+    - purpose: local_classifier
+      unavailable: true
+  expect:
+    refused: true
+    changed: false
+    offers: [the slash menu lists them]
+    here: [red coin]

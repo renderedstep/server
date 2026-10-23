@@ -167,7 +167,7 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
     def close; end
   end
 
-  test "a pointer arm reads every line through the cascade and never asks a chat model" do
+  test "a pointer arm reads every line as play reads it and never asks a chat model" do
     corpus = Eval::Classifier::Corpus.load(written(CORPUS))
     refuse = ->(**_options) { raise "a pointer arm reached BaseAgent" }
 
@@ -183,10 +183,62 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
     assert_equal 0, pass.failures, pass.failures_by_class.inspect
     assert_in_delta 1.0, pass.accuracy
     assert_equal "typed_model", by_id["a-take"].resolved_by
-    assert_equal "typed_model_escalated", by_id["a-pair"].resolved_by,
-                 "the board still says which line a live turn would have sent on"
+    assert_equal "typed_model_unsure", by_id["a-pair"].resolved_by,
+                 "an unsure line is played on the reader's own reading, and the board says which"
     assert_equal "pointer", by_id["a-take"].system_one_transport
     assert_not by_id["a-take"].rotated?
+  end
+
+  test "a throw is never asked, and a reader that cannot answer is a failure and not a reading" do
+    corpus = Eval::Classifier::Corpus.load(written(<<~YML))
+      positions:
+      - id: office
+        story: The Unrecorded Hour
+        room: Ward Office 12
+      lines:
+      - id: a-throw
+        position: office
+        typed: throw the daybook at the window
+        intent: other
+        refusal: unreadable
+        shape: throw
+        why: no reader reads a throw
+      - id: a-take
+        position: office
+        typed: take the ward stamp
+        intent: take
+        target: ward stamp
+        shape: take
+        why: the reader is down
+    YML
+    down = Class.new do
+      def answer(state, _questions)
+        raise Eval::Classifier::Pointer::Unavailable, "down" unless state["player_action"].start_with?("throw")
+
+        raise "a throw was asked"
+      end
+
+      def close; end
+    end
+
+    result = Eval::Classifier::Pointer.stub(:new, ->(**_options) { down.new }) do
+      Eval::Classifier::Bench.new(corpus: corpus, arms: [ "pointer:/models/fake" ], reps: 1, io: nil).run
+    end
+
+    by_id = result.passes.sole.readings.index_by(&:id)
+    assert_equal "typed_model_throw", by_id["a-throw"].resolved_by
+    assert_match(/Pointer::Unavailable: down/, by_id["a-take"].error)
+  end
+
+  test "pointer:local asks the running sidecar, through the local reader's agent" do
+    agent = Minitest::Mock.new
+    agent.expect(:ask_questions, { "answers" => {} }, state: { "a" => 1 }, questions: { "intent" => {} })
+    assert_equal({ "answers" => {} }, Eval::Classifier::Pointer::Sidecar.new(agent: agent).answer({ "a" => 1 }, { "intent" => {} }))
+    agent.verify
+
+    failing = Object.new
+    def failing.ask_questions(**) = raise(PointerClassifierAgent::Unavailable, "503")
+    assert_raises(Eval::Classifier::Pointer::Unavailable) { Eval::Classifier::Pointer::Sidecar.new(agent: failing).answer({}, {}) }
   end
 
   private

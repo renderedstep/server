@@ -1,11 +1,11 @@
-# A SMALL LOCAL MODEL IN SYSTEM ONE'S SEAT, MEASURED ON THE SAME BENCH.
+# THE CLASSIFIER'S LOCAL READER, MEASURED ON THE SAME BENCH.
 #
-# Stage 1 of replacing the classifier's System One call with a model that runs
-# on this machine (and later on an FPGA): an encoder of about 17M parameters
-# with a POINTER HEAD, reading a compact form of the cascade request's `state`
-# and answering its questions in Jev's own answer shape. The design and the
-# reasons for it are in the stage's scout report; what matters here is the
-# contract, which is the standing one for every model in this app:
+# A model that runs on this machine (and later on an FPGA): an encoder with a
+# POINTER HEAD, reading a compact form of the cascade request's `state` and
+# answering its questions in Jev's own answer shape. It is the reader play
+# reads every free-typed line through (`PointerClassifierAgent`); this class
+# is how the bench asks it. What matters here is the contract, which is the
+# standing one for every model in this app:
 #
 #   * IT ONLY PICKS FROM THE ENGINE'S OWN LIST. Each target answer is a score
 #     per record the question offered, plus `nothing`, softmaxed over exactly
@@ -21,20 +21,25 @@
 # process. The weights, the training data and every run's output live outside
 # the repository, in a directory the arm names (`MODELS=pointer:<dir>`); the
 # repository holds only the code that builds, trains and asks the model.
+# `MODELS=pointer:local` asks the sidecar play asks instead (`Sidecar`), at
+# `POINTER_CLASSIFIER_URL`, so the bench measures the very process a turn
+# reads through.
 #
-# ESCALATION, WITH NO KEY. A live cascade sends a line on to Mistral when
-# `named_more_than_one` >= 0.5 or `target_present` < 0.15, or when a word of
-# the line is a throw verb (`cascade::THROW_VERBS`). A local arm must run
-# with no key and spend nothing, so it answers that call itself, with the
-# reading the engine would have composed with escalation OFF
-# (`cascade::compose`, `Escalation::Off`): the chosen intent, a reported move
-# opened by a speaking verb read as talk, and the target and second name only
-# while `target_present` is at or above the gate. The line still records
-# `typed_model_escalated`, so the board's resolver counts say how many lines
-# a live turn would have sent to Mistral. The figure this arm reports is
-# therefore the local model ALONE, which is what stage 1 is asked for; the
-# local model plus a paid escalation is a different arm.
+# READ AS PLAY READS IT. A pointer arm's line goes through the engine's own
+# local composition (`classifier::read_locally`, via `Playthrough::Requests
+# .read_line(local: true)`), so the bench is play byte for byte: a line the
+# model is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
+# 0.15) is played on its own reading and recorded `typed_model_unsure`, a
+# target read as absent is refused with what is here, and a free throw is
+# never asked and is recorded `typed_model_throw`. No chat model is asked, so
+# a run needs no key and spends nothing.
+#
+# `.escalated_reading` is the Ruby restatement of that composition the pointer
+# arm used before the engine exposed it; Jev alone, a historical arm, still
+# answers its escalated lines with it.
 class Eval::Classifier::Pointer
+  # The arm model that names the running sidecar rather than a directory.
+  LOCAL = "local".freeze
   SCRIPT = Rails.root.join("script/pointer_classifier/serve.py")
 
   # `cascade::PRESENCE_THRESHOLD` and `cascade::SPEECH_VERBS` in the engine,
@@ -51,6 +56,23 @@ class Eval::Classifier::Pointer
   end
 
   class Unavailable < StandardError; end
+
+  # The sidecar play reads through, asked over HTTP with the engine's own
+  # Jev-typed questions (`PointerClassifierAgent`). It is started by
+  # `bin/pointer-classifier`, never by the bench.
+  class Sidecar
+    def initialize(agent: PointerClassifierAgent.new)
+      @agent = agent
+    end
+
+    def answer(state, questions)
+      @agent.ask_questions(state: state, questions: questions)
+    rescue PointerClassifierAgent::Unavailable => e
+      raise Unavailable, e.message
+    end
+
+    def close; end
+  end
 
   attr_reader :directory, :precision
 

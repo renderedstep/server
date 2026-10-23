@@ -59,4 +59,11 @@ if [ -n "$ta" ]; then
   ' || exit 1
 fi
 
-exec foreman start -f Procfile.dev -p "${PORT:-$port_default}" "$@"
+# The classifier's local reader is the third line of Procfile.dev, and foreman
+# offers each line its own port a hundred above the last; the reader binds the
+# port of POINTER_CLASSIFIER_URL instead, so the address the engine posts to
+# and the one it listens on are one setting. Set here when it is not set.
+port="${PORT:-$port_default}"
+export POINTER_CLASSIFIER_URL="${POINTER_CLASSIFIER_URL:-http://127.0.0.1:$((port + 200))/}"
+
+exec foreman start -f Procfile.dev -p "$port" "$@"

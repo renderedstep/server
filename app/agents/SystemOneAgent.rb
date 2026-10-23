@@ -10,20 +10,26 @@
 # class exposes `#ask_questions(state:, questions:)` and nothing chat-shaped.
 #
 # WHAT IT IS FOR: the benches that measure a System One request the engine
-# built (`Eval::Classifier::Bench`'s cascade arm, which asks the classifier's
-# request of ten questions in front of a line and hands the answers back to the
-# engine to compose). The requests and the rules that read their answers are
-# the engine's (`renderedstep_engine::cascade`, `volition`), and a turn the
-# game plays sends them itself (`Playthrough::RustEngine`).
+# built (`Eval::Classifier::Bench`'s cascade and Jev-alone arms, which ask the
+# classifier's request of ten questions in front of a line and hand the answers
+# back to the engine to compose, and the volition benches). The requests and
+# the rules that read their answers are the engine's
+# (`renderedstep_engine::cascade`, `volition`), and a turn the game plays sends
+# them itself (`Playthrough::RustEngine`).
+#
+# WHAT IT IS NOT, ANY MORE: the classifier's reader in play. A turn reads every
+# free-typed line through the local pointer model (`PointerClassifierAgent`)
+# and through nothing else, whatever keys are set; Jev's classifier wording is
+# still sent by the cascade benches, and by nothing a player does.
 #
 # THE KEY IS THE SWITCH AND THERE IS NO FLAG. `.configured?` is the whole of it:
-# with EITHER `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` in the environment the
-# cascade runs, and without either the classifier makes the one model call it
-# always made. **An absent key is not an error.** It is deliberately NOT
+# with EITHER `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY` in the environment Jev
+# answers speech, bystander acts and arrival, and without either those end at
+# the die. **An absent key is not an error.** It is deliberately NOT
 # `BaseAgent::NoModelConfiguredError` either -- that names a game with no model
 # at all, which is a broken install; this names an ordinary machine, including
 # every test run and every developer checkout. The owner's rule: either
-# credential present means the cascade is on wherever the game already runs.
+# credential present means Jev is on wherever the game already runs.
 #
 # TWO TRANSPORTS, ONE BOUNDARY. `#ask_questions` and `Answers` stay
 # provider-neutral. The HTTP implementation is chosen once at construction:
@@ -32,15 +38,15 @@
 # endpoint, credential variable and pinned model id -- `jev-1.13.0` direct,
 # `typesafe/jev-1.13` on OpenRouter. An upgrade of either pin is a deliberate,
 # measured change. The request body is otherwise byte-identical between
-# transports. OpenRouter's Decisions route is Alpha; every failure still falls
-# through to Mistral exactly as today. Treat 32k total tokens as the safe
-# context ceiling on OpenRouter.
+# transports. OpenRouter's Decisions route is Alpha; every failure still ends
+# where it always did (the die, for volition). Treat 32k total tokens as the
+# safe context ceiling on OpenRouter.
 #
 # A FAILURE HERE NEVER BLOCKS A TURN. Every way this class can fail -- a
 # timeout, an HTTP error, a body that will not parse, an answer set that does not
 # match the questions sent, a choice outside the options sent -- is one error
-# family, `Unavailable`, and the one thing its caller does with it is make the
-# call it would have made anyway. None of them is an engine refusal: a refusal is
+# family, `Unavailable`, and the one thing its caller does with it is what it
+# would have done with no answer. None of them is an engine refusal: a refusal is
 # a reading of the player's line, and these are facts about the network.
 # Neither credential is ever logged or written to a receipt, a message row or a
 # scene -- `scenes.resolved_by` records that a typed path answered and never
@@ -76,8 +82,9 @@ class SystemOneAgent
   # the benchmark's. The player is waiting on narration and this call sits in
   # front of it; the measured median for a request of this size is about a third
   # of a second, so a wait this long is already many times the answer. What
-  # running out costs is one extra Mistral call and no turn at all -- see
-  # `#ask_questions`.
+  # running out costs is the die's pick in Jev's place and no turn at all --
+  # see `#ask_questions`. The classifier's local reader waits as long
+  # (`PointerClassifierAgent::TIMEOUT`).
   TIMEOUT = 4
 
   # EVERY WAY THIS CLASS FAILS, and there is one family on purpose. The caller
@@ -90,8 +97,8 @@ class SystemOneAgent
   # were sent. Still `Unavailable`, because the outcome is the same.
   class UnusableAnswerError < Unavailable; end
 
-  # WHETHER THIS ENVIRONMENT HAS A SYSTEM ONE CREDENTIAL AT ALL. The cascade's
-  # only switch; see the header. Either key turns it on.
+  # WHETHER THIS ENVIRONMENT HAS A SYSTEM ONE CREDENTIAL AT ALL. Jev's only
+  # switch; see the header. Either key turns it on.
   def self.configured?
     ENV[TYPESAFE_API_KEY_VARIABLE].present? || ENV[OPENROUTER_API_KEY_VARIABLE].present?
   end

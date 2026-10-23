@@ -1,9 +1,20 @@
 # The pointer classifier
 
-A small local model (Ettin-17M with a pointer head) that answers the
-classifier's System One request in Jev's place. The design, and what the
-bench arm does with an escalated line, are in the header of
-`lib/eval/classifier/pointer.rb`; this file is only how to build one.
+A small local model (an Ettin encoder with a pointer head) that answers the
+classifier's typed questions. It is the classifier's reader in play
+(`PointerClassifierAgent`), served by `serve.py --http` as the `classifier`
+line of `Procfile.dev`. How the bench reads a line through it is in the
+header of `lib/eval/classifier/pointer.rb`; this file is how to build one and
+how to serve it.
+
+**Serving it.** `bin/pointer-classifier` runs `serve.py --http` on the port of
+`POINTER_CLASSIFIER_URL`, bound to 127.0.0.1, with the Python at
+`POINTER_CLASSIFIER_PYTHON` and the weights at `POINTER_CLASSIFIER_WEIGHTS`
+(both default under `storage/pointer_classifier/`, which is gitignored). The
+weights directory holds `pointer.pt`, `config.json`, `tokenizer.json` and
+`tokenizer_config.json` — never `checkpoint.pt` — and comes from the owner's
+private release; `bin/update` says what is missing. It answers 503 until the
+model is loaded (about ten seconds), then one request at a time.
 
 Nothing here makes a model call or needs a key, except the optional paid step
 2b below. Keep both System One keys out of the shell anyway (`unset

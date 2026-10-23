@@ -324,7 +324,11 @@ module Playthrough::RustEngine
   # Ruby app reads it: the player's OpenRouter key as the Direct route
   # (`BaseAgent`), `OPENROUTER_MODEL` asked first, and System One on TypeSafe
   # when its key is set and on OpenRouter's decisions route otherwise
-  # (`SystemOneAgent.transport`). Holds the keys: never log it.
+  # (`SystemOneAgent.transport`). The classifier reads through the local
+  # reader at its address, named by its weights' digest
+  # (`PointerClassifierAgent`), and through nothing else: either blank, the
+  # engine refuses free-typed lines rather than asking Mistral. Holds the
+  # keys: never log it.
   def self.models
     live_models_guard&.call
     key = ENV[SystemOneAgent::OPENROUTER_API_KEY_VARIABLE].presence
@@ -332,9 +336,24 @@ module Playthrough::RustEngine
     {
       route: key ? "direct" : "none", key: key, model: ENV["OPENROUTER_MODEL"].presence,
       system_one: if typesafe then "typesafe" elsif key then "decisions" else "off" end,
-      typesafe_key: typesafe
-    }
+      typesafe_key: typesafe,
+      classifier_endpoint: PointerClassifierAgent.endpoint, classifier_model: PointerClassifierAgent.model
+    }.tap { |models| warn_reader_down(models) }
   end
+
+  # Said once a process, loudly, because every free-typed line is about to be
+  # refused; the engine says so again on each one.
+  def self.warn_reader_down(models)
+    return if models[:classifier_endpoint] && models[:classifier_model]
+    return if @reader_down_warned
+
+    @reader_down_warned = true
+    Rails.logger.warn "[classifier] the local reader is not set up (#{PointerClassifierAgent::ENDPOINT_VARIABLE} " \
+                      "#{models[:classifier_endpoint] ? "is set" : "is unset"}, weights " \
+                      "#{models[:classifier_model] ? "found" : "missing at #{PointerClassifierAgent.weights}"}): " \
+                      "every free-typed line is refused. bin/update says how to set it up."
+  end
+  private_class_method :warn_reader_down
 
   # Whether `.models` names a model for a turn to ask. Without one, a line
   # that needs a model cannot be played however often it is resubmitted.
@@ -348,11 +367,14 @@ module Playthrough::RustEngine
   # answered with the next of `replies` (the step's own), and `stop_after`
   # stops the turn after that journal step. `unwritten` lets a game the player
   # narrates walk into an unwritten room, written by those replies (`.act`).
+  # `local_reader` reads the classifier through the local reader where no
+  # `local_classifier` reply says so, for a line it leaves unread.
   # The engine's answer to what was asked is read back with `.replayed` once
   # the block has run.
-  def self.replaying(replies, stop_after: nil, unwritten: false)
+  def self.replaying(replies, stop_after: nil, unwritten: false, local_reader: false)
     previous = Thread.current[:rust_engine_replay]
-    Thread.current[:rust_engine_replay] = { replay: replies, stop_after: stop_after, unwritten: unwritten || nil }.compact
+    Thread.current[:rust_engine_replay] = { replay: replies, stop_after: stop_after, unwritten: unwritten || nil,
+                                            local_reader: local_reader || nil }.compact
     Thread.current[:rust_engine_replayed] = nil
     yield
   ensure

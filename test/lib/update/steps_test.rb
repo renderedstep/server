@@ -410,7 +410,41 @@ class Update::StepsTest < ActiveSupport::TestCase
     assert_equal [ "no stories in this database yet" ], Update::Steps::Doctor.new.call.lines
   end
 
+  test "the local reader's step names what is missing and how to get it, and writes nothing" do
+    Dir.mktmpdir do |home|
+      with_reader_env(home) do
+        report = Update::Steps::PointerReader.new.call
+
+        assert_predicate report, :nothing_to_do?
+        assert_match(/\AMISSING Python at .*uv venv --python 3\.12/, report.lines.first)
+        assert_match(/\AMISSING weights at .*pointer\.pt, config\.json.*release asset.*never checkpoint\.pt/, report.lines.second)
+        assert_not Dir.exist?(File.join(home, "weights")), "the step made a directory"
+      end
+    end
+  end
+
+  test "the local reader's step names the weights by digest once they are there" do
+    Dir.mktmpdir do |home|
+      weights = FileUtils.mkdir_p(File.join(home, "weights")).first
+      PointerClassifierAgent::WEIGHT_FILES.each { |file| File.write(File.join(weights, file), file) }
+      with_reader_env(home) do
+        assert_equal "weights: #{PointerClassifierAgent.model} at #{weights}", Update::Steps::PointerReader.new.call.lines.second
+      end
+    end
+  end
+
   private
+
+  def with_reader_env(home)
+    saved = ENV.to_h.slice("POINTER_CLASSIFIER_WEIGHTS", "POINTER_CLASSIFIER_PYTHON")
+    ENV["POINTER_CLASSIFIER_WEIGHTS"] = File.join(home, "weights")
+    ENV["POINTER_CLASSIFIER_PYTHON"] = File.join(home, "venv/bin/python")
+    yield
+  ensure
+    ENV.delete("POINTER_CLASSIFIER_WEIGHTS")
+    ENV.delete("POINTER_CLASSIFIER_PYTHON")
+    ENV.update(saved)
+  end
 
   # The classifier's own structured reply, filed against the scene it produced,
   # exactly as `BaseAgent#attribute_to!` files it -- `content_raw` on an

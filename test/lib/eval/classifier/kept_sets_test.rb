@@ -736,6 +736,21 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     assert_equal expected, JSON.parse(JSON.generate(actual))
   end
 
+  # THE CLASSIFIER OF RECORD: the local reader play reads every free-typed line
+  # through, read as play reads it. EVALUATION.md and the set's README quote
+  # these figures; every reading is kept, as a cascade set's are.
+  test "the local reader's set is the baseline of record, read as play reads it" do
+    result = load_kept("classifier-pointer-m68-both-20261023")
+
+    assert_equal [ "pointer:local" ], result.arms
+    assert_equal Eval::Noise::MIN_RUNS, result.reps
+    assert_equal 372, result.corpus_size
+    assert_equal Eval::Noise::MIN_RUNS * 372, result.rows.size
+    assert_equal({ "typed_model" => 4 * 282, "typed_model_unsure" => 4 * 82, "typed_model_throw" => 4 * 8 },
+                 result.resolved_by_counts("pointer:local"))
+    assert_equal 4 * 323, result.rows.count { |row| row["right"] }, "323 of 372 right in every repetition"
+  end
+
   private
     # Loaded from the KEPT root explicitly rather than through `Eval.set_path`,
     # because this test is about the checked-in files: resolved by name it would

@@ -41,8 +41,10 @@
 #
 # `pointer:<model directory>` IS NOT A CHAT MODEL AT ALL. It is the local
 # pointer-head classifier (`Eval::Classifier::Pointer`) answering the cascade's
-# System One request in Jev's place, with no key and no spend; `+int8` asks
-# for its dynamically quantised weights instead of fp32. It is `local?` --
+# System One request in Jev's place, with no key and no spend, and read as play
+# reads it, by the engine's local composition; `pointer:local` is the sidecar
+# play asks, and `+int8` asks for a directory's dynamically quantised weights
+# instead of fp32. It is `local?` --
 # free, one call at a time -- and nothing is pinned in `BaseAgent`, because
 # nothing it does goes through `BaseAgent`: its rotation is pinned EMPTY for
 # the pass, so a chat call reached by mistake fails loudly instead of
@@ -51,7 +53,7 @@
 # `jev` IS JEV ALONE: the cascade's System One request, sent and composed
 # exactly as the cascade's first step sends and composes it, with no
 # escalation behind it. A line Jev's own readings would send on to Mistral is
-# answered from those readings, as a pointer arm answers it
+# answered from those readings, as a pointer arm once answered it
 # (`Eval::Classifier::Pointer.escalated_reading`), and still records
 # `typed_model_escalated`. It is hosted and paid -- `jev+typesafe-direct` pins
 # the transport as a cascade arm's suffix does -- but it never asks a chat

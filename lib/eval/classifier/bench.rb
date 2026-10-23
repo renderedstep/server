@@ -410,10 +410,15 @@ class Eval::Classifier::Bench
 
   # The pointer model's process for this arm, started on first use and closed
   # when the run ends. One per arm, so fp32 and int8 never share a process.
+  # `pointer:local` is the running sidecar play asks (`PointerClassifierAgent`).
   def pointer_for(arm)
     @pointers ||= {}
-    @pointers[arm.id] ||= Eval::Classifier::Pointer.new(directory: arm.model, precision: arm.precision,
-                                                         threads: (ENV["POINTER_THREADS"].presence || 1).to_i)
+    @pointers[arm.id] ||= if arm.model == Eval::Classifier::Pointer::LOCAL
+      Eval::Classifier::Pointer::Sidecar.new
+    else
+      Eval::Classifier::Pointer.new(directory: arm.model, precision: arm.precision,
+                                    threads: (ENV["POINTER_THREADS"].presence || 1).to_i)
+    end
   end
 
   # Which `system_one:` value `#read` passes. `false` pins the reader off;
@@ -536,7 +541,8 @@ class Eval::Classifier::Bench
   # .read_line`): System One first where this arm's cascade is on, then the
   # classifier call, each asked through this arm (`Answering`). The engine
   # builds both requests and resolves both answers; this bench only carries
-  # them.
+  # them. A pointer arm is the classifier's local reader, so its line is read
+  # exactly as play reads it (`local:`): the reader alone, no classifier call.
   def read(line, standing, arm, rep, rows)
     # A FRESH `Playthrough` PER CALL, AND NOT THE STAGED ONE. An AR object's
     # association cache is not thread-safe, and the staged object is shared by
@@ -546,8 +552,8 @@ class Eval::Classifier::Bench
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
     begin
-      read = Playthrough::Requests.read_line(playthrough, line.typed, system_one: system_one?(arm), rows: rows,
-                                                                      &answering.method(:call))
+      read = Playthrough::Requests.read_line(playthrough, line.typed, system_one: system_one?(arm), local: arm.pointer?,
+                                                                      rows: rows, &answering.method(:call))
       raise answering.failure if answering.failure
 
       elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
@@ -631,31 +637,23 @@ class Eval::Classifier::Bench
 
     private
 
-    # BOTH CALLS OF A POINTER ARM'S LINE, and neither leaves this machine. The
-    # System One request is answered by the local model; a classifier call --
-    # which the engine makes only when it escalated, or when the local answer
-    # was unusable -- is answered from that same local answer, read as the
-    # engine reads it with escalation off (`Pointer.escalated_reading`). No
-    # chat model is asked, so a run needs no key and spends nothing.
+    # A POINTER ARM'S LINE, read as play reads it: the engine asks the local
+    # model its typed questions and composes the answer itself
+    # (`classifier::read_locally`), so a line the model is unsure of is
+    # played on its own reading and a free throw is never asked. The engine
+    # never makes the classifier call for it; were it asked for one, that
+    # would be a failure. No chat model is asked, so a run needs no key and
+    # spends nothing. A model that cannot answer is the reader being down:
+    # the engine refuses the line, as play does, and the bench counts it a
+    # failure rather than a reading, so an outage is never scored as misses.
     def pointer(request)
       @transport = "pointer"
-      if request["kind"] == "system_one"
-        @state = request.fetch("state")
-        @body = @bench.pointer_for(@arm).answer(@state, request.fetch("questions"))
-      elsif @body
-        { "content" => Eval::Classifier::Pointer.escalated_reading(@state, @body, request["user"]),
-          "model" => @arm.model }
-      else
-        raise Eval::Classifier::Pointer::Unavailable, @unavailable || "the classifier was asked before the pointer model answered"
-      end
-    rescue Eval::Classifier::Pointer::Unavailable => e
-      if request["kind"] == "system_one"
-        @unavailable = e.message
-        return { "unavailable" => "#{e.class}: #{e.message}" }
-      end
+      return failed(Eval::Classifier::Pointer::Unavailable.new("the local reader's line reached the classifier call")) unless request["kind"] == "system_one"
 
+      @bench.pointer_for(@arm).answer(request.fetch("state"), request.fetch("questions"))
+    rescue Eval::Classifier::Pointer::Unavailable => e
       @failure = e
-      { "failure" => { "kind" => "provider", "message" => "#{e.class}: #{e.message}" } }
+      { "unavailable" => "#{e.class}: #{e.message}" }
     end
 
     # The System One request, sent through the arm's agent and booked against

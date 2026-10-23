@@ -146,7 +146,8 @@ class EngineSweep::BrowserTurn
     # `Playthrough::RustEngine.replaying`). Inert when the Ruby engine plays.
     replayed = nil
     outcome = without_provider(calls, replies: replies.dup, prompt_failures: prompt_failures) do
-      Playthrough::RustEngine.replaying(replies, stop_after: step.browser["interrupt_after"]) do
+      Playthrough::RustEngine.replaying(replies, stop_after: step.browser["interrupt_after"],
+                                                 local_reader: step.browser["local_reader"]) do
         interrupt_after(step.browser["interrupt_after"]) do
           Playthrough::Session.new(game).play(step.typed, request_token: step.browser.fetch("token"))
         end

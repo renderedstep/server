@@ -32,6 +32,11 @@ ENV["RAILS_ENV"] ||= "test"
 #                              `Playthrough::ClassifierPathsTest#with_key`).
 #                              `OPENROUTER_API_KEY` is already cleared above for
 #                              BaseAgent; both must stay cleared for System One.
+#   POINTER_CLASSIFIER_URL     the classifier's local reader
+#   POINTER_CLASSIFIER_WEIGHTS (`PointerClassifierAgent`): with an address and
+#   POINTER_CLASSIFIER_PYTHON  weights, a live models document names a reader
+#                              a test did not start. A test that wants one sets
+#                              them itself.
 #   RELAY_OPENROUTER_API_KEY   `Relay.configured?` is the whole of the model
 #                              relay's switch; the relay tests set a fake key
 #                              themselves and stub the upstream.
@@ -52,6 +57,7 @@ declare_environment = lambda do
   %w[
     OPENROUTER_API_KEY OPENROUTER_MODEL TA_DEBUG_VIEW
     TA_CHAT_KEEP_TURNS TA_CHAT_HISTORY_EXCHANGES TYPESAFE_API_KEY RELAY_OPENROUTER_API_KEY
+    POINTER_CLASSIFIER_URL POINTER_CLASSIFIER_WEIGHTS POINTER_CLASSIFIER_PYTHON
   ].each { |key| ENV.delete(key) }
 end
 

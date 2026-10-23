@@ -186,16 +186,32 @@ class Playthrough::Classifier
   #   typed_model_unavailable   the cascade was tried and could not be believed;
   #                             the model call answered it
   #
+  # AND THE THREE ONLY THE ENGINE WRITES, where the classifier has its local
+  # reader (`PointerClassifierAgent`, the engine's `classifier::read_locally`),
+  # which is every turn the game plays. This class is the frozen Ruby
+  # reference and produces none of them; no model call is made on any:
+  #
+  #   typed_model_unsure        the local reader was unsure of the line, and it
+  #                             was played on its own reading all the same
+  #   typed_model_throw         a free-typed throw, not read and pointed at
+  #                             `/throw`
+  #   typed_model_down          the local reader is down or not set up, and the
+  #                             line was refused with a pointer to the slash
+  #                             commands
+  #
   # WITH NO FLAG TO READ, THIS COLUMN IS THE ONLY INSTRUMENT. `model` rows on a
   # machine that is supposed to have a key is how a missing or rotted key is
   # noticed; a run of `typed_model_unavailable` is how an outage is noticed.
-  # Both are otherwise silent, because the game keeps playing either way.
-  PATHS = %w[model typed_model typed_model_escalated typed_model_unavailable].freeze
+  # Both are otherwise silent, because the game keeps playing either way. A
+  # run of `typed_model_down` is the local reader's outage, and is not silent:
+  # the player is refused.
+  LOCAL_PATHS = %w[typed_model_unsure typed_model_throw typed_model_down].freeze
+  PATHS = (%w[model typed_model typed_model_escalated typed_model_unavailable] + LOCAL_PATHS).freeze
 
   # The paths on which the model call actually happened, so a caller that has to
   # know whether there is a conversation to file under this turn can ask rather
   # than compare strings (`Playthrough::Turn#play`, `Playthrough::Mechanics#move`).
-  MODEL_PATHS = (PATHS - %w[typed_model]).freeze
+  MODEL_PATHS = %w[model typed_model_escalated typed_model_unavailable].freeze
 
   # Resolve the requested intent before asking whether a physical token fits.
   # The initial physical-action candidate made that rule sound universal: it

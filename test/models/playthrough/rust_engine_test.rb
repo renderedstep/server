@@ -32,16 +32,38 @@ class Playthrough::RustEngineTest < ActiveSupport::TestCase
   end
 
   test "the model calls go where Ruby's go: the OpenRouter key as the Direct route" do
-    with_env("OPENROUTER_API_KEY" => "sk-or-test", "TYPESAFE_API_KEY" => nil, "OPENROUTER_MODEL" => "some/model") do
-      assert_equal({ route: "direct", key: "sk-or-test", model: "some/model", system_one: "decisions", typesafe_key: nil },
-                   Playthrough::RustEngine.models)
+    unread = { classifier_endpoint: nil, classifier_model: nil }
+    Dir.mktmpdir do |nothing|
+      with_env("POINTER_CLASSIFIER_WEIGHTS" => nothing) do
+        with_env("OPENROUTER_API_KEY" => "sk-or-test", "TYPESAFE_API_KEY" => nil, "OPENROUTER_MODEL" => "some/model") do
+          assert_equal({ route: "direct", key: "sk-or-test", model: "some/model", system_one: "decisions",
+                         typesafe_key: nil, **unread }, Playthrough::RustEngine.models)
+        end
+        with_env("OPENROUTER_API_KEY" => nil, "TYPESAFE_API_KEY" => "ts-test") do
+          assert_equal({ route: "none", key: nil, model: nil, system_one: "typesafe", typesafe_key: "ts-test", **unread },
+                       Playthrough::RustEngine.models)
+        end
+        assert_equal({ route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil, **unread },
+                     Playthrough::RustEngine.models)
+      end
     end
-    with_env("OPENROUTER_API_KEY" => nil, "TYPESAFE_API_KEY" => "ts-test") do
-      assert_equal({ route: "none", key: nil, model: nil, system_one: "typesafe", typesafe_key: "ts-test" },
-                   Playthrough::RustEngine.models)
+  end
+
+  # The keys switch Jev for the other readers and never the classifier's.
+  test "the classifier's reader is its address and its weights' digest, whatever the keys say" do
+    Dir.mktmpdir do |weights|
+      File.binwrite(File.join(weights, "pointer.pt"), "weights")
+      digest = "pointer-#{Digest::SHA256.hexdigest("weights").first(16)}"
+      with_env("POINTER_CLASSIFIER_WEIGHTS" => weights, "POINTER_CLASSIFIER_URL" => "http://127.0.0.1:3200/") do
+        models = Playthrough::RustEngine.models
+        assert_equal [ "http://127.0.0.1:3200/", digest ], models.values_at(:classifier_endpoint, :classifier_model)
+        assert_equal "off", models[:system_one]
+        assert_predicate PointerClassifierAgent, :configured?
+      end
+      with_env("POINTER_CLASSIFIER_WEIGHTS" => weights) do
+        assert_not_predicate PointerClassifierAgent, :configured?, "no address is no reader"
+      end
     end
-    assert_equal({ route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil },
-                 Playthrough::RustEngine.models)
   end
 
   test "a model is configured exactly when the models document takes the Direct route" do

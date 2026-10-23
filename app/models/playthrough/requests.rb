@@ -59,8 +59,11 @@ module Playthrough::Requests
   # block returns (a Hash). Answers `{intent, resolved_by, target_present,
   # named_more_than_one, calls}`, or, where the block answered a call as a
   # failure, `{error: {kind: "model", ...}, calls}`.
-  def self.read_line(playthrough, line, system_one:, rows: self.rows, &block)
-    answered(extension.read_line(rows, playthrough.id, line.to_s, system_one) { |call| JSON.generate(block.call(JSON.parse(call))) },
+  #
+  # With `local`, the block is the classifier's local reader and the line is
+  # read exactly as play reads it (`PointerClassifierAgent`): no model call.
+  def self.read_line(playthrough, line, system_one:, local: false, rows: self.rows, &block)
+    answered(extension.read_line(rows, playthrough.id, line.to_s, system_one, local) { |call| JSON.generate(block.call(JSON.parse(call))) },
              failed: true)
   end
 

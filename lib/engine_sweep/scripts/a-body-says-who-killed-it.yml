@@ -20,8 +20,9 @@
 #               dice say and the player never is.
 #   looking     the turn right after the fight, the one where the closing
 #               scene is what just happened. The body's line is there too.
-#   the body    the owner's own line a turn later, read by the classifier as a
-#               targetless examine as it was in their game. The fight is only
+#   the body    the owner's own line a turn later, read by the classifier's
+#               local reader, as play reads it now, as the targetless examine
+#               it was in their game. The fight is only
 #               in the recap by now, and the body's line still names the
 #               killer.
 #   coming back out to the stair and in again: the arrival's own dead line
@@ -179,15 +180,15 @@ steps:
   browser:
     token: the-body
     replies:
-    - purpose: classifier
-      content: {intent: examine, target: nothing, also_named: nothing}
+    - purpose: local_classifier
+      content: {intent: examine, named_more_than_one: 0.0, target_present: 0.9}
     - purpose: narration
       content: Marek Sollen lies where he fell by the rope.
       prompt_includes:
       - 'Nobody else is alive here.'
       - 'Dead here: Marek Sollen (the Ringer), killed by Isbet Marrow'
   expect:
-    resolved_by: model
+    resolved_by: typed_model
     changed: true
     present: []
 
