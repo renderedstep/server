@@ -4,6 +4,7 @@
     <title>debug &mdash; <%= (@story || @playthrough&.story)&.title %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
+    <%= render "application/icons", theme: "#0d0f12" %>
     <%# ITS OWN STYLESHEET, and that is the point of it being a separate layout.
         The reading experience is deliberately deferred (`ta-api-iface`), so this
         page must not be able to change how the story reads -- the two share no
