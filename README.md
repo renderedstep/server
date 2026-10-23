@@ -34,6 +34,9 @@ Generation needs a model. Either:
     | jq '.data[] | select(.id == "MODEL") | .supported_parameters'
   ```
 
+* `RAILS_ASSUME_SSL=false` — production stops assuming an SSL-terminating proxy (default `true`).
+* `RAILS_FORCE_SSL=false` — production stops redirecting to HTTPS and marking cookies secure (default `true`).
+
 Comparing two test runs? The suite's assertion total moves between identical
 runs by design; [docs/testing.md](docs/testing.md) says why and gives the
 per-file comparison to use instead.
