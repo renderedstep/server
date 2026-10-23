@@ -39,7 +39,9 @@
 #                  primary development database, unattended, at whatever hour he
 #                  pulled -- see `Update::Step.model_calls?` for the gate the
 #                  one hypothetical exception has to pass, and note that no step
-#                  uses it and none is expected to.
+#                  uses it and none is expected to. The one download is
+#                  `Update::Steps::PointerReader`'s: public weights, no login,
+#                  fetched only when missing and checked by digest.
 #
 # WHAT IS DELIBERATELY NOT HERE: `bin/rails db:migrate` and `bundle install`.
 # Those are `bin/update`'s own business and always run; a migration is not a

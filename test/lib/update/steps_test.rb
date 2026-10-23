@@ -410,25 +410,76 @@ class Update::StepsTest < ActiveSupport::TestCase
     assert_equal [ "no stories in this database yet" ], Update::Steps::Doctor.new.call.lines
   end
 
-  test "the local reader's step names what is missing and how to get it, and writes nothing" do
+  test "the local reader's step pins a digest for every file the reader loads, and fetches from the public release" do
+    assert_equal PointerClassifierAgent::WEIGHT_FILES.sort, Update::Steps::PointerReader::DIGESTS.keys.sort
+    assert_match %r{\Ahttps://github\.com/renderedstep/server/releases/download/}, Update::Steps::PointerReader::RELEASE
+  end
+
+  test "a dry run of the local reader's step says what it would fetch and writes nothing" do
     Dir.mktmpdir do |home|
       with_reader_env(home) do
-        report = Update::Steps::PointerReader.new.call
+        report = Update::Steps::PointerReader.new(dry_run: true, download: ->(*) { flunk "a dry run downloaded" }).call
 
-        assert_predicate report, :nothing_to_do?
+        assert_predicate report, :changed?
         assert_match(/\AMISSING Python at .*uv venv --python 3\.12/, report.lines.first)
-        assert_match(/\AMISSING weights at .*pointer\.pt, config\.json.*release asset.*never checkpoint\.pt/, report.lines.second)
+        assert_match(/\Awould fetch pointer\.pt, config\.json/, report.lines.second)
         assert_not Dir.exist?(File.join(home, "weights")), "the step made a directory"
       end
     end
   end
 
-  test "the local reader's step names the weights by digest once they are there" do
+  test "the local reader's step fetches the missing weights, keeps them once their digests match, and is quiet after" do
+    Dir.mktmpdir do |home|
+      with_reader_env(home) do
+        with_reader_digests do
+          urls = []
+          report = Update::Steps::PointerReader.new(download: ->(url, path) { urls << url; File.write(path, File.basename(url)) }).call
+
+          assert_predicate report, :changed?
+          assert_equal PointerClassifierAgent::WEIGHT_FILES.map { |file| "#{Update::Steps::PointerReader::RELEASE}/#{file}" }, urls
+          assert_match(/\Aweights: pointer-\h{16} at /, report.lines.third)
+          assert_empty Dir.glob(File.join(home, "weights", "*.part"))
+
+          again = Update::Steps::PointerReader.new(download: ->(*) { flunk "fetched weights that were there" }).call
+          assert_predicate again, :nothing_to_do?
+        end
+      end
+    end
+  end
+
+  test "a fetched file with the wrong digest stops the run and is not kept" do
+    Dir.mktmpdir do |home|
+      with_reader_env(home) do
+        error = assert_raises(Update::StepFailed) do
+          Update::Steps::PointerReader.new(download: ->(_url, path) { File.write(path, "not the weights") }).call
+        end
+
+        assert_match(/pointer\.pt .* hashes to \h{64}, not \h{64}; it was not kept/, error.message)
+        assert_empty Dir.children(File.join(home, "weights"))
+      end
+    end
+  end
+
+  test "a fetch that cannot reach the release says so and leaves the weights missing" do
+    Dir.mktmpdir do |home|
+      with_reader_env(home) do
+        report = Update::Steps::PointerReader.new(download: ->(*) { raise SocketError, "no network" }).call
+
+        assert_predicate report, :nothing_to_do?
+        assert_match(/\AMISSING weights at .*the fetch failed: pointer\.pt: no network.*never checkpoint\.pt/, report.lines.second)
+      end
+    end
+  end
+
+  test "the local reader's step names the weights by digest once they are there, and fetches nothing" do
     Dir.mktmpdir do |home|
       weights = FileUtils.mkdir_p(File.join(home, "weights")).first
       PointerClassifierAgent::WEIGHT_FILES.each { |file| File.write(File.join(weights, file), file) }
       with_reader_env(home) do
-        assert_equal "weights: #{PointerClassifierAgent.model} at #{weights}", Update::Steps::PointerReader.new.call.lines.second
+        report = Update::Steps::PointerReader.new(download: ->(*) { flunk "fetched weights that were there" }).call
+
+        assert_predicate report, :nothing_to_do?
+        assert_equal "weights: #{PointerClassifierAgent.model} at #{weights}", report.lines.second
       end
     end
   end
@@ -444,6 +495,19 @@ class Update::StepsTest < ActiveSupport::TestCase
     ENV.delete("POINTER_CLASSIFIER_WEIGHTS")
     ENV.delete("POINTER_CLASSIFIER_PYTHON")
     ENV.update(saved)
+  end
+
+  # Pins each file's digest to what the fake download writes (its own name),
+  # so the step's real check runs against bytes a test can afford.
+  def with_reader_digests
+    step = Update::Steps::PointerReader
+    real = step::DIGESTS
+    step.send(:remove_const, :DIGESTS)
+    step.const_set(:DIGESTS, real.to_h { |file, _| [ file, Digest::SHA256.hexdigest(file) ] }.freeze)
+    yield
+  ensure
+    step.send(:remove_const, :DIGESTS)
+    step.const_set(:DIGESTS, real)
   end
 
   # The classifier's own structured reply, filed against the scene it produced,

@@ -28,9 +28,9 @@
 # (`SystemOneAgent`) switch Jev for speech, bystander acts and arrival only.
 #
 # THE WEIGHTS ARE NOT IN THE REPOSITORY. They live in a directory this
-# checkout names (`POINTER_CLASSIFIER_WEIGHTS`), fetched from the owner's
-# private release; `bin/update`'s `pointer_reader` step says what is missing
-# and how to get it. Every request names them by digest (`.model`), which is
+# checkout names (`POINTER_CLASSIFIER_WEIGHTS`), fetched from a public
+# release by `bin/update`'s `pointer_reader` step, which also says what is
+# still missing and how to get it. Every request names them by digest (`.model`), which is
 # what a receipt keeps, so a reading can be tied to the weights that made it.
 class PointerClassifierAgent
   # The sidecar's whole URL. Read here and by `bin/pointer-classifier`, which
