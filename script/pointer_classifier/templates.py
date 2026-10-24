@@ -548,6 +548,36 @@ class Lines:
                           f"daydream about {what}", f"worry about {what}"])
         return text, label("other")
 
+    # -- destroy: the game has no act for it, so it is `other`
+    def destroy(self):
+        """Tearing, burning or breaking a thing here or in the hands. No act
+        destroys a row, and the nearest act that names the thing -- a take of
+        it, most dangerously -- is the misread: the engine cannot be sure what
+        the player meant, so the line is `other` with nothing."""
+        things = self.room.lying + self.room.carried
+        if not things:
+            return None
+        key, entry = self.pick(things)
+        thing = self.ref(key)
+        verbs = ["tear up", "tear", "rip up", "rip", "shred", "destroy", "smash", "break", "snap", "crush",
+                 "ruin", "wreck", "rend"]
+        # Where a fire is offered for this thing, burning it is a `use`.
+        if not any(kind == "burn" and parts["item"] == entry["name"] for _, kind, parts in self.room.attempts):
+            verbs += ["burn", "set light to", "torch"]
+        verb = self.pick(verbs)
+        text = self.pick([f"{verb} {thing}", f"I {verb} {thing}", f"{verb} {thing} to pieces",
+                          f"{verb} {thing} in half", f"{verb} {thing} so nobody can use it",
+                          f"try to {verb} {thing}", f"{verb} {thing} into scraps and scatter them",
+                          f"just {verb} {thing}", f"{verb} {thing} before anyone sees"])
+        return text, label("other")
+
+    def destroy_absent(self):
+        thing = self.absent("item")
+        if not thing:
+            return None
+        verb = self.pick(["tear up", "rip", "shred", "destroy", "smash", "break", "burn", "crush"])
+        return self.pick([f"{verb} {thing}", f"{verb} {thing} to bits"]), label("other")
+
     # -- other
     def other(self):
         text = self.pick([
@@ -637,6 +667,7 @@ class Lines:
         ("drop", 5), ("drop_absent", 1), ("drop_pronoun", 1), ("examine", 6), ("examine_absent", 3),
         ("look_around", 2), ("use", 5), ("other", 6), ("two_one_set", 5), ("collective", 1), ("two_sets", 4),
         ("other_about", 3), ("examine_person", 2), ("take_from", 1), ("offer_absent", 1),
+        ("destroy", 2), ("destroy_absent", 1),
     )
 
     def sample(self, count):
