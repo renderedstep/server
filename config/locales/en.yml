@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  # pocket-kit's feedback dialog: the game's own wording for the prompt.
+  pocket_kit:
+    feedback:
+      placeholder: "What would make the game better?"
