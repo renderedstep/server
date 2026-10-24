@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Starts the app on 127.0.0.1 only, for the private install in
+# docs/local-deploy.md. The tailnet reaches it through `tailscale serve`, which
+# terminates TLS; nothing else on the network can.
+#
+# The systemd unit (deploy/local/text-adventure-web.service) supplies the
+# settings from deploy.env and secrets.env. Turns are Solid Queue jobs, run
+# inside Puma when SOLID_QUEUE_IN_PUMA is set.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+bin/rails db:prepare
+exec bin/rails server --binding 127.0.0.1 --port "${PORT:-3200}"
