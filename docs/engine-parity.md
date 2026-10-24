@@ -18,6 +18,13 @@ Ruby turn loop wrote them until the engine took them over; the commit tagged
 holds was unchanged when the engine took them over. No gate plays the Ruby
 loop now.
 
+**Where the engine deliberately parts from the frozen Ruby loop.** A plain
+take (nobody speaks, nothing strikes, nobody else acts, no foe, no beat of
+the arc reached) is told in the engine's own sentence with no narrator call,
+and a line about leaving the room the player stands in is settled by the
+engine against the room's ways out (`resolved_by` `engine_leave`). Neither is
+in `Playthrough::Turn`; the goldens and sweep scripts are the record.
+
 **The checks files are this repository's.** The doctor and the audit are
 Ruby, and they judge the rows the engine wrote; nothing in them asks the
 engine what it thinks it did. Each file was first written from the Ruby loop,

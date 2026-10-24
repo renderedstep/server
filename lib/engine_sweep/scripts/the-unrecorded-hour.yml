@@ -114,11 +114,11 @@ steps:
 
 - id: take-something-by-a-fragment
   type: take the apron
-  why: already holding it -- refused against the floor, and the fragment still resolves the name
+  why: already holding it -- refused against the floor, and the fragment still resolves the name among what is carried
   expect:
     refused: true
     changed: false
-    offers: [there is no thing lying here]
+    offers: [You are already carrying the copy-room apron.]
     carrying: [Ward Office 12 daybook, copy-room apron]
 
 - id: read-what-is-in-hand

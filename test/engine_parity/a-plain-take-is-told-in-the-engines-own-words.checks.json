@@ -1,0 +1,37 @@
+{
+  "script": "a-plain-take-is-told-in-the-engines-own-words",
+  "doctor": {
+    "headline": "healthy",
+    "findings": []
+  },
+  "audit": {
+    "headline": "2 scenes: 0 contradictions, 0 defects, 2 drifts, 0 still turns",
+    "flags": [
+      [
+        "reached_for_nothing",
+        1000000002,
+        "after this narration the player tried to take \"Pick up the daybook\", and the records had nothing of that name",
+        {
+          "action": "take",
+          "typed": "Pick up the daybook",
+          "was offered": "blank closure writ, filing press",
+          "where": "Ward Office 12",
+          "at": "2026-08-31T18:45:00.000Z"
+        }
+      ],
+      [
+        "reached_for_nothing",
+        1000000002,
+        "after this narration the player tried to take \"Pick up the day book\", and the records had nothing of that name",
+        {
+          "action": "take",
+          "typed": "Pick up the day book",
+          "was offered": "blank closure writ, filing press",
+          "where": "Ward Office 12",
+          "at": "2026-08-31T18:45:00.000Z"
+        }
+      ]
+    ],
+    "unjudged": []
+  }
+}

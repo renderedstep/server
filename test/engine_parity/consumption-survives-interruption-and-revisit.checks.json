@@ -12,12 +12,30 @@
     ]
   },
   "audit": {
-    "headline": "4 scenes, nothing to report",
-    "flags": [],
+    "headline": "5 scenes: 1 contradiction, 0 defects, 0 drifts, 0 still turns",
+    "flags": [
+      [
+        "item_not_held",
+        1000000003,
+        "the player is told they have the healing draught, which the records say is lying in Workshop (the world's own)",
+        {
+          "item": "healing draught",
+          "named as": "healing draught",
+          "records say": "lying in Workshop (the world's own)",
+          "claim": "You pick up the healing draught.",
+          "where": "Workshop"
+        }
+      ]
+    ],
     "unjudged": [
       [
         "third_person_protagonist",
         1000000001,
+        "this story has no protagonist on record, so there is no name to check the narration against"
+      ],
+      [
+        "third_person_protagonist",
+        1000000003,
         "this story has no protagonist on record, so there is no name to check the narration against"
       ],
       [

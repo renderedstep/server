@@ -160,6 +160,10 @@ class Playthrough::Grammar
   # through, so nothing has to keep a second copy of it in agreement.
   #
   #   grammar       this class resolved it, offline, for no model call
+  #   engine_leave  a line about leaving the room the player stands in, which
+  #                 the engine settles against the room's real ways out before
+  #                 any reader sees it (its `cascade::leaving`): one way out is
+  #                 the move, and that move's scene carries this value
   #   engine_view   one of `ENGINE_VIEW`, answered by the engine itself. No
   #                 `Scene` is ever written on that path -- `harm`, `check` and
   #                 the read-outs are `Playthrough::Mechanics`'s own -- so the
@@ -175,7 +179,7 @@ class Playthrough::Grammar
   # class that produces those values is the one that names them. See that
   # constant for what each means and why the column is the only instrument the
   # cascade has.
-  PATHS = ([ "grammar" ] + Playthrough::Classifier::PATHS + [ "engine_view" ]).freeze
+  PATHS = ([ "grammar" ] + Playthrough::Classifier::PATHS + [ "engine_leave", "engine_view" ]).freeze
 
   # The marker a player types to say "read this as a command". One character,
   # taken off the front and nowhere else.

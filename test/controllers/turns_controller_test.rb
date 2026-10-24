@@ -106,18 +106,20 @@ class TurnsControllerTest < ActionDispatch::IntegrationTest
 
   test "a job finishing before the HTTP response cannot strand the browser in a pending turn" do
     playthrough = create(:playthrough, :started)
-    item = lying_here(playthrough, playthrough.current_location, name: "red coin")
+    # A drop and not a take: a plain take is told in the engine's own words and
+    # never reaches the narrator whose failure this turn has to survive.
+    item = create(:item, :carried, playthrough: playthrough, name: "red coin")
     immediate = ->(*arguments) { NarrationJob.perform_now(*arguments) }
     streams = capture_turbo_stream_broadcasts(playthrough) do
       replying(reply(:narration, failure: :provider, message: "provider unavailable")) do
         NarrationJob.stub(:perform_later, immediate) do
           post playthrough_turns_path(playthrough),
-               params: { command: "/take red coin", request_token: "instant" }, as: :turbo_stream
+               params: { command: "/drop red coin", request_token: "instant" }, as: :turbo_stream
         end
       end
     end
 
-    assert_includes playthrough.reload.carried, item
+    assert_not_includes playthrough.reload.carried, item
     assert_equal "completed", playthrough.commands.sole.status
     assert_includes streams.first.to_html, 'id="stream"'
     assert_includes streams.last.to_html, "what do you do?"

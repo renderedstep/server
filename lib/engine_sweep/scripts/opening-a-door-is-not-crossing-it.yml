@@ -16,7 +16,7 @@ steps:
     elapsed_minutes: 0
 - id: collect-the-matching-key
   type: /take brass key
-  browser: {token: key, fail: narration}
+  browser: {token: key}
   expect:
     location: Workshop (realized)
     carrying: [travel ration, brass key]

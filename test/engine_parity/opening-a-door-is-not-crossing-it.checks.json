@@ -12,12 +12,17 @@
     ]
   },
   "audit": {
-    "headline": "1 scenes, nothing to report",
+    "headline": "2 scenes, nothing to report",
     "flags": [],
     "unjudged": [
       [
         "third_person_protagonist",
         1000000001,
+        "this story has no protagonist on record, so there is no name to check the narration against"
+      ],
+      [
+        "third_person_protagonist",
+        1000000002,
         "this story has no protagonist on record, so there is no name to check the narration against"
       ]
     ]
