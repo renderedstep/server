@@ -33,9 +33,11 @@ Rails.application.routes.draw do
   # maintainer's, and none of it has a login.
   next if Rails.configuration.x.hosted_api_only
 
-  # A NOTE TO THE MAINTAINER, handed to the command `FEEDBACK_COMMAND` names.
-  # Drawn unconditionally and gated in the controller, like the debug view.
-  post "feedback_note", to: "feedback_notes#create", as: :feedback_note
+  # A NOTE TO THE MAINTAINER, handed to the command `FEEDBACK_COMMAND` names:
+  # pocket-kit's feedback endpoint, POST /pocket-kit/feedback. Drawn
+  # unconditionally and gated by config/initializers/pocket_kit.rb, like the
+  # debug view.
+  mount PocketKit::Engine, at: "/pocket-kit"
 
   # The browser interface only *plays* stories. Generating them is still
   # `rake game:new[premise]`.

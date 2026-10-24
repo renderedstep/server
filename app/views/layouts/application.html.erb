@@ -42,7 +42,9 @@
     <%# Still one inline <style>: propshaft is here to serve JavaScript, and the
         reading experience is a stage of its own (`ta-api-iface`). Restyling
         anything is that task's job, not this file's. It sits in the body,
-        after the loading screen, so that screen can paint before it arrives. %>
+        after the loading screen, so that screen can paint before it arrives.
+        pocket-kit's feedback stylesheet comes first so the block can colour it. %>
+    <%= stylesheet_link_tag "pocket_kit/feedback" %>
     <style>
       :root { color-scheme: dark; }
       body {
@@ -335,28 +337,21 @@
         flex: 0 1 18rem; padding: .05rem .4rem; font-size: 12px; border-color: #2b3238;
       }
 
-      /* A NOTE TO THE MAINTAINER -- `feedback_notes/_feedback`. One muted
-         control at the top right of the page, in the verdict buttons' quiet
-         style, and a native dialog built from the input and button rules
-         above. "Sent" is the notice grey; a failure inside the dialog is
-         `.alert`. */
-      .feedback { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; margin: -1.25rem 0 .25rem; }
-      .feedback-toggle {
-        background: none; border: 1px solid #2b3238; color: #6b737b;
-        padding: .25rem .45rem; line-height: 0;
+      /* A NOTE TO THE MAINTAINER -- pocket-kit's feedback button, configured in
+         config/initializers/pocket_kit.rb. Its stylesheet is linked above this
+         block, so these rules win: one muted control at the top right of the
+         page, in the verdict buttons' quiet style, coloured through the gem's
+         custom properties from this palette. "Sent" is the notice grey; a
+         failure inside the dialog is the `.alert` colour. */
+      .pk-feedback {
+        --pk-feedback-color: #cfd3d8; --pk-feedback-background: #14161a; --pk-feedback-muted: #6b737b;
+        --pk-feedback-border: #2b3238; --pk-feedback-radius: 0; --pk-feedback-backdrop: rgba(0, 0, 0, .5);
+        --pk-feedback-failed: #d88f7f;
+        display: flex; justify-content: flex-end; margin: -1.25rem 0 .25rem;
       }
-      .feedback-toggle:hover { background: #1c2126; color: #cfd3d8; }
-      .feedback-sent { color: #9aa3ac; font-size: 12px; border-left: 2px solid #4a5a4a; padding-left: .5rem; }
-      .feedback-dialog {
-        width: calc(100% - 2rem); max-width: 28rem; box-sizing: border-box;
-        background: #14161a; color: #cfd3d8; border: 1px solid #333b44; padding: 1rem;
-      }
-      .feedback-dialog::backdrop { background: rgba(0, 0, 0, .5); }
-      .feedback-form { flex-direction: column; }
-      .feedback-form textarea { width: 100%; box-sizing: border-box; resize: vertical; }
-      .feedback-status { margin: 0; }
-      .feedback-status:empty { display: none; }
-      .feedback-buttons { display: flex; justify-content: flex-end; gap: .5rem; }
+      .pk-feedback-toggle:hover { background: #1c2126; }
+      .pk-feedback-sent { color: #9aa3ac; border-left: 2px solid #4a5a4a; padding-left: .5rem; }
+      .pk-feedback-dialog { border-color: #333b44; }
 
       /* THE PINNED HEADER -- the play page's title, its links and the feedback
          control stay at the top while the story scrolls under them. Sticky,
@@ -369,7 +364,7 @@
         position: sticky; top: 0; z-index: 1; background: #14161a;
         margin-top: -1.25rem; padding-top: .5rem; border-bottom: 1px solid #262b31;
       }
-      .page-header .feedback { margin-top: 0; }
+      .page-header .pk-feedback { margin-top: 0; }
       .page-header h1 { margin: .25rem 0 .5rem; }
       .page-header .nav { margin: 0 0 .5rem; }
     </style>
@@ -377,8 +372,7 @@
       <%# A page that names a header (the play page) gets it pinned to the top
           with the feedback control inside it, so neither scrolls away; any
           other page renders the control on its own, as before. %>
-      <% feedback = render "feedback_notes/feedback", screen: "#{controller_path}##{action_name}",
-                                                      playthrough_id: (@playthrough.id if @playthrough.is_a?(Playthrough)) %>
+      <% feedback = pocket_kit_feedback(fields: { playthrough_id: (@playthrough.id if @playthrough.is_a?(Playthrough)) }) %>
       <% if content_for?(:header) %>
         <header class="page-header"><%= feedback %><%= yield :header %></header>
       <% else %>
