@@ -526,6 +526,77 @@ module Story::Audit::Prose
   end
 
   # ------------------------------------------------------------------------
+  # THE PROSE DESTROYS A THING THE RECORDS STILL HAVE WHOLE.
+  #
+  # No act in the game tears, burns or breaks a row on the player's say-so, so
+  # a passage that does it to a thing still intact has invented the
+  # destruction -- and the next turn's records, the ending and the player's
+  # hands all disagree with what they just read. The case behind it is a game
+  # whose "Tear up the closet writ" was read as a take of the writ: the row
+  # was picked up whole, and both the turn's narration and the ending tore it.
+  #
+  # THREE GRAMMARS, each one the narration doing it to the thing rather than
+  # the thing appearing near a word that can mean damage:
+  #
+  #   1. the player, a destroy verb, the name: "you tear the writ in half"
+  #   2. a destroyed participle before the name: "the torn halves of the writ"
+  #   3. the name, then a destroyed participle: "the writ, torn in two"
+  #
+  # A PREPOSITION BETWEEN THE PARTICIPLE AND THE NAME has attached the damage to
+  # something else -- "a broken chair beside the writ" -- so grammars 2 and 3
+  # stop there (`of` excepted, which is how grammar 2 is written). And the
+  # negation guard reads the match and the words just before it rather than
+  # the whole sentence: "You tear the writ in half ... and the office does not
+  # stir" is a claim, and a sentence-wide guard would drop it.
+  #
+  # WHAT IT KNOWINGLY MISSES: a destruction written under a pronoun -- "you
+  # rend it cleanly in two" a sentence after the writ was named, which is how
+  # the turn narration of that case wrote it -- and any verb not on the list.
+  DESTROY_VERBS = %w[
+    tear tears tore tearing rip rips ripped ripping shred shreds shredded shredding
+    burn burns burned burnt burning smash smashes smashed smashing shatter shatters shattered
+    break breaks broke breaking destroy destroys destroyed destroying rend rends rending crush crushes crushed
+  ].freeze
+
+  DESTROYED = %w[torn ripped shredded burnt burned charred smashed shattered broken destroyed crushed].freeze
+
+  # A NEW NOUN PHRASE BETWEEN THE PARTICIPLE AND THE NAME means the word was a
+  # verb with an object, not a participle on the name: "a clerk who destroyed a
+  # stamped daybook" is a hypothetical about some daybook, and it was the one
+  # detection on the 636 passages of the checked-in corpora before this guard.
+  DETERMINER = /\b(?:a|an|the|this|that|your|my|his|her|their|its)\b/i
+
+  def destruction_claims(text, names)
+    verbs = Regexp.union(DESTROY_VERBS)
+    done = Regexp.union(DESTROYED)
+    found = []
+
+    sentences(text).each do |sentence|
+      plain = unquoted(sentence)
+
+      names.each do |name|
+        word = Regexp.escape(name)
+        grammars = [
+          /\byou\b[^.!?;:,]{0,30}?\b#{verbs}\b(?:\s+up)?\s+(?:the\s+|your\s+|a\s+)?#{word}\b/i,
+          /\b#{done}\b((?:\s+[\w'’-]+){0,3}?)\s+(?:of\s+)?(?:the\s+|your\s+)?#{word}\b/i,
+          /\b#{word}\b((?:[\s,]+[\w'’-]+){0,3}?)[\s,]+#{done}\b/i
+        ]
+        claimed = grammars.any? do |grammar|
+          match = plain.match(grammar)
+          next false if match.nil?
+          next false if match[1].to_s.match?(Story::Audit::ATTACHED_ELSEWHERE)
+          next false if match[1].to_s.match?(DETERMINER)
+
+          !plain[[ match.begin(0) - 20, 0 ].max...match.end(0)].match?(Story::Audit::NEGATIONS)
+        end
+        found << Claim.new(name: name, sentence: sentence.strip) if claimed
+      end
+    end
+
+    found.uniq(&:name)
+  end
+
+  # ------------------------------------------------------------------------
   # THE PROSE ARGUES WITH THE ENGINE'S RECEIPT.
   #
   # `Scene#engine_fact` is the exact set of facts the engine handed a scene's
