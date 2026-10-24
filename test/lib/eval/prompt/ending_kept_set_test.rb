@@ -37,8 +37,9 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
 
   ARM = "mistralai/mistral-medium-3.1".freeze
 
-  # THE ENDING'S CURRENT BASELINE, and the pair that judged the one change since:
-  # the `Dead here:` line the ending is told when somebody lies dead in the room.
+  # THE PAIR THAT JUDGED THE `Dead here:` LINE, the ending's baseline until the
+  # concluding turn's fact replaced its prose (`H2_BEFORE`/`H2_AFTER` below): the
+  # `Dead here:` line the ending is told when somebody lies dead in the room.
   # The corpus gained its sixth case for it (The Unrecorded Hour, Halkett Rowe
   # dead in Ward Office 12), so both sides were bought on the six-case corpus;
   # the line renders in that case alone, so the other five sent byte-for-byte
@@ -46,6 +47,15 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
   CURRENT_BEFORE = "prompt-ending-before-2026-10-02".freeze
 
   CURRENT_AFTER = "prompt-ending-after-2026-10-02".freeze
+
+  # THE ENDING'S CURRENT BASELINE, and the pair that judged the change since: on
+  # the ending's pass alone, *What just happened* reads the concluding turn's
+  # engine fact instead of its paragraph, unless that turn was a move or has no
+  # fact (renderedstep/engine#69). Same corpus, same instructions; the request
+  # identity moved, and four of the six cases send a different request.
+  H2_BEFORE = "prompt-ending-h2-before".freeze
+
+  H2_AFTER = "prompt-ending-h2-after".freeze
 
   test "both sides load off disk with their provenance in the file" do
     [ BEFORE, AFTER ].each do |name|
@@ -316,8 +326,35 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
     assert_equal 0.0, kept(CURRENT_AFTER).spread(:truncated_prose, arm: ARM).max
   end
 
+  test "the fact pair scored today's corpus, the same instructions and two requests" do
+    assert_equal Eval::Prompt.digest(Eval::Prompt.corpus("ending")), kept(H2_BEFORE).corpus_digest
+    assert_equal kept(H2_BEFORE).corpus_digest, kept(H2_AFTER).corpus_digest
+    assert_equal kept(H2_BEFORE).instructions_digest, kept(H2_AFTER).instructions_digest,
+                 "the ending's own instructions did not move; the fact is in the moment"
+    assert_equal kept(CURRENT_AFTER).request_identity, kept(H2_BEFORE).request_identity,
+                 "the before side is the request the dead-line pair left current"
+    assert_not_equal kept(H2_BEFORE).request_identity, kept(H2_AFTER).request_identity
+    [ H2_BEFORE, H2_AFTER ].each do |name|
+      assert_equal 6, kept(name).corpus_size
+      assert_equal Eval::Noise::MIN_RUNS, kept(name).reps
+      assert_equal [ ARM ], kept(name).answered_by
+    end
+  end
+
+  # THE VERDICT THE FACT SHIPPED ON, pinned: no check moved, and `commitments`
+  # fell REAL -- the endings name fewer rooms, exits, items and people. That is
+  # a recorded cost, not a pass; the README has the readings.
+  test "the fact moved no check and cost commitments" do
+    verdicts = Eval::Prompt::Comparison.new(kept(H2_BEFORE), kept(H2_AFTER), io: nil).verdicts(ARM)
+
+    assert_predicate verdicts, :any?
+    assert_equal [ :commitments ], verdicts.select { |row| row.verdict.real? }.map(&:metric)
+    assert_equal 0, kept(H2_AFTER).spread(:failures, arm: ARM).max
+    assert_equal 0.0, kept(H2_AFTER).spread(:truncated_prose, arm: ARM).max
+  end
+
   test "the current ending baseline certifies its scaffold and retains variable preludes" do
-    result = kept(CURRENT_AFTER)
+    result = kept(H2_AFTER)
     corpus = Eval::Prompt.corpus("ending")
     current = Eval::Prompt::RequestVersion.offline(corpus)
     assert_equal Eval::Prompt.digest(corpus), result.corpus_digest
@@ -342,11 +379,14 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
     assert_equal result.request_identity, Eval::Prompt::EndingVersion.identity(scaffolds, corpus)
     rows.each do |row|
       assert_equal false, row.fetch("prelude_stable")
-      assert_includes row.fetch("prompt"), row.fetch("prelude").fetch("description")
+      # A turn that ends on its fact tells the ending the fact, not this prose;
+      # its opening sentence is still the last line of *Earlier*.
+      assert_includes row.fetch("prompt"), row.fetch("prelude").fetch("description").split(/(?<=[.!?])\s/).first
       assert_equal %w[description summary], row.fetch("prelude").keys.sort
     end
-    assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{CURRENT_AFTER}/prompt.json"
-    assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{CURRENT_BEFORE}/prompt.json"
+    [ H2_BEFORE, H2_AFTER, CURRENT_BEFORE, CURRENT_AFTER ].each do |name|
+      assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{name}/prompt.json"
+    end
     assert_includes Eval::MEASUREMENT_FILES, "db/eval/prompt-ending-2026-09-10/prompt.json",
                     "the five-case baseline stays on disk as history"
   end

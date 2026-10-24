@@ -1568,7 +1568,22 @@ requests both sides, so their spread is the run-to-run spread. No check reads a
 dead person written as standing in a single turn, so the line's own case was
 read by hand: without the line none of the four endings mentions Rowe, with it
 two of four name him and none has him standing. `prompt-ending-after-2026-10-02`
-is the ending's current baseline; its README has the readings.
+was the ending's baseline until the pair below; its README has the readings.
+
+### The concluding turn's fact, and the h2 pair
+
+On the ending's pass alone, *What just happened* reads the concluding turn's
+engine fact instead of its paragraph, unless that turn was a move or has no
+fact (renderedstep/engine#69). Same corpus and instructions; the request
+identity moved from `v2:4e5e367c21bbf5dc` to `v2:1913005814e96308`.
+
+```bash
+rake eval:prompt_compare BEFORE=prompt-ending-h2-before AFTER=prompt-ending-h2-after
+```
+
+**NOISE on every check; `commitments` fell REAL.** The endings name less of the
+room, and the take case re-narrates the pickup. `prompt-ending-h2-after` is the
+ending's current baseline; its README has the readings and the receipts.
 
 ### Serial, for now
 
