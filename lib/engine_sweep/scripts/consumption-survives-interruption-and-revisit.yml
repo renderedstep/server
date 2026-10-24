@@ -22,7 +22,7 @@ steps:
     note: completed
 - id: take-the-only-dose
   type: /take healing draught
-  browser: {token: pickup, fail: narration}
+  browser: {token: pickup}
   expect:
     carrying: [healing draught]
     here: [brass key, iron lever]

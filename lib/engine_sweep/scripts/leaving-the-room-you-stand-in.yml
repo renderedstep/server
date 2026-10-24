@@ -1,0 +1,86 @@
+# "Leave", "exit" and "get out" are settled by the engine against the room's
+# real ways out before any reader sees the line: one way out moves through it,
+# several ask which, and a "leave" that also names a carried thing asks which
+# act was meant. A "leave" that puts a thing somewhere is not about the room,
+# so it goes to the reader as any other line does.
+story: The Unrecorded Hour
+why: a line about leaving here is answered from the room's exits, never from a label
+steps:
+- id: into-the-closet
+  type: go to the Supply Closet
+  why: the closet has one way out, so leaving it names a single exit
+  expect:
+    changed: true
+    location: The Supply Closet (realized)
+    exits:
+    - Ward Office 12 (realized)
+    carrying:
+    - Ward Office 12 daybook
+- id: leave-the-closet-by-its-one-way-out
+  type: Leave the closet
+  why: one way out is the move, and the engine says it resolved the line
+  browser:
+    token: leave-the-closet
+    replies:
+    - purpose: arrival
+      content:
+        description: You come back into the office.
+        summary: Back in the office.
+  expect:
+    changed: true
+    refused: false
+    resolved_by: engine_leave
+    location: Ward Office 12 (realized)
+    carrying:
+    - Ward Office 12 daybook
+- id: leave-the-office-could-be-either-act
+  type: leave the office
+  why: the office shares its name with the carried daybook, so the line could be a drop; the engine asks rather than picks
+  browser:
+    token: leave-the-office
+  expect:
+    changed: false
+    refused: true
+    location: Ward Office 12 (realized)
+    carrying:
+    - Ward Office 12 daybook
+- id: exit-from-two-ways-out-asks-which
+  type: exit
+  why: two ways out and no name for either; the refusal lists them
+  browser:
+    token: exit
+  expect:
+    changed: false
+    refused: true
+    location: Ward Office 12 (realized)
+    carrying:
+    - Ward Office 12 daybook
+- id: a-slashed-leave-is-read-the-same
+  type: "/leave this place"
+  why: the slash does not route around the rule
+  browser:
+    token: slashed-leave
+  expect:
+    changed: false
+    refused: true
+    location: Ward Office 12 (realized)
+- id: leaving-a-thing-somewhere-goes-to-the-reader
+  type: leave the daybook open on the desk
+  why: words after the thing are not a room, so the word test lets the line through to the reader
+  browser:
+    token: leave-the-daybook
+    replies:
+    - purpose: local_classifier
+      content:
+        intent: drop
+        target_drop: player_item_1
+        named_more_than_one: 0
+        target_present: 0.97
+    - purpose: narration
+      content: You leave the daybook open on the desk.
+  expect:
+    changed: true
+    refused: false
+    resolved_by: typed_model
+    location: Ward Office 12 (realized)
+    carrying: []

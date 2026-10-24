@@ -1,0 +1,12 @@
+{
+  "script": "leaving-the-room-you-stand-in",
+  "doctor": {
+    "headline": "healthy",
+    "findings": []
+  },
+  "audit": {
+    "headline": "3 scenes, nothing to report",
+    "flags": [],
+    "unjudged": []
+  }
+}
