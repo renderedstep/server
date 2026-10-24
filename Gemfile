@@ -88,3 +88,5 @@ gem "propshaft"
 gem "importmap-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
+# The owner-only feedback button; config/initializers/pocket_kit.rb sets it up.
+gem "pocket_kit", github: "calebl/pocket-kit", tag: "v0.1.0"

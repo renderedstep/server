@@ -197,12 +197,15 @@ one build is the Rust engine's extension, which plays every turn
 
 `FEEDBACK_COMMAND`, when set, puts a feedback button at the top of every page
 for the owner — only where `Playthrough::Debug.enabled?` (local, or
-`TA_DEBUG_VIEW`). Sending runs the command, split like a shell word list but
-with no shell, with `--request-id ta-feedback-<uuid> --json -` appended and the
-note on stdin: the screen as `controller#action`, on a game screen the
-playthrough's id and the room's name, a blank line, then the typed text. Only
-exit status 0 counts as sent. Notes are capped at 2,000 characters and five a
-minute. Unset, the button is absent and `POST /feedback_note` is a 404.
+`TA_DEBUG_VIEW`). The button is the
+[pocket-kit](https://github.com/calebl/pocket-kit) gem's, set up in
+`config/initializers/pocket_kit.rb`. Sending runs the command, split like a
+shell word list but with no shell, with `--request-id ta-feedback-<uuid> --json -`
+appended and the note on stdin: the screen as `controller#action`, on a game
+screen the playthrough's id and the room's name, a blank line, the typed text,
+then a `Device:` block of what the browser reports. Exit status 0 or 3 (saved,
+not yet announced) counts as sent. Unset, the button is absent and
+`POST /pocket-kit/feedback` is a 404.
 
 ### Use things and open passages
 
