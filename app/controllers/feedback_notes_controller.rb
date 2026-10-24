@@ -14,7 +14,8 @@ require "shellwords"
 #
 # WHAT IS SENT, AND NOTHING ELSE: the typed text, the screen as
 # `controller#action`, and on a game screen the current room's name and the
-# playthrough's id. No narration, no transcript, no token, no other game. The
+# playthrough's id, then a "Device:" block of what the browser reports about
+# itself (`DEVICE_FIELDS`, each checked and capped). No narration, no transcript, no token, no other game. The
 # screen is checked against the routes and the playthrough is looked up here, so
 # the page cannot put anything else in the message.
 #
@@ -29,6 +30,20 @@ class FeedbackNotesController < ApplicationController
   MAX_LENGTH = 2000
   NOTES_PER_MINUTE = 5
   UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+
+  # WHAT THE BROWSER SAYS ABOUT THE DEVICE, filled in by the dialog's script as
+  # the note is sent. Each value is kept only if it matches its pattern, and the
+  # free one -- the user agent -- is capped; anything else is dropped, never
+  # passed on. The label is what the "Device:" block calls it.
+  DEVICE_FIELDS = {
+    user_agent: [ "Browser", /\A[[:print:]]{1,300}\z/ ],
+    screen: [ "Screen", /\A\d{1,5}x\d{1,5}\z/ ],
+    viewport: [ "Viewport", /\A\d{1,5}x\d{1,5}\z/ ],
+    visual_viewport: [ "Visual viewport", /\A\d{1,5}x\d{1,5}\z/ ],
+    pixel_ratio: [ "Pixel ratio", /\A\d{1,2}(\.\d{1,4})?\z/ ],
+    standalone: [ "Home screen app", /\A(true|false)\z/ ],
+    color_scheme: [ "Colour scheme", /\A(light|dark)\z/ ]
+  }.freeze
 
   # One store for the process, as `Api::V1::TurnsController` has, so the limit
   # holds in the test environment whose cache stores nothing.
@@ -54,13 +69,24 @@ class FeedbackNotesController < ApplicationController
   end
 
   # The message on the command's stdin.
-  def self.body(text:, screen:, playthrough: nil)
+  def self.body(text:, screen:, playthrough: nil, device: {})
     lines = [ "Text adventure feedback (screen: #{screen})" ]
     if playthrough
       lines << "Playthrough: #{playthrough.id}"
       lines << "Room: #{playthrough.current_location.name}" if playthrough.current_location
     end
-    "#{lines.join("\n")}\n\n#{text}\n"
+    note = "#{lines.join("\n")}\n\n#{text}\n"
+    return note if device.empty?
+
+    "#{note}\nDevice:\n#{device.map { |field, value| "#{DEVICE_FIELDS[field].first}: #{value}" }.join("\n")}\n"
+  end
+
+  # The device fields that pass their pattern, in `DEVICE_FIELDS` order.
+  def self.device(params)
+    DEVICE_FIELDS.each_with_object({}) do |(field, (_label, pattern)), kept|
+      value = params&.[](field).to_s.strip
+      kept[field] = value if value.match?(pattern)
+    end
   end
 
   def create
@@ -87,7 +113,8 @@ class FeedbackNotesController < ApplicationController
   end
 
   def sent?(text, screen, request_id)
-    body = self.class.body(text: text, screen: screen, playthrough: playthrough)
+    device = self.class.device(params[:device].is_a?(ActionController::Parameters) ? params[:device] : nil)
+    body = self.class.body(text: text, screen: screen, playthrough: playthrough, device: device)
     _output, status = Open3.capture2e(*self.class.command, "--request-id", "ta-feedback-#{request_id}", "--json", "-",
                                       stdin_data: body)
     status.success?

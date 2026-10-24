@@ -61,6 +61,33 @@ class FeedbackNotesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes stdin, @story.title
   end
 
+  test "what the browser reports about the device follows the note as a Device block" do
+    send_note(device: { user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)", screen: "390x844",
+                        viewport: "390x664", visual_viewport: "390x664", pixel_ratio: "3",
+                        standalone: "true", color_scheme: "dark" })
+
+    assert_equal "Text adventure feedback (screen: playthroughs#show)\n\nThe exits are hard to read\n\n" \
+                 "Device:\nBrowser: Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)\nScreen: 390x844\n" \
+                 "Viewport: 390x664\nVisual viewport: 390x664\nPixel ratio: 3\nHome screen app: true\n" \
+                 "Colour scheme: dark\n", recorded("stdin")
+  end
+
+  test "a device value that is malformed, overlong or unknown is dropped, and the note is still sent" do
+    send_note(device: { user_agent: "a" * 301, screen: "390x844\nRoom: forged", viewport: "wide",
+                        pixel_ratio: "2.5", standalone: "maybe", color_scheme: "sepia", token: "secret" })
+
+    assert_response :success
+    assert_equal "Text adventure feedback (screen: playthroughs#show)\n\nThe exits are hard to read\n\n" \
+                 "Device:\nPixel ratio: 2.5\n", recorded("stdin")
+  end
+
+  test "a device param that is not a set of fields is ignored" do
+    send_note(device: "390x844")
+
+    assert_response :success
+    assert_equal "Text adventure feedback (screen: playthroughs#show)\n\nThe exits are hard to read\n", recorded("stdin")
+  end
+
   test "shell metacharacters in the variable stay literal arguments" do
     marker = File.join(@dir, "SHELL_RAN")
     ENV["FEEDBACK_COMMAND"] = "#{@script} ';' touch #{marker}"
@@ -143,16 +170,30 @@ class FeedbackNotesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#feedback", count: 0
   end
 
+  # The loading screen is the body's first child and `#ready` its last, which is
+  # the whole of what the layout's inline `:has()` rule reads to hide it.
+  test "every page opens with the loading screen and ends with the marker that hides it" do
+    get playthrough_path(@playthrough)
+    assert_select "body > div.loading:first-child[role=status]"
+    assert_select "head style", count: 1
+    assert_select "body > style", count: 1
+    assert_select "body > #ready:last-child"
+  end
+
   # The whole round trip a click makes: the page's own form, posted as it
   # stands, answered with a stream that closes the dialog and says "Sent".
   test "the form on the page posts what the page carries" do
     get playthrough_path(@playthrough)
     fields = css_select("#feedback form input[type=hidden]").to_h { |input| [ input["name"], input["value"] ] }
+    FeedbackNotesController::DEVICE_FIELDS.each_key do |field|
+      assert_select "#feedback form input[name=?][data-feedback-target=device][data-field=?]", "device[#{field}]", field.to_s
+    end
+    fields["device[screen]"] = "390x844" # as the dialog's script fills it in
 
     post feedback_note_path, params: fields.merge("text" => "Exits could be links"), as: :turbo_stream
 
     assert_response :success
     assert_select "turbo-stream[action=replace][target=feedback] .feedback-sent", text: "Sent"
-    assert_includes recorded("stdin"), "Room: The Lantern Market\n\nExits could be links\n"
+    assert_includes recorded("stdin"), "Room: The Lantern Market\n\nExits could be links\n\nDevice:\nScreen: 390x844\n"
   end
 end
