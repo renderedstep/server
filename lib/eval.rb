@@ -178,6 +178,9 @@ module Eval
     db/eval/prompt-ending-before-2026-10-02/prompt.json
     db/eval/prompt-ending-after-2026-10-02/prompt.json
     db/eval/prompt-ending-after-2026-10-02/README.md
+    db/eval/prompt-ending-h2-before/prompt.json
+    db/eval/prompt-ending-h2-after/prompt.json
+    db/eval/prompt-ending-h2-after/README.md
     lib/eval/prompt/ending_version.rb
     lib/eval/prompt/request_version.rb
     lib/eval/realization/request_version.rb

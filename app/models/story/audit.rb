@@ -217,10 +217,14 @@ class Story::Audit
   # `break_untold` reads no prose at all: the records say the turn broke a
   # thing and the receipt the writer was handed does not say so. See
   # `#check_break`.
+  #
+  # `destruction_invented` is `#check_break` from the other side: the prose
+  # destroys a thing and the records still have it whole. See
+  # `#check_destruction`.
   CONTRADICTIONS = %i[unreachable_transition item_not_held unrecorded_departure unrecorded_arrival
                       take_denied pickup_invented inscription_misquoted
                       dead_shown_alive carried_shown_lying handover_invented
-                      break_untold].freeze
+                      break_untold destruction_invented].freeze
 
 
   # THE PROSE BROKE A RULE THE APP STATES, provable from the row itself and one
@@ -481,6 +485,7 @@ class Story::Audit
   # reports under. See `#available_checks`.
   SCHEMA_REQUIRED = {
     item_not_held: [ :items, %i[playthrough_id disposition] ],
+    destruction_invented: [ :items, %i[playthrough_id disposition] ],
     named_more_than_one: [ :playthrough_overreaches, [] ]
   }.freeze
 
@@ -623,6 +628,7 @@ class Story::Audit
       check_inscription(scene)
       check_receipt(scene)
       check_break(scene)
+      check_destruction(scene) if available_checks.include?(:destruction_invented)
     end
 
     check_stillness
@@ -1459,6 +1465,67 @@ class Story::Audit
          typed: scene.typed.presence,
          where: scene.location&.name,
          at: scene.story_timestamp)
+  end
+
+  # ------------------------------------------------------------------------
+  # THE PROSE DESTROYS A THING THE RECORDS STILL HAVE WHOLE.
+  #
+  # The case behind it: "Tear up the closet writ" was read as a take of the
+  # writ, the arc's last goal, so the engine picked it up whole and the story
+  # was won. The turn's narration tore it, and the ending -- handed that
+  # paragraph -- tore it again, so the player read a loss the records do not
+  # hold. Nothing here judged it: `item_not_held` reads custody, `break_untold`
+  # reads a break the records made, and neither reads a break they did not.
+  #
+  # THE CANDIDATES ARE THE THINGS IN REACH AND INTACT AFTER THE TURN: a
+  # playthrough's copy carried by its party, or lying in the room the scene is
+  # in. A thing in that state was not destroyed by any turn, so prose that
+  # destroys it is a contradiction rather than a reading of one.
+  #
+  # PRECISION OVER RECALL, as everywhere here. A `Scene` carries no
+  # playthrough, so a name is read only where EVERY copy of it in the story is
+  # whole: a copy spent or broken in any game might be the one this prose is
+  # about. And a row touched after the scene was written is unjudged, on
+  # `#check_items`'s rule -- where it was then is unknown.
+  #
+  # `Story::Audit::Prose.destruction_claims` is the reading and its stated miss.
+  # ------------------------------------------------------------------------
+  def check_destruction(scene)
+    text = scene.description.to_s
+    return if text.blank?
+
+    intact_in_reach(scene).each do |item|
+      claim = Prose.destruction_claims(text, Prose.item_names(item)).first
+      next if claim.nil?
+
+      if scene.created_at && item.updated_at > scene.created_at
+        next unjudge(:destruction_invented, scene,
+                     "#{item.name.inspect} changed after this scene was written, so its state then is unknown")
+      end
+
+      flag(:destruction_invented, scene,
+           "the narration destroys the #{item.name}, which the records still have whole",
+           item: item.name,
+           "named as" => claim.name,
+           "records say" => item.carried? ? "intact, carried by the player" : "intact, lying in #{scene.location&.name}",
+           claim: claim.sentence.truncate(220),
+           typed: scene.typed.presence,
+           where: scene.location&.name,
+           at: scene.story_timestamp)
+    end
+  end
+
+  def intact_in_reach(scene)
+    copies = story_instances
+    spent = copies.reject(&:intact?).map { |item| item.name.to_s.downcase.strip }.to_set
+
+    copies.select { |item| item.carried? || (item.lying? && item.location_id == scene.location_id) }
+          .reject { |item| spent.include?(item.name.to_s.downcase.strip) }
+          .uniq { |item| item.name.to_s.downcase.strip }
+  end
+
+  def story_instances
+    @story_instances ||= Item.instances.where(playthrough: story.playthroughs).order(:id).to_a
   end
 
   # Whether this scene is the turn that broke the thing it acted on: the last

@@ -758,7 +758,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
       assert_select "h1", text: playthrough.story.title
       assert_select "p.nav a[href=?]", root_path
     end
-    assert_match(/\.page-header \{\s*position: sticky; top: 0;/, css_select("head style").sole.text)
+    assert_match(/\.page-header \{\s*position: sticky; top: 0;/, css_select("body > style").sole.text)
   end
 
   # A phone width is not something the suite can see either, so this pins the
@@ -771,7 +771,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
 
     get playthrough_path(playthrough)
 
-    style = css_select("head style").sole.text
+    style = css_select("body > style").sole.text
     assert_match(/main \{[^}]*overflow-wrap: break-word/, style)
     assert_match(/@media \(pointer: coarse\) \{\s*input\[type=text\], textarea \{ font-size: max\(16px, 1em\); \}/, style)
     assert_no_match(/overflow-x: hidden;/, style)
