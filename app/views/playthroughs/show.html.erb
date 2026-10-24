@@ -25,16 +25,20 @@
                   turbo:load@document->play#notePosition
                   turbo:before-stream-render@document->play#followStreamRender
                   turbo:submit-end->play#acknowledgeSubmission">
-  <h1><%= @playthrough.story.title %></h1>
-  <%# The window into the machine, and the only mark it leaves on the game.
-      Absent entirely unless `Playthrough::Debug.enabled?` -- local by default --
-      so a player who was handed a playthrough link is never shown one. %>
-  <p>
-    <%= link_to "&larr; all stories".html_safe, root_path %>
-    <% if Playthrough::Debug.enabled? %>
-      &middot; <%= link_to "debug", playthrough_debug_path(@playthrough) %>
-    <% end %>
-  </p>
+  <%# The header is pinned by the layout (`.page-header`), so it is handed up
+      rather than rendered here. %>
+  <% content_for :header do %>
+    <h1><%= @playthrough.story.title %></h1>
+    <%# The window into the machine, and the only mark it leaves on the game.
+        Absent entirely unless `Playthrough::Debug.enabled?` -- local by default --
+        so a player who was handed a playthrough link is never shown one. %>
+    <p class="nav">
+      <%= link_to "&larr; all stories".html_safe, root_path %>
+      <% if Playthrough::Debug.enabled? %>
+        &middot; <%= link_to "debug", playthrough_debug_path(@playthrough) %>
+      <% end %>
+    </p>
+  <% end %>
 
   <div class="preface"><%= @playthrough.story.preface %></div>
   <hr>

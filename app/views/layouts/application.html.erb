@@ -15,7 +15,13 @@
         font: 15px/1.6 ui-monospace, "DejaVu Sans Mono", monospace;
         margin: 0; padding: 2rem 1rem;
       }
-      main { max-width: 44rem; margin: 0 auto; }
+      /* NO SIDEWAYS SCROLL ON A PHONE. A token too long for the column -- a
+         run-on name, a hyphenated room, anything a model writes without a
+         space -- breaks inside itself rather than pushing the page wider;
+         `overflow-wrap` inherits, so this one line covers the log, the place
+         line and every panel. The body is never `overflow-x: hidden`: that
+         would hide content instead of fitting it. */
+      main { max-width: 44rem; margin: 0 auto; overflow-wrap: break-word; }
       h1 { font-size: 1.2rem; letter-spacing: .08em; text-transform: uppercase; color: #8ba0b4; }
       h2 { font-size: 1rem; color: #e6e9ec; margin: 0 0 .25rem; }
       a { color: #7fb2d8; }
@@ -47,7 +53,14 @@
       form { display: flex; gap: .5rem; }
       input[type=text], textarea {
         flex: 1; background: #0e1013; color: #cfd3d8; border: 1px solid #333b44;
-        padding: .5rem .6rem; font: inherit;
+        padding: .5rem .6rem; font: inherit; min-width: 0;
+      }
+      /* iOS zooms the page in when a field under 16px takes focus, and the
+         zoomed page then scrolls sideways -- on the play page that is every
+         turn, since the input is autofocused. 16px on a touch screen only, so
+         the desktop look keeps the body's 15px. */
+      @media (pointer: coarse) {
+        input[type=text], textarea { font-size: max(16px, 1em); }
       }
       /* A GAME THE PLAYER NARRATES: the mode choice beside Play, and the
          paragraph box on the facts card. Layout only, out of what is here. */
@@ -309,13 +322,36 @@
       .feedback-status { margin: 0; }
       .feedback-status:empty { display: none; }
       .feedback-buttons { display: flex; justify-content: flex-end; gap: .5rem; }
+
+      /* THE PINNED HEADER -- the play page's title, its links and the feedback
+         control stay at the top while the story scrolls under them. Sticky,
+         not fixed, so it keeps its place in the flow and nothing needs an
+         offset to clear it. The page's own background hides the prose passing
+         beneath, and the `hr` rule's colour marks the edge. The feedback row's
+         negative margin moves onto the header so the resting layout is
+         unchanged; `.page-header h1` keeps its default margins. */
+      .page-header {
+        position: sticky; top: 0; z-index: 1; background: #14161a;
+        margin-top: -1.25rem; padding-top: .5rem; border-bottom: 1px solid #262b31;
+      }
+      .page-header .feedback { margin-top: 0; }
+      .page-header h1 { margin: .25rem 0 .5rem; }
+      .page-header .nav { margin: 0 0 .5rem; }
     </style>
     <%= javascript_importmap_tags %>
   </head>
   <body>
     <main>
-      <%= render "feedback_notes/feedback", screen: "#{controller_path}##{action_name}",
-                                             playthrough_id: (@playthrough.id if @playthrough.is_a?(Playthrough)) %>
+      <%# A page that names a header (the play page) gets it pinned to the top
+          with the feedback control inside it, so neither scrolls away; any
+          other page renders the control on its own, as before. %>
+      <% feedback = render "feedback_notes/feedback", screen: "#{controller_path}##{action_name}",
+                                                      playthrough_id: (@playthrough.id if @playthrough.is_a?(Playthrough)) %>
+      <% if content_for?(:header) %>
+        <header class="page-header"><%= feedback %><%= yield :header %></header>
+      <% else %>
+        <%= feedback %>
+      <% end %>
       <% if flash[:alert] %><p class="alert"><%= flash[:alert] %></p><% end %>
       <%= yield %>
     </main>

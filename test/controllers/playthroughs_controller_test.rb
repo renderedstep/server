@@ -746,6 +746,36 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#bottom"
   end
+
+  # The header is pinned by the layout's sticky `.page-header`, so the title and
+  # the way back are in it rather than in the scrolling story.
+  test "show puts the title and its links in the pinned header" do
+    playthrough = create(:playthrough)
+
+    get playthrough_path(playthrough)
+
+    assert_select "main > header.page-header" do
+      assert_select "h1", text: playthrough.story.title
+      assert_select "p.nav a[href=?]", root_path
+    end
+    assert_match(/\.page-header \{\s*position: sticky; top: 0;/, css_select("head style").sole.text)
+  end
+
+  # A phone width is not something the suite can see either, so this pins the
+  # two rules that keep the page from scrolling sideways there: long tokens
+  # wrap inside the column, and a touch screen's input is 16px so iOS does not
+  # zoom the page in when the autofocused box takes focus. The width
+  # measurement itself is in the PR.
+  test "show carries the rules that keep a phone from scrolling sideways" do
+    playthrough = create(:playthrough)
+
+    get playthrough_path(playthrough)
+
+    style = css_select("head style").sole.text
+    assert_match(/main \{[^}]*overflow-wrap: break-word/, style)
+    assert_match(/@media \(pointer: coarse\) \{\s*input\[type=text\], textarea \{ font-size: max\(16px, 1em\); \}/, style)
+    assert_no_match(/overflow-x: hidden;/, style)
+  end
   # --- a playthrough that is over -------------------------------------------
   #
   # The captain's ruling of 2026-09-04: at zero hit points the character is dead
