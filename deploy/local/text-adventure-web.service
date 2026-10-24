@@ -1,0 +1,29 @@
+# The private install's web process: Rails on 127.0.0.1:3200, reached from the
+# tailnet at https://<machine>.<tailnet>.ts.net:8445. See docs/local-deploy.md.
+#
+# Install:
+#   cp deploy/local/text-adventure-web.service ~/.config/systemd/user/
+#   (edit PATH to the Ruby the install uses)
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now text-adventure-web
+#
+# Logs: journalctl --user -u text-adventure-web -f
+
+[Unit]
+Description=text-adventure-web (Rails) on 127.0.0.1:3200
+After=network-online.target text-adventure-web-reader.service
+Wants=network-online.target text-adventure-web-reader.service
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.local/share/text-adventure-web/secrets.env
+EnvironmentFile=%h/.local/share/text-adventure-web/deploy.env
+Environment=PATH=%h/.local/share/mise/installs/ruby/3.4.10/bin:/usr/local/bin:/usr/bin
+Environment=PIDFILE=%t/text-adventure-web.pid
+ExecStart=%h/.local/share/text-adventure-web/app/bin/start
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
