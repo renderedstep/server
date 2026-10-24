@@ -68,29 +68,31 @@ class Playthrough::DrainedTurnTest < ActiveSupport::TestCase
   # this one over the room the player is standing in, and took whatever they
   # had typed since with it.
   test "an overtaken job broadcasts nothing over the turn that passed it" do
-    lying_here(@game, @game.current_location, name: "red coin")
-    Playthrough::Command.accept!(@game, "drop red coin", "first")
-    reading = { "intent" => "drop", "target" => "red coin", "also_named" => "nothing", "thrown_at" => "nothing" }
+    # The later line is a drop and not a take: a plain take is told in the
+    # engine's own words, and this walk needs a narrated turn to pass the first.
+    create(:item, :carried, playthrough: @game, name: "red coin")
+    Playthrough::Command.accept!(@game, "take red coin", "first")
+    reading = { "intent" => "take", "target" => "red coin", "also_named" => "nothing", "thrown_at" => "nothing" }
 
     drained = capture_turbo_stream_broadcasts(@game) do
-      replying(reply(:classifier, reading), reply(:narration, "You pick up the red coin.")) do
-        NarrationJob.perform_now(@game.id, "/take red coin", "second")
+      replying(reply(:classifier, reading), reply(:narration, "You drop the red coin.")) do
+        NarrationJob.perform_now(@game.id, "/drop red coin", "second")
       end
     end
 
     assert_equal %w[completed completed], @game.commands.order(:id).pluck(:status)
-    assert_includes @game.reload.carried.map(&:name), "red coin"
+    assert_not_includes @game.reload.carried.map(&:name), "red coin"
     assert_includes drained.last.to_html, "what do you do?"
-    assert_not_includes drained.last.to_html, "drop red coin",
+    assert_not_includes drained.last.to_html, "take red coin",
                         "the later line's page is the one that stands"
 
     # An overtaken delivery must not ask a model: no reply is declared.
     overtaken = capture_turbo_stream_broadcasts(@game) do
-      replying { NarrationJob.perform_now(@game.id, "drop red coin", "first") }
+      replying { NarrationJob.perform_now(@game.id, "take red coin", "first") }
     end
 
     assert_empty overtaken, "the page the player is reading is newer than this submission"
-    assert_includes @game.reload.carried.map(&:name), "red coin", "and nothing was undone"
+    assert_not_includes @game.reload.carried.map(&:name), "red coin", "and nothing was undone"
   end
 
   # THE OTHER HALF OF THE SAME RULE, and the reason the suppression is keyed on

@@ -308,11 +308,13 @@ class NarrationJobTest < ActiveJob::TestCase
   # on, so it is the one that names what to do.
   test "an install with no model configured keeps its committed turn and says why the prose is plain" do
     playthrough = create(:playthrough, :started)
-    item = lying_here(playthrough, playthrough.current_location, name: "red coin")
+    # A drop and not a take: a plain take is told in the engine's own words and
+    # never asks the narrator whose absence this turn has to name.
+    item = create(:item, :carried, playthrough: playthrough, name: "red coin")
 
-    html = play(playthrough, "/take red coin", reply(:narration, failure: :no_model)).last.to_html
+    html = play(playthrough, "/drop red coin", reply(:narration, failure: :no_model)).last.to_html
 
-    assert_includes playthrough.reload.carried, item, "the action was committed and stands"
+    assert_not_includes playthrough.reload.carried, item, "the action was committed and stands"
     assert_match Playthrough::SetupNotice::COMPLETED, html
     assert_no_match Regexp.new(Regexp.escape(Playthrough::TurnFailureNotice::MESSAGE)), html,
                     "the turn finished, so the vague internal-failure copy is the wrong one"
