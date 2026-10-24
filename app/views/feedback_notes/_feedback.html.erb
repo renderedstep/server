@@ -8,7 +8,10 @@
             data-action="feedback#open"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none"
       stroke="currentColor" stroke-width="1.4"><path d="M2 3h12v8H7l-3 3v-3H2z"/></svg></button>
     <dialog class="feedback-dialog" data-feedback-target="dialog" aria-label="Send feedback">
-      <%= form_with url: feedback_note_path, class: "feedback-form" do |form| %>
+      <%= form_with url: feedback_note_path, class: "feedback-form", data: { action: "feedback#describe" } do |form| %>
+        <% FeedbackNotesController::DEVICE_FIELDS.each_key do |field| %>
+          <%= hidden_field_tag "device[#{field}]", "", id: nil, data: { feedback_target: "device", field: field } %>
+        <% end %>
         <%= form.hidden_field :screen, value: screen, id: nil %>
         <%= form.hidden_field :playthrough_id, value: playthrough_id, id: nil if playthrough_id.present? %>
         <%= form.hidden_field :request_id, value: SecureRandom.uuid, id: nil %>

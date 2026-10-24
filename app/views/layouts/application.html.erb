@@ -5,9 +5,44 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= render "application/icons", theme: "#14161a" %>
+    <%# THE LOADING SCREEN -- the blinking block cursor alone, centred on the
+        page's own background, and nothing else: no new colour, no image to
+        fetch. Nothing paints until the head has arrived, and the page's
+        stylesheet is most of a page's bytes, so the head carries only these
+        few rules and the stylesheet follows the screen into the body: on a
+        slow link the cursor shows while the rest is still on its way, where
+        before there was a blank page for as long as the stylesheet took.
+        `#ready` -- the last thing in the body -- hides it once the whole
+        page has been parsed. `:has()` is the switch, so a browser without it
+        never shows it at all rather than showing it for ever.
+
+        The same screen covers a Turbo visit or form post that is still
+        waiting on the server (Play, Resume, a link): Turbo marks the document
+        `aria-busy` for as long as one is in flight. There it fades in only
+        after a moment, so a quick page never flashes it. %>
+    <style>
+      html, body { background: #14161a; }
+      .loading { display: none; }
+      @supports selector(:has(*)) {
+        body:not(:has(> #ready)) > .loading, html[aria-busy="true"] .loading {
+          display: flex; position: fixed; inset: 0; z-index: 2;
+          align-items: center; justify-content: center; background: #14161a;
+          color: #8ba0b4; font: 24px ui-monospace, "DejaVu Sans Mono", monospace;
+        }
+        html[aria-busy="true"] .loading { animation: loading-in .2s .4s both; }
+      }
+      @keyframes loading-in { from { opacity: 0; } }
+      .loading::after { content: "\2588"; animation: blink 1s steps(2) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+    </style>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body>
+    <div class="loading" role="status" aria-label="Loading"></div>
     <%# Still one inline <style>: propshaft is here to serve JavaScript, and the
         reading experience is a stage of its own (`ta-api-iface`). Restyling
-        anything is that task's job, not this file's. %>
+        anything is that task's job, not this file's. It sits in the body,
+        after the loading screen, so that screen can paint before it arrives. %>
     <style>
       :root { color-scheme: dark; }
       body {
@@ -338,9 +373,6 @@
       .page-header h1 { margin: .25rem 0 .5rem; }
       .page-header .nav { margin: 0 0 .5rem; }
     </style>
-    <%= javascript_importmap_tags %>
-  </head>
-  <body>
     <main>
       <%# A page that names a header (the play page) gets it pinned to the top
           with the feedback control inside it, so neither scrolls away; any
@@ -355,5 +387,6 @@
       <% if flash[:alert] %><p class="alert"><%= flash[:alert] %></p><% end %>
       <%= yield %>
     </main>
+    <span id="ready" hidden></span>
   </body>
 </html>
