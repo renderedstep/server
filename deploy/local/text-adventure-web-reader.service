@@ -1,0 +1,21 @@
+# The private install's local line reader (bin/pointer-classifier) on
+# 127.0.0.1:3201. The web unit wants it; see docs/local-deploy.md.
+#
+# Install:
+#   cp deploy/local/text-adventure-web-reader.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now text-adventure-web-reader
+
+[Unit]
+Description=text-adventure-web local line reader (pointer model) on 127.0.0.1:3201
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.local/share/text-adventure-web/deploy.env
+ExecStart=%h/.local/share/text-adventure-web/app/bin/pointer-classifier
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -36,6 +36,10 @@ Generation needs a model. Either:
 
 * `RAILS_ASSUME_SSL=false` — production stops assuming an SSL-terminating proxy (default `true`).
 * `RAILS_FORCE_SSL=false` — production stops redirecting to HTTPS and marking cookies secure (default `true`).
+* `RAILS_ALLOWED_HOSTS=a.example,b.example` — production answers only those hosts (and `/up` from anywhere); unset, every host is answered.
+
+A private install on one machine, on `127.0.0.1` behind `tailscale serve`, is
+in [docs/local-deploy.md](docs/local-deploy.md) with its start script and units.
 
 Comparing two test runs? The suite's assertion total moves between identical
 runs by design; [docs/testing.md](docs/testing.md) says why and gives the
