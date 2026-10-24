@@ -53,6 +53,17 @@ ARTICLES = ("the ", "a ", "an ")
 SCENERY = ("the window", "the wall", "the ceiling", "the floor", "the sky", "the shelves", "the corner",
            "the rafters", "the doorframe", "the rain", "the dust", "the stains on the wall", "the far wall")
 
+# Head nouns of things with writing on them, which a line can read a part of.
+WRITTEN = ("ledger", "logbook", "almanac", "map", "chart", "letter", "letters", "notice", "poster", "handbill",
+           "pamphlet", "newspaper", "paper", "papers", "notes", "note", "roll", "roster", "register", "manifest",
+           "inventory", "dossier", "casebook", "docket", "warrant", "receipt", "invoice", "deed", "will",
+           "petition", "ballot", "ticket", "pass", "book", "diary", "journal", "list", "record", "records", "log")
+
+# How and when, said of any act: no tail belongs to one intent, or the tail
+# rather than the verb would come to decide it.
+ASIDES = ("before anyone sees", "while nobody is watching", "quickly", "slowly", "right now", "first",
+          "one more time", "without a word", "as quietly as I can")
+
 
 def vocabulary():
     with open(VOCABULARY) as source:
@@ -390,7 +401,8 @@ class Lines:
             text = f"pick {thing} up"
         else:
             text = self.pick([f"{verb} {thing}", f"I {verb} {thing}", f"try to {verb} {thing}",
-                              f"{verb} {thing} and put it in my bag", f"carefully {verb} {thing}"])
+                              f"{verb} {thing} and put it in my bag", f"carefully {verb} {thing}",
+                              f"{verb} {thing} {self.pick(ASIDES)}"])
         return text, label("take", [key])
 
     def take_absent(self):
@@ -440,7 +452,38 @@ class Lines:
                           "peer at", "search", "turn over", "look over", "squint at", "investigate", "feel",
                           "sniff", "look inside", "flip through"])
         text = self.pick([f"{verb} {thing}", f"I {verb} {thing}", f"{verb} {thing} carefully",
-                          f"what is {thing}?", f"{verb} {thing} for anything odd"])
+                          f"what is {thing}?", f"{verb} {thing} for anything odd",
+                          f"{verb} {thing} {self.pick(ASIDES)}"])
+        return text, label("examine", [key])
+
+    def examine_detail(self):
+        """A part of a thing, or what is written on it, is still an examine OF
+        the thing. The destroy lines name these same things as `other`, so the
+        verb has to decide, not the thing nor a posture before it."""
+        things = self.room.lying + self.room.carried
+        if not things:
+            return None
+        # Few things have writing on them, and those are the ones read in part.
+        written = [(k, e) for k, e in things if item_head(e["name"]) in WRITTEN]
+        key, entry = self.pick(written if written and self.rng.random() < 0.6 else things)
+        thing = self.ref(key)
+        if item_head(entry["name"]) in WRITTEN:
+            part = self.pick(["writing on", "entries in", "last page of", "margins of", "figures in", "lines in",
+                              "words on", "dates in", "handwriting in", "first page of", "names in", "notes in"])
+            verb = self.pick(["read", "look at", "study", "go over", "make out", "run my eye over", "peer at",
+                              "check", "squint at", "puzzle over"])
+            questions = [f"what is written in {thing}?", f"what do the words on {thing} say?", f"what's in {thing}?"]
+        else:
+            part = self.pick(["marks on", "underside of", "back of", "edge of", "scratches on", "maker's mark on",
+                              "bottom of", "surface of", "handle of", "inside of"])
+            verb = self.pick(["look at", "study", "peer at", "check", "squint at", "run a finger along",
+                              "feel", "inspect"])
+            questions = [f"what are the marks on {thing}?"]
+        posture = self.pick(["kneel down", "lean closer", "bend down", "step up", "hold it to the light",
+                             "sit down", "lean in"])
+        text = self.pick([f"{verb} the {part} {thing}", f"{verb} the {part} {thing}", f"I {verb} the {part} {thing}",
+                          f"{posture} and {verb} the {part} {thing}", f"{posture} and {verb} {thing}",
+                          f"{verb} the {part} {thing} {self.pick(ASIDES)}"] + questions)
         return text, label("examine", [key])
 
     def examine_absent(self):
@@ -456,7 +499,9 @@ class Lines:
         target = [NOTHING] if self.room.lying or self.room.carried else None
         text = self.pick(["look around", "look around the room", "look", "survey the room", "what is here?",
                           "describe the room", "take in my surroundings", "glance around",
-                          "search the room", "check my surroundings", "where am I?", "l", "look about"])
+                          "search the room", "check my surroundings", "where am I?", "l", "look about",
+                          "anything worth taking here?", "what is lying about?", "anything here I could use?",
+                          "what is there to take?", "is anything useful around?", "what can I find in here?"])
         return text, label("examine", target)
 
     # -- use
@@ -529,9 +574,13 @@ class Lines:
             return None
         who = self.ref(self.pick(self.room.people)[0])
         pronoun = self.pick(["him", "her", "them"])
+        # Weighing somebody up is still looking, not the attack it may come before.
+        when = self.pick(["", "", " before I act", " before making a move", " first", " from where I stand"])
         text = self.pick([f"look at {who}", f"study {who}'s face", f"look {pronoun} over" if len(self.room.people) == 1
                           else f"look {who} over", f"watch {who} closely", f"examine {who}'s hands",
-                          f"look {who} up and down"])
+                          f"look {who} up and down", f"weigh up {who}{when}", f"take the measure of {who}{when}",
+                          f"judge how strong {who} looks{when}", f"watch how {who} stands{when}",
+                          f"eye {who}'s arms and shoulders{when}"])
         target = [NOTHING] if self.room.lying or self.room.carried else None
         return text, label("examine", target)
 
@@ -568,7 +617,7 @@ class Lines:
         text = self.pick([f"{verb} {thing}", f"I {verb} {thing}", f"{verb} {thing} to pieces",
                           f"{verb} {thing} in half", f"{verb} {thing} so nobody can use it",
                           f"try to {verb} {thing}", f"{verb} {thing} into scraps and scatter them",
-                          f"just {verb} {thing}", f"{verb} {thing} before anyone sees"])
+                          f"just {verb} {thing}", f"{verb} {thing} {self.pick(ASIDES)}"])
         return text, label("other")
 
     def destroy_absent(self):
@@ -667,7 +716,7 @@ class Lines:
         ("drop", 5), ("drop_absent", 1), ("drop_pronoun", 1), ("examine", 6), ("examine_absent", 3),
         ("look_around", 2), ("use", 5), ("other", 6), ("two_one_set", 5), ("collective", 1), ("two_sets", 4),
         ("other_about", 3), ("examine_person", 2), ("take_from", 1), ("offer_absent", 1),
-        ("destroy", 2), ("destroy_absent", 1),
+        ("destroy", 2), ("destroy_absent", 1), ("examine_detail", 3),
     )
 
     def sample(self, count):
