@@ -75,8 +75,17 @@ class EngineSweepPhysicalActionsTest < ActiveSupport::TestCase
     EngineSweep::Script.load(Rails.root.join("lib/engine_sweep/scripts/#{name}.yml"))
   end
 
+  # The first `length` steps, as the Ruby loop plays them. A plain take is told
+  # in the Rust engine's own words, so the script declares no narrator call for
+  # it; the frozen Ruby loop still narrates every take, so here that take's
+  # narration fails as the script declared it did before.
   def prefix(name, length)
     original = script(name)
-    EngineSweep::Script.new(path: original.path, story: original.story, steps: original.steps.first(length), why: original.why)
+    steps = original.steps.first(length).map do |step|
+      next step unless step.typed.to_s.start_with?("/take ") && step.browser && step.browser["fail"].nil? && !step.browser.key?("replies")
+
+      step.with(browser: step.browser.merge("fail" => "narration"))
+    end
+    EngineSweep::Script.new(path: original.path, story: original.story, steps: steps, why: original.why)
   end
 end
