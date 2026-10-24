@@ -1346,6 +1346,64 @@ lines:
   shape: other
   why: a question to the game rather than to anybody in it
 
+# A DESTROY LINE IS `other`. No act in the game tears, burns or breaks a row,
+# and the nearest act that names the thing is a take of it -- which on an arc's
+# goal item finishes the story. When the engine cannot be sure what the player
+# meant, the label is `other` with nothing, so these are.
+- id: other-destroy-tear-writ
+  position: office
+  typed: tear up the writ
+  intent: other
+  shape: other-destroy
+  why: >-
+    the writ is lying here, on the take set by name, so a `take` of it is the
+    in-bounds misread -- and the writ is the arc's last goal, so that misread
+    ends the story
+
+- id: other-destroy-tear-writ-real
+  position: office
+  typed: Tear up the closet writ
+  intent: other
+  shape: other-destroy
+  why: >-
+    LIFTED VERBATIM from a played game, where it was read as a take of the blank
+    closure writ and finished the arc. The narration then tore a writ the
+    records still had whole
+
+- id: other-destroy-rip-writ
+  position: office
+  typed: rip the writ
+  intent: other
+  shape: other-destroy
+  why: the same act by another verb, against the same lying writ
+
+- id: other-destroy-shred-note
+  position: office
+  typed: shred the note
+  intent: other
+  shape: other-destroy
+  why: >-
+    a destroy line naming nothing in reach: no note is on any list here, so
+    nothing may resolve, and the daybook in the hands is not it
+
+- id: other-destroy-index
+  position: office-carrying-three
+  typed: destroy the index
+  intent: other
+  shape: other-destroy
+  why: >-
+    the index is carried, on the drop set by name; a `drop` of it would be the
+    in-bounds misread here, as a take is for a thing lying down
+
+- id: other-destroy-burn-writ
+  position: office
+  typed: burn the writ
+  intent: other
+  shape: other-destroy
+  why: >-
+    no fire is offered in this room, so no burn attempt is on the list and
+    there is nothing for a `use` to name. A burn that IS offered is a `use`
+
 # ===========================================================================
 # REFUSED: `:unresolved` -- THE REACH THAT FOUND NOTHING
 #

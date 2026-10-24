@@ -223,8 +223,16 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     "two-names-talk-perrin" => { also_named: "Halkett Rowe", refusal: :named_more_than_one, shape: "two-names-one-set" }
   }.freeze
 
+  # THE DESTROY LINES, after the talk-about-another pair was bought: a line that
+  # tears, burns or breaks a thing is `other` with nothing. That pair scored
+  # none of them, so it is checked against today's corpus less these.
+  ADDED_SINCE_ABOUT = %w[other-destroy-tear-writ other-destroy-tear-writ-real other-destroy-rip-writ
+                         other-destroy-shred-note other-destroy-index other-destroy-burn-writ].freeze
+
+  def about_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_ABOUT.include?(line.id) }
+
   def use_corpus
-    kept = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_USE.include?(line.id) }
+    kept = about_corpus.subset { |line| !ADDED_SINCE_USE.include?(line.id) }
     Eval::Classifier::Corpus.new(path: kept.path, positions: kept.positions,
                                  lines: kept.lines.map { |line| FORMER_TALK_LABELS[line.id] ? line.with(**FORMER_TALK_LABELS[line.id]) : line })
   end
@@ -629,8 +637,8 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     end
   end
 
-  # THE TALK-ABOUT-ANOTHER PAIR: the use pair's arm and transport on today's
-  # corpus, either side of System One's talk wording counting only the people
+  # THE TALK-ABOUT-ANOTHER PAIR: the use pair's arm and transport on the corpus
+  # before the destroy lines, either side of System One's talk wording counting only the people
   # spoken to. The model call's request did not move, and System One's is in no
   # digest, so both sides share today's request identity. Their READMEs have
   # the verdicts.
@@ -642,8 +650,8 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   test "the talk-about-another sets are today's corpus and request either side of the talk wording" do
     [ load_kept(ABOUT_BEFORE), load_kept(ABOUT_AFTER) ].each do |result|
       assert result.cascade, result.name
-      assert_equal Eval::Classifier.digest, result.corpus_digest, result.name
-      assert_equal Eval::Noise::MIN_RUNS * Eval::Classifier.corpus.size, result.rows.size, result.name
+      assert_equal Eval::Classifier.digest(about_corpus), result.corpus_digest, result.name
+      assert_equal Eval::Noise::MIN_RUNS * about_corpus.size, result.rows.size, result.name
       assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms, result.name
       assert_equal Eval::Classifier::Version.offline, result.request_identity, result.name
       assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq, result.name
@@ -670,10 +678,10 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   end
 
   test "the talk-about-another sets' floor can be recomputed offline" do
-    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: Eval::Classifier.corpus).summary.to_h.to_json)
+    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: about_corpus).summary.to_h.to_json)
     [ ABOUT_BEFORE, ABOUT_AFTER ].each do |set|
       kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
-      assert_equal Eval::Classifier.digest, kept.fetch("corpus_digest"), set
+      assert_equal Eval::Classifier.digest(about_corpus), kept.fetch("corpus_digest"), set
       assert_equal floor, kept.fetch("floor"), set
     end
   end
