@@ -1,0 +1,110 @@
+# THINGS A PERSON COULD WEAR, AND NO WAY YET TO WEAR THEM.
+#
+# The classifier bench's position for lines that put clothes on and take them
+# off. The game has no worn state and offers no attempt to wear or remove a
+# thing, so every such line is labelled a reach for an act nobody offered; the
+# world is here so the lines have real records to be read against. A coat and
+# a scarf are in the hands, a cap and an apron lie by the door beside a bell
+# that is not clothing, and one person stands here to receive an offer -- the
+# wrong action a dress line is most at risk of becoming.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Oil lamps, ropes and hand carts.
+  weapons: Walking sticks.
+  geographies: A harbour office on a wet coast.
+  civilizations: A port town that keeps a tide book.
+  history: The harbour office has logged every tide for a century.
+  economics: Coins and stamped tide receipts.
+  politics: The harbour warden keeps the quay.
+  religion: The town blesses its boats each spring.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the port.
+story:
+  title: A Peg by the Door
+  genre: town adventure
+  start_time: '2026-10-25T07:00:00Z'
+  preface: A harbour office with a row of pegs by its door.
+  summary: Tamsin Hale comes in out of the rain.
+opening_scene:
+  location: The Harbour Office
+  characters: [Tamsin Hale, Orrin Tace]
+  description: You stand dripping inside the harbour office door.
+  summary: Tamsin arrives at the harbour office.
+characters:
+- fullname: Tamsin Hale
+  nickname: Tamsin
+  race: Townsfolk
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A tide clerk come to copy the morning's figures.
+  personality: Brisk and wet through.
+  appearance: Rain in her hair.
+  likes: A dry ledger.
+  dislikes: Drafts.
+  fears: A missed tide.
+  stats: {level: 3, hit_die: 8, strength: 10, dexterity: 12, will: 12}
+  items:
+  - name: oilskin coat
+    description: A long oilskin coat, streaming with rain.
+    bulk: light
+    properties: '{}'
+  - name: wool scarf
+    description: A grey wool scarf, damp at the ends.
+    bulk: light
+    properties: '{}'
+- fullname: Orrin Tace
+  nickname: Warden Tace
+  race: Townsfolk
+  location: The Harbour Office
+  age: 58
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: The harbour warden, who has kept this office for thirty years.
+  personality: Slow and exact.
+  appearance: A grey beard and ink on his cuffs.
+  likes: A full tide book.
+  dislikes: Puddles on his floor.
+  fears: A storm surge.
+  stats: {level: 3, hit_die: 8, strength: 11, dexterity: 10, will: 13}
+locations:
+- name: The Harbour Office
+  detail_level: realized
+  opening: true
+  description: A low office with a counter, a row of pegs by the door and rain on the windows.
+  teaser: The harbour office.
+  lore: The warden logs the tides here.
+  items:
+  - name: flat cap
+    description: A tweed cap left on a peg.
+    bulk: light
+    properties: '{}'
+  - name: canvas apron
+    description: A stiff canvas apron hanging by its strings.
+    bulk: light
+    properties: '{}'
+  - name: hand-bell
+    description: A brass bell the warden rings at high water.
+    bulk: light
+    properties: '{}'
+- name: The Quay
+  detail_level: realized
+  description: A stone quay with the tide coming in.
+  teaser: The quay outside.
+  lore: Boats tie up here.
+- name: The Tide Loft
+  detail_level: realized
+  description: A loft over the office where the tide books are kept.
+  teaser: A loft up a ladder.
+  lore: Every tide book since the office opened is up here.
+connections:
+- between: [The Harbour Office, The Quay]
+  distance: adjacent
+  travel_method: walking
+- between: [The Harbour Office, The Tide Loft]
+  distance: adjacent
+  travel_method: climbing
