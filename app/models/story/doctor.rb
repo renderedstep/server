@@ -1866,7 +1866,7 @@ class Story::Doctor
 
     [ *stories_without_a_conclusion, *quests_without_an_outcome, *quests_with_two_defaults,
       *outcomes_nothing_can_reach, *unbound_quest_steps, *stories_that_cannot_progress,
-      *missing_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal,
+      *missing_quest_targets, *uncarriable_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal,
       *due_endings_out_of_place ]
   end
 
@@ -2101,6 +2101,29 @@ class Story::Doctor
                 :safe, subject: step)
       end
     end
+  end
+
+  # A BEAT THAT ASKS THE PLAYER TO HOLD A THING NOTHING CAN PICK UP: its bulk
+  # has no row in the carrying rule, so the arc cannot be finished. Fatal and
+  # manual -- which thing the beat should have named is not on record. The
+  # rule is the ENGINE'S (`carry.rs`), so the check is too, asked through
+  # `Playthrough::RustEngine.carry_findings` rather than copied here. A story
+  # with no `hold_item` beat bound to a thing pays for no read of the engine.
+  def uncarriable_quest_targets
+    holds = Quest::Step.where(quest: story.quests, trigger_kind: "hold_item", target_type: "Item").where.not(target_id: nil)
+    return [] unless holds.exists?
+
+    Playthrough::RustEngine.carry_findings(story).map do |found|
+      finding(found.fetch("code").to_sym, found.fetch("severity").to_sym, found.fetch("message"),
+              found.fetch("remedy").to_sym, subject: Quest::Step.find_by(id: found.dig("subject", "id")))
+    end
+  rescue Playthrough::RustEngine::EngineError => e
+    raise unless e.kind == "not_built"
+
+    [ finding(:hold_item_target_cannot_be_carried, :warning,
+              "this story has a beat that asks the player to hold a thing, and whether it can be carried could not " \
+              "be checked: #{e.message}",
+              :manual) ]
   end
 
   # P3: THE ARC CAN COMPLETE. A bound target the player cannot walk to is a
