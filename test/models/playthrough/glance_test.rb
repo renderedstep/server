@@ -158,12 +158,13 @@ class Playthrough::GlanceTest < ActiveSupport::TestCase
     bare = create(:location, story: @story, name: "A Bare Cell")
     game = create(:playthrough, story: @story, character: @vance, current_location: bare)
     availability = offline { Playthrough::Availability.new(game) }
-    %i[move talk take drop attack use].each do |name|
+    %i[move talk take drop attack].each do |name|
       verb = availability.verb(name)
       assert_not verb.available?, name
       assert_empty verb.targets, name
       assert_equal Playthrough::Refusal::EMPTY[name], verb.reason, name
     end
+    assert_equal %w[wait], availability.verb(:use).targets.map(&:kind), "time passes in any room"
     assert_equal "There is nothing here or in your hands to look at closely.", availability.verb(:examine).reason
     assert_equal "There is nothing you can lift and nothing to throw it at.", availability.verb(:throw).reason
   end
@@ -209,7 +210,12 @@ class Playthrough::GlanceTest < ActiveSupport::TestCase
     grammar = Playthrough::Grammar.new(@playthrough)
     targets.each do |choice|
       assert_not_nil choice.line, choice.name
-      assert choice.line.start_with?("/#{choice.kind} "), choice.line
+      assert_match %r{\A/#{choice.kind}( |\z)}, choice.line
+      # The wait is the engine's grammar's alone; the Ruby reader does not
+      # play it, and lib/engine_sweep/scripts/a-wait-lets-the-world-take-its-turn.yml
+      # walks `/wait` on the engine.
+      next if choice.kind == "wait"
+
       assert_equal choice.token, offline { grammar.reading_first(choice.line) }.intent.physical.token, choice.line
     end
   end

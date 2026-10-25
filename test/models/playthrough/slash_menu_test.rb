@@ -22,7 +22,7 @@ class Playthrough::SlashMenuTest < ActiveSupport::TestCase
   def menu = Playthrough::SlashMenu.new(@playthrough).to_h
 
   test "it offers the ordinary verbs and the physical attempts available here" do
-    assert_equal %w[go talk take drop inspect attack offer], menu[:verbs].map { |verb| verb[:word] }
+    assert_equal %w[go talk take drop inspect attack offer wait], menu[:verbs].map { |verb| verb[:word] }
     assert(menu[:verbs].all? { |verb| verb[:hint].present? })
   end
 
@@ -102,7 +102,7 @@ class Playthrough::SlashMenuTest < ActiveSupport::TestCase
   test "it serializes to the JSON the form carries" do
     parsed = JSON.parse(Playthrough::SlashMenu.new(@playthrough).to_json)
 
-    assert_equal %w[go talk take drop inspect attack offer], parsed["verbs"].map { |verb| verb["word"] }
+    assert_equal %w[go talk take drop inspect attack offer wait], parsed["verbs"].map { |verb| verb["word"] }
     assert_equal [ "ward stamp" ], parsed["targets"]["take"]
   end
 

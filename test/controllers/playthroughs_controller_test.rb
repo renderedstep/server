@@ -378,7 +378,7 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=slash][data-slash-menu-value]" do |elements|
       menu = JSON.parse(elements.first["data-slash-menu-value"])
 
-      assert_equal %w[go talk take drop inspect attack offer], menu["verbs"].map { |verb| verb["word"] }
+      assert_equal %w[go talk take drop inspect attack offer wait], menu["verbs"].map { |verb| verb["word"] }
       assert_equal [ "The Sunken Stair" ], menu["targets"]["go"]
       assert_equal [ "Halkett Rowe" ], menu["targets"]["talk"]
       assert_equal [ "ward stamp" ], menu["targets"]["take"]
