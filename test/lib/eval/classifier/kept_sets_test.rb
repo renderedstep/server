@@ -229,7 +229,21 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   ADDED_SINCE_ABOUT = %w[other-destroy-tear-writ other-destroy-tear-writ-real other-destroy-rip-writ
                          other-destroy-shred-note other-destroy-index other-destroy-burn-writ].freeze
 
-  def about_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_ABOUT.include?(line.id) }
+  # THE WEAR AND REMOVE LINES, after the local reader's set was bought: lines
+  # that put clothes on and take them off, at the one position with clothes in
+  # reach. No kept set scored them, so every one is checked against today's
+  # corpus less these.
+  ADDED_SINCE_POINTER = %w[wear-cap-put-on wear-cap-wear wear-cap-put-on-split wear-apron-don wear-apron-tie-on
+                           wear-apron-wear wear-scarf-put-on-my wear-scarf-wrap wear-scarf-wear remove-coat-take-off-my
+                           remove-coat-take-off-full remove-coat-take-off-split remove-coat-remove-my
+                           remove-coat-remove-full remove-coat-shrug-off remove-scarf-take-off wear-get-dressed
+                           remove-undress wear-apron-change-into wear-coat-back-on wear-hood-pull-up other-coat-button
+                           remove-coat-hang-up wear-apron-disguise take-not-wear-cap drop-not-remove-coat
+                           use-not-wear-scarf-offer].freeze
+
+  def pointer_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_POINTER.include?(line.id) }
+
+  def about_corpus = pointer_corpus.subset { |line| !ADDED_SINCE_ABOUT.include?(line.id) }
 
   def use_corpus
     kept = about_corpus.subset { |line| !ADDED_SINCE_USE.include?(line.id) }

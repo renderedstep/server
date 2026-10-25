@@ -193,6 +193,17 @@ positions:
     in the hands, so the physical attempts are the searches and the openings
     alone.
 
+- id: pegs
+  story: A Peg by the Door
+  room: The Harbour Office
+  why: >-
+    THE ONE POSITION WITH CLOTHES IN REACH. A sweep world
+    (`lib/engine_sweep/worlds`), because no seeded world puts anything wearable
+    in both places at once: an oilskin coat and a wool scarf in the hands, a
+    flat cap and a canvas apron on the floor beside a hand-bell that is not
+    clothing, two ways out, and one person to receive the offers a dress line is
+    most at risk of becoming.
+
 lines:
 # ===========================================================================
 # ONE ACT: A MOVE THAT RESOLVES
@@ -4326,3 +4337,256 @@ lines:
     nothing has been found in the desk yet, so there are no papers on any list.
     The line asks to take, not to search; it stays `take` with nothing and must
     not be read as the desk's search
+
+# ===========================================================================
+# PUTTING CLOTHES ON AND TAKING THEM OFF, WHICH NOTHING YET OFFERS
+#
+# The game has no worn state and no attempt to wear or remove a thing, so each
+# of these lines asks for an act nobody offered. The rule the open scuttle
+# follows applies: `use` with nothing, refused `:unresolved`. That refusal IS
+# the right answer today, and the one the owner's rule asks for: a line the
+# game does not understand is better refused than played as something else.
+# What these lines are at risk of is exactly that something else -- "put on
+# the cap" read as a take, "take off my coat" as a drop, "button my coat" as
+# an offer -- because the reader learned "put/take + a thing" as take and drop.
+# When wearing and removing become offered attempts, the lines that name a
+# thing move to that attempt (`use` -> "Put on the flat cap"), and the lines
+# that name none stay where they are.
+# ===========================================================================
+- id: wear-cap-put-on
+  position: pegs
+  typed: put on the cap
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the plain put-on, of a thing on the floor; must not be read as picking the cap up
+
+- id: wear-cap-wear
+  position: pegs
+  typed: wear the cap
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the verb the act will be named for, on the same cap
+
+- id: wear-cap-put-on-split
+  position: pegs
+  typed: put the cap on
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the particle after the thing; "put the cap" must not stop at a drop
+
+- id: wear-apron-don
+  position: pegs
+  typed: don the apron
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the old verb for putting a thing on
+
+- id: wear-apron-tie-on
+  position: pegs
+  typed: tie on the apron
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: an apron is put on by its strings; the act is still wearing it
+
+- id: wear-apron-wear
+  position: pegs
+  typed: wear the apron
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the plain wear, of the second thing on the floor
+
+- id: wear-scarf-put-on-my
+  position: pegs
+  typed: put on my scarf
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: >-
+    a put-on of a thing already in the hands; "my" is the carried set and must
+    not be read as putting the scarf down
+
+- id: wear-scarf-wrap
+  position: pegs
+  typed: wrap the scarf around my neck
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the body place named instead of the verb; the act is wearing the scarf
+
+- id: wear-scarf-wear
+  position: pegs
+  typed: wear the scarf
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: the plain wear, of a carried thing; must not be read as taking a thing already held
+
+- id: remove-coat-take-off-my
+  position: pegs
+  typed: take off my coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: >-
+    THE SHAPE MOST AT RISK: "take off" leaves the coat in the hands, and a drop
+    would put it on the floor
+
+- id: remove-coat-take-off-full
+  position: pegs
+  typed: take off the oilskin coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the same, with the coat named as the records hold it
+
+- id: remove-coat-take-off-split
+  position: pegs
+  typed: take my coat off
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the particle after the thing, the twin of "put the cap on"
+
+- id: remove-coat-remove-my
+  position: pegs
+  typed: remove my coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the verb the act will be named for; on clothing, "remove" takes it off and does not put it down
+
+- id: remove-coat-remove-full
+  position: pegs
+  typed: remove the oilskin coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the same, with the coat's full name
+
+- id: remove-coat-shrug-off
+  position: pegs
+  typed: shrug off the coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: a manner verb for taking a coat off; the act is still removing it
+
+- id: remove-scarf-take-off
+  position: pegs
+  typed: take off the scarf
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the remove twin of "put on my scarf"
+
+- id: wear-get-dressed
+  position: pegs
+  typed: get dressed
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: >-
+    a wear of nothing named. It stays a refused `use` once wearing is offered,
+    because no one thing is named to put on
+
+- id: remove-undress
+  position: pegs
+  typed: undress
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: the remove twin of "get dressed", and refused for the same reason
+
+- id: wear-apron-change-into
+  position: pegs
+  typed: change into the apron
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: a wear phrased as a change of clothes; must not be read as a look at the apron
+
+- id: wear-coat-back-on
+  position: pegs
+  typed: put the coat back on
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: >-
+    "back on" is a wear of a carried thing; "put the coat" must not stop at a
+    drop
+
+- id: wear-hood-pull-up
+  position: pegs
+  typed: pull my hood up
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: >-
+    a wear of a hood no list holds, so `use` with nothing; it must not land on
+    the cap. The coat may well have a hood but no record says so. `other` is
+    accepted too, since nothing is reached for
+  also_accept:
+  - intent: other
+    target:
+
+- id: other-coat-button
+  position: pegs
+  typed: button my coat
+  intent: other
+  shape: other-garment
+  why: >-
+    fastening a garment is not wearing or removing it and moves nothing, so it
+    is `other`; it must not become the offer of the coat to the warden. A
+    refused `use` is accepted too, since a button is an act on the coat
+  also_accept:
+  - intent: use
+    target:
+
+- id: remove-coat-hang-up
+  position: pegs
+  typed: hang up my coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-remove
+  why: >-
+    taking the coat off onto a peg. No peg is offered and no remove is, so it is
+    a refused `use`; a drop is the wrong act because the coat is hung, not let
+    fall. A drop is not accepted
+
+- id: wear-apron-disguise
+  position: pegs
+  typed: disguise myself with the apron
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-wear
+  why: a wear for a purpose; must not be read as a look at the apron
+
+- id: take-not-wear-cap
+  position: pegs
+  typed: pick up the cap
+  intent: take
+  target: flat cap
+  shape: take
+  why: THE CONTROL beside the wear lines; a pick-up of the cap stays a take
+
+- id: drop-not-remove-coat
+  position: pegs
+  typed: drop the coat
+  intent: drop
+  target: oilskin coat
+  shape: drop
+  why: THE CONTROL beside the remove lines; a drop of the coat stays a drop
+
+- id: use-not-wear-scarf-offer
+  position: pegs
+  typed: give the scarf to the warden
+  intent: use
+  target: Offer wool scarf to Orrin Tace; they may refuse
+  shape: use-offer
+  why: THE CONTROL beside "button my coat"; a real offer of a carried thing stays the offer
