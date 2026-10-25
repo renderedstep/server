@@ -616,6 +616,30 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     assert_nil story.locations.find_by(name: "The Closet").surface
   end
 
+  # WHAT A THING IS MADE OF, on the same terms: absent is none, and a file
+  # that stops naming a material takes it off.
+  test "loads an item's material, defaults it to none, and takes it off when the file drops it" do
+    world = document
+    closet = world["locations"].find { |place| place["name"] == "The Closet" }
+    closet["items"].first["material"] = "paper"
+
+    story = WorldSeed::Loader.new(world).load!
+
+    assert_equal "paper", Item.in_story(story).templates.find_by(name: "A Private Index").material
+    assert_nil Item.in_story(story).templates.find_by(name: "A Daybook").material
+
+    story = WorldSeed::Loader.new(document).load!
+
+    assert_nil Item.in_story(story).templates.find_by(name: "A Private Index").material
+  end
+
+  test "rejects a material that is none of the list" do
+    bad = document
+    bad["characters"].first["items"].first["material"] = "porcelain"
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(bad).load! }
+    assert_match(/material: "porcelain".*there is: paper, cloth, rope/, error.message)
+  end
+
   test "rejects a fragility or a surface the engine has no table for" do
     bad = document
     bad["characters"].first["items"].first["fragility"] = "porcelain"

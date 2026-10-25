@@ -222,6 +222,19 @@ module Playthrough::RustEngine
     answer["findings"]
   end
 
+  # WHAT THE DOCTOR REPORTS ABOUT WHAT A STORY'S THINGS ARE MADE OF, in the
+  # engine's words (`Engine::material_findings`), in `noticed_findings`'
+  # shape. The materials table is the engine's, so its checks are;
+  # `Story::Doctor#material_records` is the one caller. Reads only.
+  def self.material_findings(story)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.material_findings(file, story.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["findings"]
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 

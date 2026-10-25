@@ -79,7 +79,8 @@ class Story::Doctor
       *vitals_rows,
       *arc,
       *event_stream,
-      *noticed_records
+      *noticed_records,
+      *material_records
     ]
   end
 
@@ -2988,6 +2989,34 @@ class Story::Doctor
     story.playthroughs.exists?(mode: "player_narrates") ||
       story_items.where.not(noticed_at: nil).exists? ||
       Playthrough::NpcState.where(playthrough_id: story.playthroughs.select(:id)).where.not(noticed_at: nil).exists?
+  end
+
+  # ------------------------------------------------------------------------
+  # WHAT A STORY'S THINGS ARE MADE OF (`items.material`), against what the
+  # engine's materials table settles about a thing of each (`material.rs`):
+  # paper always burns, glass never does and is never sturdy. The table is the
+  # engine's, so the check is too -- `Engine::material_findings`, asked
+  # through `Playthrough::RustEngine.material_findings`. One code,
+  # `item_material_contradicts`, a warning and `manual`: whether the material
+  # or the column is the one that is wrong is not on record. A game's copy
+  # that says what its template says is the template's finding, reported once.
+  #
+  # NOTHING IS ASKED OF A STORY WITH NO MATERIAL ON ANY ROW, which is every
+  # story written before the column, on the same terms as `noticed_records`.
+  def material_records
+    return [] unless story_items.where.not(material: nil).exists?
+
+    Playthrough::RustEngine.material_findings(story).map do |found|
+      subject = Item.find_by(id: found.fetch("subject").fetch("id"))
+      finding(found.fetch("code").to_sym, found.fetch("severity").to_sym, found.fetch("message"),
+              found.fetch("remedy").to_sym, subject: subject)
+    end
+  rescue Playthrough::RustEngine::EngineError => e
+    raise unless e.kind == "not_built"
+
+    [ finding(:item_material_contradicts, :warning,
+              "this story has things that say what they are made of, and that could not be checked: #{e.message}",
+              :manual) ]
   end
 
   # The engine names a finding's row by table and id; the repair acts on it.

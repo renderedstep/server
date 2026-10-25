@@ -153,6 +153,13 @@ class Item::Kit
     "The #{thing.name}."
   end
 
+  # WHAT A KIT WRITES A THING OF THIS NAME AS BEING MADE OF: the material
+  # whose `names` list it, or nil where none does (the engine's
+  # `kit::Thing::material`).
+  def self.material_of(name)
+    TABLES.fetch("materials").find { |_, rule| rule.fetch("names").include?(name) }&.first
+  end
+
   # `count` names out of `from`, never one already `used` in the room, drawn one
   # at a time from what is left; fewer when the pool runs dry.
   def self.draw(from, count, used, rng)
@@ -195,6 +202,7 @@ class Item::Kit
       use_kind: TABLES.fetch("use_kinds").fetch(thing.name, "ordinary"),
       combustible: TABLES.fetch("combustible").include?(thing.name),
       readable: TABLES.fetch("readable").include?(thing.name),
+      material: self.class.material_of(thing.name),
       **{ hold: thing.hold, fragility: thing.fragility }.compact
     )
     return item if within
