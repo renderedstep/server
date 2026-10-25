@@ -167,6 +167,25 @@ class Story::DoctorArcTest < ActiveSupport::TestCase
     assert_equal "obsidian maw", step.target_name
   end
 
+  # A beat to hold a thing nothing can pick up is an arc no game finishes. The
+  # carrying rule is the engine's, so this asks the built extension.
+  test "a beat to hold a thing nothing can pick up is fatal, and one to hold a light thing is not" do
+    press = create(:item, :immovable, :lying, location: @maw, name: "filing press")
+    beat = create(:quest_step, :hold_item, quest: @quest, position: 1, target_name: press.name)
+    beat.bind!(press, at: @story.start_time)
+    doctor = Story::Doctor.new(@story.reload)
+    finding = doctor.findings.detect { |one| one.code == :hold_item_target_cannot_be_carried }
+
+    assert_not_nil finding
+    assert_equal [ :fatal, :manual, beat ], [ finding.severity, finding.remedy, finding.subject ]
+    assert_includes finding.message, "filing press"
+    assert_not_predicate doctor, :playable?
+
+    press.update!(bulk: "light")
+
+    assert_not_includes codes, :hold_item_target_cannot_be_carried
+  end
+
   # --- P3: the arc can complete ----------------------------------------------
 
   test "a bound target no path leads to is fatal" do

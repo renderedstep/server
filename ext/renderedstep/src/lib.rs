@@ -78,6 +78,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("facts_card", function!(facts_card, 3))?;
     module.define_module_function("write_paragraph", function!(write_paragraph, 5))?;
     module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
+    module.define_module_function("carry_findings", function!(carry_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
     module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
@@ -285,17 +286,39 @@ fn noticed_findings(database: String, story: i64) -> Result<String, RubyError> {
             Err(error) => return failed(&error),
         };
         match engine.noticed_findings(story) {
-            Ok(findings) => json!({ "findings": findings.iter().map(|finding| json!({
-                "code": finding.code,
-                "severity": finding.severity,
-                "message": finding.message,
-                "remedy": finding.remedy,
-                "subject": { "table": finding.subject.0, "id": finding.subject.1 },
-            })).collect::<Vec<_>>() }),
+            Ok(findings) => findings_json(&findings),
             Err(error) => failed(&error),
         }
     });
     Ok(answer.to_string())
+}
+
+/// `RenderedStep.carry_findings(database, story_id)`: what the doctor
+/// reports about a story's arcs asking the player to hold a thing nothing
+/// can pick up (`Engine::carry_findings`), in `noticed_findings`' shape.
+/// Reads only.
+fn carry_findings(database: String, story: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.carry_findings(story) {
+            Ok(findings) => findings_json(&findings),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+fn findings_json(findings: &[renderedstep_engine::noticed::Finding]) -> Value {
+    json!({ "findings": findings.iter().map(|finding| json!({
+        "code": finding.code,
+        "severity": finding.severity,
+        "message": finding.message,
+        "remedy": finding.remedy,
+        "subject": { "table": finding.subject.0, "id": finding.subject.1 },
+    })).collect::<Vec<_>>() })
 }
 
 /// What a submission plays: the line it carries, or the act the game picks.

@@ -208,6 +208,20 @@ module Playthrough::RustEngine
     answer["findings"]
   end
 
+  # WHAT THE DOCTOR REPORTS ABOUT A STORY'S ARCS ASKING THE PLAYER TO HOLD A
+  # THING NOTHING CAN PICK UP, in the engine's words (`Engine::carry_findings`),
+  # in `noticed_findings`' shape. Whether a bulk can be held is the engine's
+  # carrying rule, so the check is; `Story::Doctor#uncarriable_quest_targets`
+  # is the one caller. Reads only.
+  def self.carry_findings(story)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.carry_findings(file, story.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["findings"]
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 
