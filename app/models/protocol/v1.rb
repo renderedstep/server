@@ -94,6 +94,8 @@ module Protocol::V1
       sheet: glance.sheet,
       next_beat: glance.next_beat,
       story_time: glance.story_time&.iso8601,
+      ending_due: glance.ending_due? ? true : false,
+      ending_offer: glance.ending_offer&.to_h,
       over: glance.over? ? true : false,
       ended: glance.ended,
       verbs: glance.verbs.map { |verb| verb(verb) }

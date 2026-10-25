@@ -325,7 +325,7 @@ class EngineSweep::Invariants
       hostility_unmoved, hazards_unmoved, geometry_unmoved, positions_in_bounds, room_names_unique,
       place_names_unique,
       desires_unmoved, volitions_moved_what_they_named, speech_moved_nothing,
-      quest_unmoved, nothing_was_written ].flatten.compact
+      quest_unmoved, due_endings_hold, nothing_was_written ].flatten.compact
   end
 
   private
@@ -1048,6 +1048,17 @@ def moved_by_a_receipt?(rows, character_id, item_id)
   rows.any? { |other| other.character_id == character_id && other.status == "applied" && other.chosen == "take:#{item_id}" } ||
     Interaction.exists?(character_id: character_id, engine_action: "accept:#{item_id}", action_status: "applied")
 end
+
+  # THE ENDING THE LAST BEAT FIXED IS THE ONE THE GAME GETS. The doctor's
+  # `due_endings_out_of_place` after every typed line rather than over a stored
+  # world: a due row names an ending of the main arc, an ending row written
+  # beside it names the same one, and a game over with an ending due and none
+  # written says on the stream that every beat was reached.
+  def due_endings_hold
+    Story::Doctor.new(story).due_endings_out_of_place.map do |finding|
+      broken("due_endings_hold", finding.message)
+    end
+  end
 
   def quest_unmoved
     wanted = quests_in_file

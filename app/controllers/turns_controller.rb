@@ -7,6 +7,14 @@ class TurnsController < ApplicationController
     redirect_to playthrough_path(playthrough, anchor: "bottom"), status: :see_other
   end
 
+  # "Not yet" to the ending the story offers is `Playthrough::Session`'s; see
+  # `#put_off_ending!`. No turn is played, so the page is simply drawn again.
+  def put_off_ending
+    playthrough = Playthrough.find(params[:playthrough_id])
+    Playthrough::Session.new(playthrough).put_off_ending!
+    redirect_to playthrough_path(playthrough, anchor: "bottom"), status: :see_other
+  end
+
   # Takes the player's typed command, hands the turn to a background job, and
   # acknowledges the submission immediately. The job broadcasts the pending
   # page, prose and final page in order while it owns the turn's process lock.

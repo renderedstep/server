@@ -151,7 +151,7 @@ steps:
 
 - id: the-bearing-carried-home
   type: take the bearing book
-  why: the last beat, in order, so the default ending and its own sentence on the closing scene
+  why: the last beat, in order -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
     carrying: [bell-rope tally, climbers' bearing book]
@@ -159,6 +159,14 @@ steps:
       1: reached
       2: reached
       3: reached
+    ending: none
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: "`/end` writes the default ending and its own sentence on the closing scene"
+  expect:
+    changed: true
     ending: the-bearing-holds
     ending_words: ["the survey has its fixed point at last", "and then no more counting at all"]
     dead: true

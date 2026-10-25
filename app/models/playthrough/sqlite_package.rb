@@ -29,6 +29,7 @@ class Playthrough::SqlitePackage
     playthrough_blows
     playthrough_commands
     playthrough_drifts
+    playthrough_due_endings
     playthrough_endings
     playthrough_feedbacks
     playthrough_npc_states

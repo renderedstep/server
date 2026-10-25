@@ -92,15 +92,13 @@ steps:
     changed: true
     location: Blackfang Warren room 2 (stub)
 
-- id: the-cell-and-the-end-of-the-story
+- id: the-cell-and-the-last-beat
   type: go to the dry cell
   why: |-
-    THE WHOLE CLAIM, IN ONE STEP. The last beat lands, so `Playthrough::Arc`
-    selects an outcome off this game's own records, ends the playthrough and
-    writes ONE closing `Scene`. No model was asked anything -- this mode makes
-    no call -- and the paragraph on that row is the reached outcome's own
-    sentence out of the world file. `ending:` is the record of WHICH ending and
-    `ending_words:` is the proof it came with words.
+    THE LAST BEAT LANDS AND THE ENDING FALLS DUE. The outcome is selected off
+    this game's own records here, and fixed, but nothing is written yet: no
+    ending, no last paragraph, and the game is still being played until the
+    player says to end it.
   expect:
     changed: true
     location: the dry cell (realized)
@@ -109,6 +107,20 @@ steps:
       1: reached
       2: reached
       3: reached
+    ending: none
+    ending_words: []
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: |-
+    THE WHOLE CLAIM, IN ONE STEP. `/end` ends the playthrough on the outcome
+    the last beat fixed and writes ONE closing `Scene`. No model was asked
+    anything -- this mode makes no call -- and the paragraph on that row is the
+    reached outcome's own sentence out of the world file. `ending:` is the
+    record of WHICH ending and `ending_words:` is the proof it came with words.
+  expect:
+    changed: true
     ending: rescued
     ending_words: ["The prince is found alive in the dry cell", "the iron gate opens outward at last"]
     dead: true

@@ -245,6 +245,22 @@ module Playthrough::RustEngine
     ActiveRecord::Base.connection.clear_query_cache
   end
 
+  # "NOT YET" TO THE ENDING THE STORY OFFERS (`Engine::put_off_ending`): the
+  # due row is stamped declined, so the offer is not made again, and `/end`
+  # still ends the story on it. Writes nothing while no ending is offered.
+  # `Playthrough::Session#put_off_ending!` is the caller.
+  def self.put_off_ending(playthrough)
+    unplayable = self.unplayable
+    raise unplayable if unplayable
+
+    answer = JSON.parse(extension.put_off_ending(database, playthrough.id))
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["put_off"]
+  ensure
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
   # One line played with no model at all, in one transaction, with `decision`
   # standing in for what a person answers when it is a conversation. The
   # engine sweep's typed steps; no front end plays this way.

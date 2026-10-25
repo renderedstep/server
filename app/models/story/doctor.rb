@@ -1866,7 +1866,60 @@ class Story::Doctor
 
     [ *stories_without_a_conclusion, *quests_without_an_outcome, *quests_with_two_defaults,
       *outcomes_nothing_can_reach, *unbound_quest_steps, *stories_that_cannot_progress,
-      *missing_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal ]
+      *missing_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal,
+      *due_endings_out_of_place ]
+  end
+
+  # AN ENDING THAT FELL DUE AND THE RECORDS AROUND IT DISAGREE. The engine
+  # writes `playthrough_due_endings` on the line that meets the main arc's last
+  # beat and the ending row only on `/end` (`Playthrough::DueEnding`), so:
+  #
+  #   - a due row on a game still being played is the ordinary state between
+  #     those two lines, and is not reported;
+  #   - its outcome is the main arc's, or the engine did not write it;
+  #   - the ending row `/end` writes names the due row's outcome, or something
+  #     other than `/end` decided the ending;
+  #   - an ended game with a due row and no ending row is a player who died
+  #     after "Not yet", and that game carries the quest event saying every
+  #     beat was reached (`Playthrough::Arc#record_failure!`'s words) -- without
+  #     it nothing on the stream says the story was left unfinished.
+  #
+  # At most one per game is the unique index's, and is not asked here. `manual`
+  # throughout: which outcome the game earned is not on record twice, so any
+  # repair would be choosing one.
+  def due_endings_out_of_place
+    main = Quest.main_arc(story)
+    Playthrough::DueEnding.where(playthrough: story.playthroughs).includes(:playthrough, :quest_outcome)
+                          .order(:id).filter_map do |due|
+      playthrough = due.playthrough
+      ending = playthrough.endings.find_by(quest_outcome: Quest::Outcome.where(quest: main))
+      if due.quest_outcome.quest_id != main&.id
+        finding(:due_ending_off_the_main_arc, :warning,
+                "playthrough ##{playthrough.id} has the ending #{due.quest_outcome.name.inspect} due, which is not " \
+                "an ending of the story's main arc, so `/end` would write an ending no last beat earned",
+                :manual, subject: due)
+      elsif ending && ending.quest_outcome_id != due.quest_outcome_id
+        finding(:ending_not_the_one_due, :warning,
+                "playthrough ##{playthrough.id} reached #{ending.quest_outcome.name.inspect} while " \
+                "#{due.quest_outcome.name.inspect} was the ending its last beat fixed, so something other than " \
+                "`/end` decided how the story ended",
+                :manual, subject: due)
+      elsif playthrough.over? && ending.nil? && !left_unfinished_after_every_beat?(playthrough)
+        finding(:due_ending_never_written, :warning,
+                "playthrough ##{playthrough.id} is over with #{due.quest_outcome.name.inspect} due and never " \
+                "written, and no event on the stream says every beat was reached and the ending was left " \
+                "unwritten, so nothing records why the story did not end",
+                :manual, subject: due)
+      end
+    end
+  end
+
+  # The sweep asks this one after every typed line (`EngineSweep::Invariants`).
+  public :due_endings_out_of_place
+
+  def left_unfinished_after_every_beat?(playthrough)
+    story.world_events.where(playthrough: playthrough, source: WorldEvent::QUEST)
+         .where("summary LIKE ?", "%every beat was reached%").exists?
   end
 
   # NOTHING TO FINISH. A warning and not fatal: every turn still plays, and a

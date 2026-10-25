@@ -230,6 +230,13 @@
       <%= render "playthroughs/battle", battle: battle, playthrough: playthrough %>
     <% end %>
 
+    <%# THE STORY CAN END HERE, once every goal it asked for is met: the
+        engine's question, or the standing button once it has been put off.
+        Read off the glance, so it is absent for every game whose ending is not
+        due. See the partial. %>
+    <%= render "playthroughs/ending_offer", glance: Playthrough::Session.new(playthrough).glance,
+                                            playthrough: playthrough %>
+
     <%# Where the player is and what leads out of it. Not decoration: the exits
         are the move targets Playthrough::Classifier will accept, so a player
         who cannot read them is guessing at the one command that matters.

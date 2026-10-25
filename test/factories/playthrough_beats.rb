@@ -14,4 +14,11 @@ FactoryBot.define do
     quest_outcome { association :quest_outcome, quest: association(:quest, story: playthrough.story) }
     reached_at { playthrough.story_now }
   end
+
+  # AND WHICH ENDING IT HAS EARNED BUT NOT YET TAKEN.
+  factory :playthrough_due_ending, class: "Playthrough::DueEnding" do
+    association :playthrough
+    quest_outcome { association :quest_outcome, quest: association(:quest, story: playthrough.story) }
+    due_at { playthrough.story_now }
+  end
 end

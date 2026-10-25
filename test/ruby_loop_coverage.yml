@@ -147,11 +147,11 @@ test/models/playthrough/arc_outcome_test.rb:
   an arc with one ending reaches it:
     pins: a finished arc with a single default outcome reaches it
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
   a second ending whose rule does not hold changes nothing:
     pins: a conditional outcome whose condition fails leaves the default as the ending
     by:
-    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+    - sweep an-ending-with-words#and-the-player-ends-the-story
   an ending nothing selects is never reached, whatever order it is written in:
     pins: a non-default outcome with no condition is never selected
     by:
@@ -173,7 +173,7 @@ test/models/playthrough/arc_outcome_test.rb:
   taking them in order falls through to the default:
     pins: beats reached in order do not satisfy out_of_order, so the default is reached
     by:
-    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+    - sweep an-ending-with-words#and-the-player-ends-the-story
   a beat reached while they were still alive reaches the ending that says so:
     pins: 'while_alive: the named character alive when the named beat landed selects
       that outcome'
@@ -216,8 +216,8 @@ test/models/playthrough/arc_outcome_test.rb:
     pins: the concluding turn exposes the ending, outcome and closing scene for the
       ending narration
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
-    - record an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
+    - record an-ending-kept-when-the-narrator-fails#first-the-end
   a turn that concluded nothing says nothing:
     pins: a turn that ends nothing claims no conclusion
     by:
@@ -233,12 +233,12 @@ test/models/playthrough/arc_outcome_test.rb:
     pins: finishing writes one unscheduled quest WorldEvent with the playthrough,
       the outcome name and arc title
     by:
-    - record an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
-    - record a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - record an-ending-kept-when-the-narrator-fails#first-the-end
+    - record a-room-written-while-the-arc-waits#and-the-player-ends-the-story
   one quest event per game, whichever way the game went:
     pins: repeated arc runs after finishing add no quest event
     by:
-    - record an-ending-kept-when-the-narrator-fails#second-the-cell-and-the-end
+    - record an-ending-kept-when-the-narrator-fails#second-the-end
     partial: records hold exactly one quest event per playthrough across two games;
       re-running the arc on a finished game is unreachable in Rust (lines refused),
       so the quest_event_recorded guard on that path is unexercised
@@ -259,8 +259,8 @@ test/models/playthrough/arc_outcome_test.rb:
   an ending with no ramification schedules nothing:
     pins: an outcome without a ramification writes no scheduled row
     by:
-    - record an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
-    - golden an-ending-with-words#the-cell-and-the-end-of-the-story
+    - record an-ending-kept-when-the-narrator-fails#first-the-end
+    - golden an-ending-with-words#and-the-player-ends-the-story
   a failure schedules nothing, because it reached no ending:
     pins: a failed arc writes only the failure event, never the ramification
     by:
@@ -270,7 +270,7 @@ test/models/playthrough/arc_test.rb:
     pins: a bound reach_location step is reached exactly when the game's current location
       is the target room
     by:
-    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
+    - sweep an-ending-with-words#the-cell-and-the-last-beat
     - sweep an-ending-taken-under-his-hands#the-one-fixed-point
   an unbound step is never reached, whatever the world happens to contain:
     pins: a step with no target row is never reached even when the party stands in
@@ -330,8 +330,8 @@ test/models/playthrough/arc_test.rb:
     pins: the last beat writes the outcome, ends the game and writes an engine-authored
       conclude scene with the outcome sentence
     by:
-    - sweep an-ending-with-words#the-cell-and-the-end-of-the-story
-    - record an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep an-ending-with-words#and-the-player-ends-the-story
+    - record an-ending-kept-when-the-narrator-fails#first-the-end
   an arc with beats left does not end anything:
     pins: reaching some but not all beats writes no ending and keeps the game open
     by:
@@ -353,7 +353,7 @@ test/models/playthrough/arc_test.rb:
     pins: a game that reached an ending writes no failed-quest event afterwards
     by:
     - sweep an-ending-with-words#and-the-words-outlive-the-turn
-    - record an-ending-kept-when-the-narrator-fails#second-the-cell-and-the-end
+    - record an-ending-kept-when-the-narrator-fails#second-the-end
     partial: the line after the ending is refused with changed false, and records
       hold one success event per game; Rust never re-runs run_arc on a finished game,
       so record_failure's ending guard is unexercised
@@ -2321,7 +2321,7 @@ test/models/playthrough/turn_ending_test.rb:
       it answers with the closing scene (narrated prose, resolved_action NARRATED_ENDING);
       the game is over with the default outcome
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
     partial: 'Replay pins calls [location, location, arrival, ending]; expects ending
       rung, dead true and ending_words with the narrated prose (the golden holds the
       whole description). resolved_action ''ending'' and the turned.scene being the
@@ -2330,7 +2330,7 @@ test/models/playthrough/turn_ending_test.rb:
   the ending is told the outcome the engine selected:
     pins: 'the ending prompt says ''The story has ended: <outcome summary>'''
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
     - vector moment
   the turn's own prose survives the ending that follows it:
     pins: the closing scene is a second Scene whose previous_scene is the turn's own
@@ -2341,7 +2341,7 @@ test/models/playthrough/turn_ending_test.rb:
     pins: when the ending call fails, the closing scene keeps the outcome summary
       (resolved_action conclude), the game is over and that scene is current
     by:
-    - sweep an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep an-ending-kept-when-the-narrator-fails#first-the-end
   a turn that reached no beat buys no ending call:
     pins: a turn that leaves the arc unfinished makes no ending call and the game
       goes on
@@ -4149,7 +4149,7 @@ test/models/scene/ending_test.rb:
     pins: the narrated prose overwrites the closing scene's description in place (same
       row), and that scene stays current
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
   a rendered ending is labelled as narration and an unrendered one stays the engine's:
     pins: the narrated closing scene gets resolved_action NARRATED_ENDING ('ending');
       a fallback keeps 'conclude'
@@ -4178,7 +4178,7 @@ test/models/scene/ending_test.rb:
     pins: 'the ending prompt has ''The story has ended: <summary>'', the room name
       and ''Write the ending.'''
     by:
-    - sweep a-room-written-while-the-arc-waits#up-the-tower-and-the-end-of-the-story
+    - sweep a-room-written-while-the-arc-waits#and-the-player-ends-the-story
     - vector moment
     partial: 'The sweep step''s prompt_includes holds the outcome sentence; the moment
       ''endings'' output pins ''The story has ended: ...'' and the room. The trailing
@@ -4193,18 +4193,18 @@ test/models/scene/ending_test.rb:
     pins: a refused ending call leaves the outcome summary as the closing scene's
       description; it stays current and the game is over
     by:
-    - sweep an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep an-ending-kept-when-the-narrator-fails#first-the-end
   a suppressed crisis response leaves the engine's sentence standing:
     pins: a crisis answer to the ending call leaves the outcome summary
     by:
-    - sweep an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep an-ending-kept-when-the-narrator-fails#first-the-end
     partial: 'Same Err branch as unavailable, but no crisis answer is replayed. Port:
       a third player on that script whose ending content is a crisis line (''Call
       988'')'
   a dropped call leaves the engine's sentence standing:
     pins: a timed-out ending call leaves the outcome summary
     by:
-    - sweep an-ending-kept-when-the-narrator-fails#first-the-cell-and-the-end
+    - sweep an-ending-kept-when-the-narrator-fails#first-the-end
   an answer with nothing in it leaves the engine's sentence standing:
     pins: a blank ending answer is not kept; the outcome summary stands
     by:
@@ -4213,7 +4213,7 @@ test/models/scene/ending_test.rb:
     pins: an ending paragraph that stops mid-sentence is discarded; the summary stands
       (resolved_action conclude)
     by:
-    - sweep an-ending-kept-when-the-narrator-fails#second-the-cell-and-the-end
+    - sweep an-ending-kept-when-the-narrator-fails#second-the-end
   no case in the ninety-case corpus concludes an arc, so none reaches this pass:
     pins: Eval::Prompt main corpus has no case one beat from the end (subject is the
       corpus validator; staging walks positions with Playthrough::Mechanics)

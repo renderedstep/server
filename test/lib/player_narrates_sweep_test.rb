@@ -42,14 +42,13 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
     walked = walk("db/seeds/worlds/the-salt-assizes.yml", turns: 10)
 
     assert_predicate walked.game, :over?, "the arc boost should carry the walk to the story's ending"
-    closing = walked.cards.last
-    assert closing.ending.present?, "the turn that ended the story should carry its closing words on its card"
+    closing = walked.game.current_scene
+    assert_includes closing.description, walked.game.endings.sole.quest_outcome.summary.first(40),
+                    "the scene /end wrote carries the ending's own words"
     assert_includes walked.actions, "move"
     purposes = walked.game.paragraphs.flat_map { |paragraph| paragraph.would_ask.pluck("purpose") }
     assert_includes purposes, "arrival"
     assert_includes purposes, "narration"
-    assert_equal "ending", walked.game.paragraphs.max_by(&:id).would_ask.last["purpose"],
-                 "the turn that closed the story stands in for the ending's request too"
 
     Dir.mktmpdir("paragraph-export") do |outside|
       path = File.join(outside, "set.yml")
@@ -123,6 +122,17 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
 
       turns.times do |turn|
         break if game.reload.over?
+
+        # THE LAST BEAT MAKES THE ENDING DUE, and the player ends the story with
+        # `/end`. That is the player's line, not a turn the game chose, so its
+        # closing scene carries the ending's own words and nothing waits for a
+        # paragraph.
+        if session.glance.ending_due?
+          closing = end_the_story(session)
+          assert_equal "conclude", closing.resolved_action
+          assert_nil session.waiting, "turn #{turn}: /end is not a turn the game chose"
+          break
+        end
 
         scene = act(session)
         assert_kind_of Scene, scene, "turn #{turn}: the game's act should answer a scene, not #{scene.inspect}"
@@ -226,5 +236,12 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
   def act(session)
     submission = session.act!
     session.play(submission.command, request_token: submission.request_token)
+  end
+
+  # `/end` is a typed line, so it is submitted as one; the game asks no model
+  # for it, and an empty replay stands in front of the live document.
+  def end_the_story(session)
+    submission = session.accept!("/end")
+    replying { session.play(submission.command, request_token: submission.request_token) }
   end
 end

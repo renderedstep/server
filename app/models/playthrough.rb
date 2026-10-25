@@ -70,6 +70,10 @@ class Playthrough < ApplicationRecord
                    inverse_of: :playthrough
   has_many :endings, class_name: "Playthrough::Ending", dependent: :destroy,
                      inverse_of: :playthrough
+  # The ending the last beat earned and `/end` has not yet written; the
+  # engine's row (`Playthrough::DueEnding`).
+  has_one :due_ending, class_name: "Playthrough::DueEnding", dependent: :destroy,
+                       inverse_of: :playthrough
   # WHAT THIS GAME DID TO THE STORY'S HISTORY -- one row at most today, the
   # failed arc. Destroyed with it for the reason above and stated in
   # `WorldEvent`'s header: a world nobody is playing has no arc anybody failed.

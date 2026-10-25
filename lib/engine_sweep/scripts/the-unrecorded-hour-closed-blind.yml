@@ -28,13 +28,21 @@ steps:
 
 - id: and-the-index-last
   type: take the index
-  why: every beat is reached, one of them early, so the ending is the one whose rule holds and not the default
+  why: every beat is reached, one of them early -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
     quest:
       1: reached
       2: reached
       3: reached
+    ending: none
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: "`/end` writes the ending whose rule held when the last beat was met, not the default"
+  expect:
+    changed: true
     ending: closed-blind
     ending_words: ["Query 1188 was closed on your own report"]
     dead: true

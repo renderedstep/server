@@ -193,7 +193,7 @@ steps:
     exits: [Blackfang Warren room 1 (stub), the dry cell (realized)]
     present: []
 
-- id: reach-the-prince-and-end-the-story
+- id: reach-the-prince
   type: go to the dry cell
   why: |-
     THE WHOLE STORY -- the last beat, the presence and the ending, off the
@@ -204,12 +204,9 @@ steps:
     step back, which is the captain's display ruling of 2026-09-06 walked rather
     than asserted.
 
-    AND ARRIVING FINISHES THE ARC. Every beat is reached, so `Playthrough::Arc`
-    writes the reached outcome, ends the playthrough and writes one
-    engine-authored closing `Scene` carrying the sentence the world was built
-    toward. `dead: true` is `playthroughs.ended_at` being set -- the column says
-    the game is over and nothing about how, which is why the note is what says
-    this one ended in a story rather than in a death.
+    AND ARRIVING MAKES THE ENDING DUE. Every beat is reached, so the outcome is
+    decided here and the note says the story can end -- but the game is still
+    being played until the player ends it.
   expect:
     changed: true
     location: the dry cell (realized)
@@ -220,6 +217,20 @@ steps:
       1: reached
       2: reached
       3: reached
+    dead: false
+    note: "the story can end here (/end): The prince is found alive in the dry cell"
+
+- id: and-end-the-story
+  type: "/end"
+  why: |-
+    `/end` writes the reached outcome, ends the playthrough and writes one
+    engine-authored closing `Scene` carrying the sentence the world was built
+    toward. `dead: true` is `playthroughs.ended_at` being set -- the column says
+    the game is over and nothing about how, which is why the note is what says
+    this one ended in a story rather than in a death.
+  expect:
+    changed: true
+    location: the dry cell (realized)
     dead: true
     note: "the story is over: The prince is found alive in the dry cell"
 

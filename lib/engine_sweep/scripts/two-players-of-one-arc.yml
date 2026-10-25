@@ -122,11 +122,9 @@ steps:
     changed: true
     location: Blackfang Warren room 2 (stub)
 
-- id: the-first-game-finishes-the-story
+- id: the-first-game-meets-the-last-beat
   type: go to the dry cell
-  why: |-
-    every beat reached, so the arc closes: the reached outcome, `ended_at`, and
-    one engine-authored scene carrying the sentence this world was built toward.
+  why: every beat reached, so the ending falls due, and the game is still being played until the player ends it
   expect:
     changed: true
     location: the dry cell (realized)
@@ -135,6 +133,15 @@ steps:
       1: reached
       2: reached
       3: reached
+    dead: false
+
+- id: the-first-game-finishes-the-story
+  type: "/end"
+  why: |-
+    `/end` closes the arc: the reached outcome, `ended_at`, and one
+    engine-authored scene carrying the sentence this world was built toward.
+  expect:
+    changed: true
     dead: true
 
 - id: and-the-second-game-is-still-being-played

@@ -49,6 +49,9 @@ Rails.application.routes.draw do
       # LETTING THE GAME ACT, in a game the player narrates: a turn like a
       # typed one, whose act the engine picks. See `TurnsController#act`.
       post :act, on: :collection
+      # "NOT YET", to the ending the story offers once every goal is met. See
+      # `TurnsController#put_off_ending`.
+      post :put_off_ending, on: :collection
     end
 
     # HERE IS MY PARAGRAPH, in a game the player narrates: kept beside the

@@ -346,6 +346,18 @@ class Playthrough::Session
     end
   end
 
+  # "NOT YET", to the ending the story offers once every goal is met
+  # (`Glance#ending_offer`): the offer is withdrawn and `/end` still ends the
+  # story on the outcome already fixed. Any typed line is "Not yet" too, by the
+  # engine's own rule, so this is only the button. Writes nothing while no
+  # ending is offered. Taken under the game's lock, so it waits for a turn
+  # still in hand.
+  def put_off_ending!
+    GameLock.synchronize("playthrough", playthrough.id) do
+      Playthrough::RustEngine.put_off_ending(playthrough)
+    end
+  end
+
   # WHAT THE LAST TURN LEFT THE PLAYER TOLD, rebuilt from its submission row so
   # a reload says what the broadcast said: the refusal, the crisis notice, the
   # setup or failure copy. Only the newest finished submission speaks, and only

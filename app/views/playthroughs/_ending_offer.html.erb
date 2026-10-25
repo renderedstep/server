@@ -1,0 +1,47 @@
+<%# locals: (glance:, playthrough:) %>
+<%# EVERY GOAL IS MET: END THE STORY HERE?
+
+    THE WORDS ARE THE ENGINE'S. The heading, the goals and the question are
+    `Playthrough::Glance#ending_offer`, read back as the engine wrote them; the
+    two button labels are its `end` and `not_yet`. Nothing here is generated and
+    nothing here decides anything: the outcome was fixed by the line that met
+    the last beat, so which button is pressed, and when, cannot change which
+    ending is reached.
+
+    THE BATTLE PANEL'S FRAME AND BUTTON ROW (`playthroughs/_battle`). "End the
+    story" posts the engine's own line (`end_line`, `/end`) to the same
+    `turns#create` the text box reaches, so typing `/end` is the identical turn.
+    "Not yet" withdraws the question (`TurnsController#put_off_ending`), and any
+    typed line does too, by the engine's rule.
+
+    ONCE THE QUESTION IS GONE AND THE ENDING IS STILL DUE, one standing button
+    -- the same `/end` -- so the player can end the story whenever they choose. %>
+<% if (offer = glance.ending_offer) %>
+  <div class="sheet ending-offer">
+    <p class="sheet-lead"><%= offer.heading %></p>
+    <ul class="sheet-goals">
+      <% offer.goals.each do |goal| %>
+        <li><%= goal %></li>
+      <% end %>
+    </ul>
+    <h3 class="sheet-prompt"><%= offer.question %></h3>
+    <div class="sheet-actions">
+      <%= form_with url: playthrough_turns_path(playthrough) do |form| %>
+        <%= render "turns/request_token", token: SecureRandom.uuid %>
+        <%= form.hidden_field :command, value: offer.end_line, id: nil %>
+        <%= form.submit offer.end %>
+      <% end %>
+      <%= form_with url: put_off_ending_playthrough_turns_path(playthrough) do |form| %>
+        <%= form.submit offer.not_yet %>
+      <% end %>
+    </div>
+  </div>
+<% elsif glance.ending_due? %>
+  <div class="sheet-actions ending-due">
+    <%= form_with url: playthrough_turns_path(playthrough) do |form| %>
+      <%= render "turns/request_token", token: SecureRandom.uuid %>
+      <%= form.hidden_field :command, value: "/end", id: nil %>
+      <%= form.submit "End the story" %>
+    <% end %>
+  </div>
+<% end %>
