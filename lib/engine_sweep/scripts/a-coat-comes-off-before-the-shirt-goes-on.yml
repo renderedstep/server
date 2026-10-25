@@ -1,0 +1,155 @@
+---
+story: The Cloakroom at the Ferry
+why: >-
+  Putting a thing on and taking it off are acts of their own, typed as
+  `/wear` and `/remove` (and `don`, `put on`, `doff`, `take off`). A worn
+  thing is still carried. A body wears one thing on each place, and the body
+  lies under the outer layer, so a coat comes off before a shirt goes on or
+  off. A thing lying here is picked up and put on in one act. A worn thing is
+  taken off before it is dropped, thrown or offered, as an act of its own.
+  Every refusal is in the engine's own words, and no line here reaches a
+  reader.
+steps:
+- id: the-shirt-waits-for-the-coat
+  why: >-
+    Wren wears her oilskin coat over the body, so the shirt cannot go on
+    under it until the coat comes off.
+  type: "/wear linen shirt"
+  expect:
+    refused: true
+    resolved_by: grammar
+    offers: Take off the oilskin coat first.
+- id: a-bell-is-not-clothing
+  why: The hand-bell names no place on a body.
+  type: "/wear hand-bell"
+  expect:
+    refused: true
+    offers: The hand-bell is not something you can wear.
+    here:
+    - felt hat
+    - flat cap
+    - hand-bell
+- id: a-worn-coat-is-not-dropped
+  why: A worn thing comes off before it is put down, as an act of its own.
+  type: "/drop oilskin coat"
+  expect:
+    refused: true
+    offers: You are wearing the oilskin coat. Take it off first.
+    carrying:
+    - linen shirt
+    - oilskin coat
+    - wool scarf
+- id: a-worn-coat-is-not-given
+  why: Nor is it offered to somebody while it is worn.
+  type: "/give oilskin coat to Abel Moss"
+  expect:
+    refused: true
+    offers: You are wearing the oilskin coat. Take it off first.
+- id: a-worn-coat-is-not-thrown
+  why: Nor thrown, and no die is thrown for it.
+  type: "/throw oilskin coat at Abel Moss"
+  expect:
+    refused: true
+    offers: You are wearing the oilskin coat. Take it off first.
+    hp_of:
+      Abel Moss: 6
+- id: the-coat-comes-off
+  why: Taking it off leaves it in Wren's hands.
+  type: "/take off the oilskin coat"
+  expect:
+    changed: true
+    refused: false
+    resolved_by: grammar
+    change: You take off the oilskin coat. It stays in your hands.
+    carrying:
+    - linen shirt
+    - oilskin coat
+    - wool scarf
+- id: the-shirt-goes-on
+  why: With nothing worn over the body, the shirt goes on.
+  type: "/wear linen shirt"
+  expect:
+    changed: true
+    change: You put on the linen shirt.
+- id: a-coat-in-hand-is-not-worn
+  type: "/remove oilskin coat"
+  expect:
+    refused: true
+    offers: You are not wearing the oilskin coat.
+- id: the-scarf-goes-on
+  why: "`don` is `wear`, and a fragment of the name is enough."
+  type: "/don the scarf"
+  expect:
+    changed: true
+    change: You put on the wool scarf.
+- id: the-scarf-is-on-already
+  type: "/wear wool scarf"
+  expect:
+    refused: true
+    offers: You are already wearing the wool scarf.
+- id: the-cap-off-the-peg
+  why: >-
+    A cap lying here is picked up and put on in one act, as a throw picks up
+    what it throws.
+  type: "/put on the flat cap"
+  expect:
+    changed: true
+    change: You pick up the flat cap and put it on.
+    here:
+    - felt hat
+    - hand-bell
+    carrying:
+    - flat cap
+    - linen shirt
+    - oilskin coat
+    - wool scarf
+- id: one-thing-on-the-head
+  why: The hat is worn on the head too, where the cap already is.
+  type: "/wear felt hat"
+  expect:
+    refused: true
+    offers: You are already wearing the flat cap on your head. Take it off first.
+    here:
+    - felt hat
+    - hand-bell
+- id: a-worn-scarf-is-not-dropped
+  type: "/drop scarf"
+  expect:
+    refused: true
+    offers: You are wearing the wool scarf. Take it off first.
+- id: nothing-worn-by-that-name
+  type: "/remove gloves"
+  expect:
+    refused: true
+    offers: You are not wearing anything called that.
+- id: the-cap-comes-off
+  why: "`doff` is `remove`."
+  type: "/doff the cap"
+  expect:
+    changed: true
+    change: You take off the flat cap. It stays in your hands.
+- id: the-cap-goes-down
+  why: Once it is off, the cap is put down like anything else carried.
+  type: "/drop flat cap"
+  expect:
+    changed: true
+    here:
+    - felt hat
+    - flat cap
+    - hand-bell
+- id: the-coat-goes-back-on
+  why: The coat goes on over the shirt.
+  type: "/wear oilskin coat"
+  expect:
+    changed: true
+    change: You put on the oilskin coat.
+- id: the-shirt-is-under-the-coat
+  why: And the shirt does not come off while the coat is worn over it.
+  type: "/remove linen shirt"
+  expect:
+    refused: true
+    offers: Take off the oilskin coat first.
+    carrying:
+    - linen shirt
+    - oilskin coat
+    - wool scarf

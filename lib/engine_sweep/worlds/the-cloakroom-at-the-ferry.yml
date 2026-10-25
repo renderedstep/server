@@ -1,0 +1,124 @@
+# THINGS PUT ON AND TAKEN OFF, ONE ACT AT A TIME.
+#
+# The first world anybody in it is dressed, for the walks of `/wear` and
+# `/remove`. Wren comes in wearing an oilskin coat over nothing she has put
+# on yet, with a linen shirt and a wool scarf in her hands: the shirt goes on
+# the body, which lies under the coat, so it waits for the coat to come off.
+# A flat cap and a felt hat lie by the door, both worn on the head, so one
+# taken up from the floor leaves no room for the other, and a hand-bell beside
+# them is no clothing at all. Abel Moss, the ferryman, wears a pair of leather
+# gloves and holds a brass token; when he dies both spill to the floor.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Oil lamps, ropes and a chain ferry.
+  weapons: Boathooks and walking sticks.
+  geographies: A river crossing on a cold estuary.
+  civilizations: A ferry town that lives by the crossing.
+  history: The chain ferry has crossed the estuary since the old bridge fell.
+  economics: Coins and brass ferry tokens.
+  politics: The ferryman answers to the river board.
+  religion: The town lights a lamp for the drowned each winter.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the estuary.
+story:
+  title: The Cloakroom at the Ferry
+  genre: town adventure
+  start_time: '2026-10-25T06:00:00Z'
+  preface: A cloakroom at the ferry stairs, where the crossing waits for the tide.
+  summary: Wren Calloway comes in out of the wind to wait for the ferry.
+opening_scene:
+  location: The Cloakroom
+  characters: [Wren Calloway, Abel Moss]
+  description: You shoulder the door shut against the wind.
+  summary: Wren arrives at the ferry cloakroom.
+characters:
+- fullname: Wren Calloway
+  nickname: Wren
+  race: Townsfolk
+  age: 31
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A surveyor waiting on the morning crossing.
+  personality: Patient and cold.
+  appearance: Wind-reddened cheeks and ink on her fingers.
+  likes: A dry bench.
+  dislikes: Waiting.
+  fears: A missed crossing.
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  items:
+  - name: oilskin coat
+    description: A long oilskin coat, beaded with spray.
+    bulk: light
+    wear: outer
+    worn: true
+    properties: '{}'
+  - name: linen shirt
+    description: A clean linen shirt, folded small.
+    bulk: light
+    wear: body
+    properties: '{}'
+  - name: wool scarf
+    description: A grey wool scarf, damp at the ends.
+    bulk: light
+    wear: neck
+    properties: '{}'
+- fullname: Abel Moss
+  nickname: Abel
+  race: Townsfolk
+  location: The Cloakroom
+  age: 62
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: The ferryman, who has worked the chain for forty years.
+  personality: Gruff and slow.
+  appearance: A white beard and a tarred cap.
+  likes: A slack tide.
+  dislikes: Passengers who talk.
+  fears: The chain parting.
+  stats: {level: 1, hit_die: 6, strength: 8, dexterity: 8, will: 10}
+  items:
+  - name: leather gloves
+    description: A pair of tarred leather gloves.
+    bulk: light
+    wear: hands
+    worn: true
+    properties: '{}'
+  - name: brass token
+    description: A brass ferry token, worn smooth.
+    bulk: light
+    properties: '{}'
+locations:
+- name: The Cloakroom
+  detail_level: realized
+  opening: true
+  description: A narrow room at the ferry stairs, with pegs along one wall and a bench under the window.
+  teaser: The ferry cloakroom.
+  lore: Passengers wait here for the crossing.
+  items:
+  - name: flat cap
+    description: A tweed cap left on a peg.
+    bulk: light
+    wear: head
+    properties: '{}'
+  - name: felt hat
+    description: A brimmed felt hat, dented on one side.
+    bulk: light
+    wear: head
+    properties: '{}'
+  - name: hand-bell
+    description: A brass bell the ferryman rings when the ferry docks.
+    bulk: light
+    properties: '{}'
+- name: The Ferry Stairs
+  detail_level: realized
+  description: Stone stairs running down to the chain ferry.
+  teaser: The stairs down to the water.
+  lore: The ferry docks at the foot of them.
+connections:
+- between: [The Cloakroom, The Ferry Stairs]
+  distance: adjacent
+  travel_method: walking
