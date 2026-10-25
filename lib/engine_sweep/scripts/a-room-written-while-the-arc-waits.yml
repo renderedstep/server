@@ -82,7 +82,7 @@ steps:
     quest:
       1: reached
       2: reached
-- id: up-the-tower-and-the-end-of-the-story
+- id: up-the-tower
   type: "/move the Bell Tower"
   browser:
     token: tower
@@ -99,6 +99,22 @@ steps:
       content:
         description: You climb the tower stair to the bell rope.
         summary: Ilse reaches the Bell Tower.
+  why: the last beat makes the ending due and writes none, so no ending request is made on this line
+  expect:
+    location: the Bell Tower (realized)
+    quest:
+      1: reached
+      2: reached
+      3: reached
+    ending: none
+    dead: false
+    note: completed
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: "`/end` writes the ending, and the narrator is asked for its paragraph over the same request the beat line used to send"
+  browser:
+    token: end
+    replies:
     - purpose: ending
       content: You haul on the rope, and the bell rings out over the valley for the first time in a generation.
       prompt_includes:

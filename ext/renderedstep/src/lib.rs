@@ -79,6 +79,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("write_paragraph", function!(write_paragraph, 5))?;
     module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
+    module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
 }
 
@@ -248,6 +249,24 @@ fn start(database: String, story: i64, mode: String) -> Result<String, RubyError
         };
         match engine.start_in(story, mode) {
             Ok(playthrough) => json!({ "playthrough": playthrough }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.put_off_ending(database, playthrough_id)`: "Not yet" to
+/// the ending the story offers (`Engine::put_off_ending`), so it is not
+/// offered again; `/end` still ends the story on it. Writes nothing while
+/// none is offered.
+fn put_off_ending(database: String, playthrough: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let mut engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.put_off_ending(playthrough) {
+            Ok(()) => json!({ "put_off": true }),
             Err(error) => failed(&error),
         }
     });
@@ -1208,6 +1227,11 @@ fn glance_json(glance: &Glance) -> Value {
         "sheet": glance.sheet,
         "next_beat": glance.next_beat,
         "story_time": glance.story_time,
+        "ending_due": glance.ending_due,
+        "ending_offer": glance.ending_offer.as_ref().map(|offer| json!({
+            "heading": offer.heading, "goals": offer.goals, "question": offer.question,
+            "end": offer.end, "end_line": offer.end_line, "not_yet": offer.not_yet,
+        })),
         "over": glance.over,
         "ended": glance.ended,
         "verbs": glance.verbs.iter()

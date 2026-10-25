@@ -272,15 +272,25 @@ class Eval::Prompt::Bench
 
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     begin
-      answer = Playthrough::Requests.submit_fixed(file, playthrough, kase.typed, token: SecureRandom.uuid,
-                                                  fixed: { action: kase.act.to_s, target: kase.target.presence }) do |call|
-        scaffold_ending!(playthrough, call) if kase.ending? && call["purpose"] == ENDING
-        answering.call(call)
+      failure = nil
+      submit = lambda do |line, fixed|
+        answer = Playthrough::Requests.submit_fixed(file, playthrough, line, token: SecureRandom.uuid, fixed: fixed) do |call|
+          scaffold_ending!(playthrough, call) if kase.ending? && call["purpose"] == ENDING
+          answering.call(call)
+        end
+        failure = answering.respond_to?(:failure) ? answering.failure : nil
+        if (error = answer["error"])
+          raise failure || Playthrough::RustEngine::EngineError.new(error.fetch("kind"), error.fetch("message"))
+        end
+        answer
       end
-      failure = answering.respond_to?(:failure) ? answering.failure : nil
-      if (error = answer["error"])
-        raise failure || Playthrough::RustEngine::EngineError.new(error.fetch("kind"), error.fetch("message"))
-      end
+      answer = submit.call(kase.typed, { action: kase.act.to_s, target: kase.target.presence })
+      # AN ENDING CASE'S LINE MAKES THE ENDING DUE AND WRITES NONE; `/end` is the
+      # line that writes it and asks for its paragraph. The request is built
+      # over the same rows -- `/end` writes no scene before the ending -- so
+      # what the narrator is asked is the case's turn, one line later. `/end`
+      # is read by the grammar, so the fixed reading is never consulted.
+      answer = submit.call("/end", { action: "other", target: nil }) if kase.ending?
 
       scene = answer.dig("turned", "scene") && Scene.find(answer.dig("turned", "scene"))
       # Recovery completes engine effects despite an unavailable renderer.

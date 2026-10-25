@@ -137,11 +137,11 @@ steps:
 - id: the-last-beat-is-the-first-one
   type: take the signet ring
   why: |-
-    EVERY BEAT REACHED, SO THE ARC CLOSES -- and it closes on `too-late` rather
-    than on the default, because the beats were reached 2, 3, 1 and the world
-    file gives that ending `when: out_of_order`. The ramification is on the
-    stream a line later than the ending and due three story hours out, so it is
-    `scheduled` and not `fired`: this game is over and its clock has stopped.
+    EVERY BEAT REACHED, SO THE ENDING FALLS DUE -- and it is `too-late` rather
+    than the default, because the beats were reached 2, 3, 1 and the world file
+    gives that ending `when: out_of_order`. Decided here and written by nothing
+    yet: no ending row, nothing scheduled, and the game is still being played
+    until the player says to end it.
   expect:
     changed: true
     carrying: [prince's signet ring]
@@ -149,6 +149,18 @@ steps:
       1: reached
       2: reached
       3: reached
+    ending: none
+    scheduled: 0
+    dead: false
+
+- id: and-the-player-ends-it-there
+  type: "/end"
+  why: |-
+    `/end` WRITES THE ENDING THE LAST BEAT DECIDED. The ramification is on the
+    stream a line later than the ending and due three story hours out, so it is
+    `scheduled` and not `fired`: this game is over and its clock has stopped.
+  expect:
+    changed: true
     ending: too-late
     scheduled: 1
     fired: 0

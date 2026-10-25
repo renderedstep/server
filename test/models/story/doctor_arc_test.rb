@@ -236,6 +236,63 @@ class Story::DoctorArcTest < ActiveSupport::TestCase
     assert_includes doctor.findings.map(&:message).join, "Prince Aurel Durn"
   end
 
+  # --- an ending that fell due -----------------------------------------------
+  #
+  # The line that meets the last beat writes the due row; `/end` writes the
+  # ending (`Playthrough::DueEnding`).
+
+  test "an ending due in a game still being played is the ordinary state between the two lines" do
+    game = create(:playthrough, story: @story)
+    create(:playthrough_due_ending, playthrough: game, quest_outcome: @quest.default_outcome)
+
+    assert_empty codes & DUE_CODES
+  end
+
+  test "the ending /end wrote is the one that was due" do
+    game = create(:playthrough, story: @story)
+    create(:playthrough_due_ending, playthrough: game, quest_outcome: @quest.default_outcome)
+    create(:playthrough_ending, playthrough: game, quest_outcome: @quest.default_outcome)
+    game.end!
+
+    assert_empty codes & DUE_CODES
+  end
+
+  test "an ending other than the one due is reported" do
+    late = create(:quest_outcome, quest: @quest, name: "too-late", condition: "out_of_order")
+    game = create(:playthrough, story: @story)
+    create(:playthrough_due_ending, playthrough: game, quest_outcome: @quest.default_outcome)
+    create(:playthrough_ending, playthrough: game, quest_outcome: late)
+    game.end!
+
+    assert_includes codes, :ending_not_the_one_due
+  end
+
+  test "a game over with its ending due and unwritten says so on the stream, or is reported" do
+    game = create(:playthrough, story: @story)
+    create(:playthrough_due_ending, playthrough: game, quest_outcome: @quest.default_outcome)
+    game.end!
+
+    assert_includes codes, :due_ending_never_written
+
+    WorldEvent.create!(story: @story, playthrough: game, source: WorldEvent::QUEST, occurred_at: game.story_now,
+                       summary: "The Long Way Down was left unfinished: every beat was reached and the ending " \
+                                "was never written.")
+
+    assert_not_includes codes, :due_ending_never_written
+  end
+
+  test "an ending due off a side arc is reported" do
+    side = create(:quest, story: @story, title: "The Locksmith's Debt", parent_quest: @quest)
+    paid = create(:quest_outcome, :default, quest: side, name: "paid")
+    game = create(:playthrough, story: @story)
+    due = build(:playthrough_due_ending, playthrough: game, quest_outcome: paid)
+    due.save!(validate: false)
+
+    assert_includes codes, :due_ending_off_the_main_arc
+  end
+
+  DUE_CODES = %i[due_ending_off_the_main_arc ending_not_the_one_due due_ending_never_written].freeze
+
   private
 
   def bound_step(record, position: 1)

@@ -18,9 +18,10 @@ class EngineSweepTest < ActiveSupport::TestCase
   # closes on. Shared by the `ending_words:` walks below, whose LAST step is the
   # one being asserted -- the route itself is `an-ending-with-words.yml`'s and is
   # not what those tests are about.
+  # The last beat makes the ending due; `/end` writes it.
   TO_THE_END = [ "take the signet ring", "go to the obsidian maw", "go to Blackfang Tunnel",
                  "go to Blackfang Warren room 1", "go to Blackfang Warren room 2",
-                 "go to the dry cell" ].freeze
+                 "go to the dry cell", "/end" ].freeze
 
   test "every stored script walks the engine and the records say what it says" do
     results = EngineSweep.run

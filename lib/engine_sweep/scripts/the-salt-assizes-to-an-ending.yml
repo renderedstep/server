@@ -57,13 +57,21 @@ steps:
 
 - id: the-court-rung-on-the-true-figure
   type: take the hand-bell
-  why: the last beat, in order, so the arc falls through to the default ending and the closing scene carries the file's own sentence
+  why: the last beat, in order -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
     quest:
       1: reached
       2: reached
       3: reached
+    ending: none
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: "`/end` writes the default ending, and the closing scene carries the file's own sentence"
+  expect:
+    changed: true
     ending: the-court-rises-true
     ending_words: ["You ring the court up on the water's own figure", "somebody's hand, and not the sea's"]
     dead: true

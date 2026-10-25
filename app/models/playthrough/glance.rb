@@ -44,6 +44,11 @@ class Playthrough::Glance
   # in a game the player narrates, how many things in plain sight it has not
   # noticed yet -- what a look would show; 0 in any other game.
   Counts = Data.define(:visible, :unsearched, :unnoticed)
+  # THE QUESTION ONCE EVERY GOAL IS MET, in the engine's words
+  # (`glance::EndingOffer`): the heading, the arc's goals in order, the
+  # question, the label of the answer that ends the story and the line it
+  # plays (`/end`), and the label of "Not yet".
+  EndingOffer = Data.define(:heading, :goals, :question, :end, :end_line, :not_yet)
 
   attr_reader :playthrough, :document
 
@@ -75,6 +80,15 @@ class Playthrough::Glance
   def story_time = document["story_time"] && Time.zone.at(document["story_time"])
 
   def over? = document["over"]
+
+  # EVERY GOAL IS MET AND THE ENDING DECIDED: `/end` ends the story on it,
+  # whether or not the question is still standing. False once the game is over.
+  def ending_due? = document["ending_due"]
+
+  # THE QUESTION TO ASK, while the ending is due and the player has neither
+  # taken it nor played on past it; nil otherwise. Asked once: "Not yet", or
+  # any other line, withdraws it.
+  def ending_offer = (EndingOffer.new(**fields(document["ending_offer"])) if document["ending_offer"])
 
   # HOW THE GAME IS TOLD (`Playthrough::MODES`), as the engine reads it.
   def mode = document["mode"]
@@ -108,6 +122,7 @@ class Playthrough::Glance
       line("carrying", carrying.map(&:name), "nothing"),
       line("condition", [ condition, *sheet ].compact, "no stat block", "; "),
       "  next beat   #{next_beat || "this world has no arc"}",
+      *("  ending      #{ending_offer ? ending_offer.question : "due"} (#{ending_offer&.end_line || "/end"})" if ending_due?),
       *("  ended       #{ended}" if ended),
       *verbs.map { |verb| verb_line(verb) }
     ].join("\n")

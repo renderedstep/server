@@ -60,16 +60,25 @@ steps:
 - id: the-writ-before-anybody-names-it
   type: take the writ
   why: |-
-    THE LAST BEAT, AND THE STORY ENDS ON IT. Every beat is reached in the
-    order the file lists them, so `Playthrough::Arc` falls through to the
-    default ending and the closing scene carries its sentence -- the world
-    file's words, since this mode makes no model call.
+    THE LAST BEAT, AND THE ENDING FALLS DUE ON IT. Every beat is reached in the
+    order the file lists them, so the default ending is decided here -- and
+    nothing is written until the player ends the story.
   expect:
     changed: true
     quest:
       1: reached
       2: reached
       3: reached
+    ending: none
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: |-
+    `/end` WRITES IT, and the closing scene carries its sentence -- the world
+    file's words, since this mode makes no model call.
+  expect:
+    changed: true
     ending: query-answered
     ending_words: ["the missing hour has a source at last", "Query 1188 stays open in your name"]
     dead: true

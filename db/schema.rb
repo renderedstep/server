@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_213000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -361,6 +361,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_213000) do
     t.index ["playthrough_id", "story_timestamp"], name: "index_playthrough_drifts_on_playthrough_id_and_story_timestamp"
     t.index ["playthrough_id"], name: "index_playthrough_drifts_on_playthrough_id"
     t.index ["scene_id"], name: "index_playthrough_drifts_on_scene_id"
+  end
+
+  create_table "playthrough_due_endings", force: :cascade do |t|
+    t.integer "playthrough_id", null: false
+    t.integer "quest_outcome_id", null: false
+    t.datetime "due_at", null: false
+    t.datetime "declined_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playthrough_id"], name: "index_playthrough_due_endings_on_playthrough_id", unique: true
+    t.index ["quest_outcome_id"], name: "index_playthrough_due_endings_on_quest_outcome_id"
   end
 
   create_table "playthrough_endings", force: :cascade do |t|
@@ -868,6 +879,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_213000) do
   add_foreign_key "playthrough_drifts", "locations"
   add_foreign_key "playthrough_drifts", "playthroughs"
   add_foreign_key "playthrough_drifts", "scenes"
+  add_foreign_key "playthrough_due_endings", "playthroughs"
+  add_foreign_key "playthrough_due_endings", "quest_outcomes"
   add_foreign_key "playthrough_endings", "playthroughs"
   add_foreign_key "playthrough_endings", "quest_outcomes"
   add_foreign_key "playthrough_feedbacks", "playthroughs"

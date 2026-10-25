@@ -152,7 +152,7 @@ steps:
 
 - id: the-tally-off-his-body
   type: take the tally
-  why: the last beat -- and the book was taken while he was alive, so the second ending and its own words
+  why: the last beat -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
     carrying: [climbers' bearing book, bell-rope tally]
@@ -160,6 +160,14 @@ steps:
       1: reached
       2: reached
       3: reached
+    ending: none
+    dead: false
+
+- id: and-the-player-ends-the-story
+  type: "/end"
+  why: the book was taken while he was alive, so `/end` writes the second ending and its own words
+  expect:
+    changed: true
     ending: taken-under-his-hands
     ending_words: ["while the Ringer was still standing over the rope"]
     dead: true
