@@ -615,6 +615,10 @@ class WorldSeed::Exporter
       document["material"] = item.material if item.material.present?
       document["use_kind"] = item.use_kind unless item.use_kind == "ordinary"
       document["combustible"] = true if item.combustible?
+      # WHERE ON A BODY IT IS WORN, AND WHETHER IT IS, each omitted when absent
+      # or false on the same rule.
+      document["wear"] = item.wear if item.wear.present?
+      document["worn"] = true if item.worn?
       # WHERE IN THE ROOM IT IS LYING, on the same terms as a character's pair
       # one method up. An item exported under a CHARACTER never has one -- a
       # thing in a pair of hands is in no room to be placed in

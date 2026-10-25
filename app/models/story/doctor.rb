@@ -80,7 +80,8 @@ class Story::Doctor
       *arc,
       *event_stream,
       *noticed_records,
-      *material_records
+      *material_records,
+      *worn_things
     ]
   end
 
@@ -3017,6 +3018,37 @@ class Story::Doctor
     [ finding(:item_material_contradicts, :warning,
               "this story has things that say what they are made of, and that could not be checked: #{e.message}",
               :manual) ]
+  end
+
+  # ------------------------------------------------------------------------
+  # WHERE A THING IS WORN (`items.wear`) AND WHETHER IT IS (`items.worn`), and
+  # the rules are the ENGINE'S (`wear.rs`, its `data/item/wear.yml`), so the
+  # checks are too -- `Engine::wear_findings`, asked through
+  # `Playthrough::RustEngine.wear_findings`, on `#noticed_records`' terms:
+  #
+  #   wear_no_such_place   a `wear` that is no place on a body       manual
+  #   worn_unwearable      worn, with no place                        safe
+  #   worn_not_held        worn, and nobody holds it                  safe
+  #   worn_place_taken     two things worn on one place by one body   manual
+  #
+  # `Story::Repair` has no handler for any of them yet, so all four are
+  # reported and left alone.
+  #
+  # NOTHING IS ASKED OF A STORY WITH NOTHING TO CHECK: no row anywhere names a
+  # place or is worn is every story that exists before the columns were, and
+  # none of them pays for a read of the engine.
+  def worn_things
+    return [] unless story_items.where.not(wear: nil).or(story_items.where(worn: true)).exists?
+
+    Playthrough::RustEngine.wear_findings(story).map do |found|
+      finding(found.fetch("code").to_sym, found.fetch("severity").to_sym, found.fetch("message"),
+              found.fetch("remedy").to_sym, subject: noticed_subject(found.fetch("subject")))
+    end
+  rescue Playthrough::RustEngine::EngineError => e
+    raise unless e.kind == "not_built"
+
+    [ finding(:worn_things_unchecked, :warning,
+              "this story has things that can be worn, and they could not be checked: #{e.message}", :manual) ]
   end
 
   # The engine names a finding's row by table and id; the repair acts on it.

@@ -46,7 +46,8 @@
 # with no position of its own; small stuff is a portable thing on the floor.
 # A part is an `Item::PART` `attached` to its piece, with the piece's room, no
 # position, a `hold` and the bulk and fragility it will have once it comes
-# away. Every row carries its `kit_key` -- `kind/piece`, `kind/piece/thing`,
+# away. A thing the table's `wear` names is written with that place on a body,
+# and none is worn. Every row carries its `kit_key` -- `kind/piece`, `kind/piece/thing`,
 # `kind/piece/attached/part` or `kind/loose/thing` -- which is what keeps a kit row out of the room writer's
 # caps (`Item.bespoke`) and tells the doctor who wrote it. A description is one
 # engine line and no prose: nothing sends an item's description to a model, and
@@ -203,6 +204,7 @@ class Item::Kit
       combustible: TABLES.fetch("combustible").include?(thing.name),
       readable: TABLES.fetch("readable").include?(thing.name),
       material: self.class.material_of(thing.name),
+      wear: TABLES.fetch("wear")[thing.name],
       **{ hold: thing.hold, fragility: thing.fragility }.compact
     )
     return item if within
@@ -244,6 +246,7 @@ class Item::Kit
     end
     TABLES.fetch("density").each_key { |word| problems << "density #{word} is not Location::Kind's" unless Location::Kind::DENSITIES.include?(word) }
     TABLES.fetch("use_kinds").each_value { |use| problems << "#{use} is no use kind" unless Item::USE_KINDS.include?(use) }
+    TABLES.fetch("wear").each { |name, place| problems << "#{name} is worn on #{place}, which is no place on a body" unless Item::WEAR_PLACES.include?(place) }
     unless VISIBLE + Item::Registry::MAX_PER_ROOM == MAX_VISIBLE_PER_ROOM
       problems << "visible #{VISIBLE} and the writer's #{Item::Registry::MAX_PER_ROOM} are not #{MAX_VISIBLE_PER_ROOM}"
     end
