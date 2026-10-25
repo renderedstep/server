@@ -374,7 +374,7 @@
           other page renders the control on its own, as before. %>
       <% feedback = pocket_kit_feedback(fields: { playthrough_id: (@playthrough.id if @playthrough.is_a?(Playthrough)) }) %>
       <% if content_for?(:header) %>
-        <header class="page-header"><%= feedback %><%= yield :header %></header>
+        <header class="page-header" data-controller="viewport-pin"><%= feedback %><%= yield :header %></header>
       <% else %>
         <%= feedback %>
       <% end %>

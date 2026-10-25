@@ -761,6 +761,14 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/\.page-header \{\s*position: sticky; top: 0;/, css_select("body > style").sole.text)
   end
 
+  # Sticky alone loses the header under the iPhone keyboard, which scrolls the
+  # visual viewport inside the layout one; the controller follows it.
+  test "show hands the pinned header to the viewport pin" do
+    get playthrough_path(create(:playthrough))
+
+    assert_select "header.page-header[data-controller=viewport-pin]"
+  end
+
   # A phone width is not something the suite can see either, so this pins the
   # two rules that keep the page from scrolling sideways there: long tokens
   # wrap inside the column, and a touch screen's input is 16px so iOS does not
