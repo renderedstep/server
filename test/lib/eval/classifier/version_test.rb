@@ -54,10 +54,13 @@ class Eval::Classifier::VersionTest < ActiveSupport::TestCase
     built, room = built_and_room(game, "Offer the apple to Maren.")
     request = Eval::Classifier::Version.request_for(built, room)
     enum = request.fetch(:schema).dig("schema", "properties", "target", "enum")
-    tokens = room.fetch("physical").map { |choice| choice.fetch("token") }
+    # The wait is offered in the room but kept out of every reader request
+    # until the readers are retrained on it.
+    waits, tokens = room.fetch("physical").map { |choice| choice.fetch("token") }.partition { |token| token.start_with?("use:wait:") }
 
     assert_predicate tokens, :any?
     tokens.each { |token| assert_includes enum, token }
+    waits.each { |token| assert_not_includes enum, token }
     assert_includes request[:user], tokens.last
     assert_equal Playthrough::Classifier::INSTRUCTIONS, request[:system]
   end

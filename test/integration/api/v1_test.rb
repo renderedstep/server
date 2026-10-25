@@ -312,8 +312,8 @@ class Api::V1Test < ActionDispatch::IntegrationTest
     assert_nil verbs.dig("take", "lines")
 
     use = verbs.fetch("use")
-    assert_equal [ "Consume flask of water" ], use["targets"]
-    assert_equal [ "/consume flask of water" ], use["lines"]
+    assert_equal [ "Consume flask of water", "Wait and let time pass" ], use["targets"]
+    assert_equal [ "/consume flask of water", "/wait" ], use["lines"]
     choice = Playthrough::Availability.new(playthrough.reload).verb(:use).targets.first
     assert_equal choice.token, Playthrough::Grammar.new(playthrough).reading_first(use["lines"].first).intent.physical.token
   end
