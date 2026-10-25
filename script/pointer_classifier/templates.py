@@ -57,7 +57,12 @@ SCENERY = ("the window", "the wall", "the ceiling", "the floor", "the sky", "the
 WRITTEN = ("ledger", "logbook", "almanac", "map", "chart", "letter", "letters", "notice", "poster", "handbill",
            "pamphlet", "newspaper", "paper", "papers", "notes", "note", "roll", "roster", "register", "manifest",
            "inventory", "dossier", "casebook", "docket", "warrant", "receipt", "invoice", "deed", "will",
-           "petition", "ballot", "ticket", "pass", "book", "diary", "journal", "list", "record", "records", "log")
+           "petition", "ballot", "ticket", "pass", "book", "diary", "journal", "list", "record", "records", "log",
+           "slate", "tablet", "board", "sign", "plaque", "label", "tag", "placard")
+
+# Where a thing is looked for: the room's own surfaces, and the clutter in it.
+SEARCHED = SCENERY + ("the rubble", "the wreckage", "the mess", "the debris", "the drawers", "the piles",
+                      "the ashes", "the straw")
 
 # How and when, said of any act: no tail belongs to one intent, or the tail
 # rather than the verb would come to decide it.
@@ -132,6 +137,12 @@ def item_head(name):
         return bare.split(" of ", 1)[1].split()[-1]
     words = [w for w in bare.split() if not w.isdigit()]
     return words[-1] if words else bare
+
+
+def is_written(name):
+    """A thing with writing on it, by its head noun or the last part of a hyphenated one."""
+    head = item_head(name)
+    return head in WRITTEN or head.split("-")[-1] in WRITTEN
 
 
 def item_refs(name, carried=False):
@@ -464,12 +475,13 @@ class Lines:
         if not things:
             return None
         # Few things have writing on them, and those are the ones read in part.
-        written = [(k, e) for k, e in things if item_head(e["name"]) in WRITTEN]
+        written = [(k, e) for k, e in things if is_written(e["name"])]
         key, entry = self.pick(written if written and self.rng.random() < 0.6 else things)
         thing = self.ref(key)
-        if item_head(entry["name"]) in WRITTEN:
+        if is_written(entry["name"]):
             part = self.pick(["writing on", "entries in", "last page of", "margins of", "figures in", "lines in",
-                              "words on", "dates in", "handwriting in", "first page of", "names in", "notes in"])
+                              "words on", "dates in", "handwriting in", "first page of", "names in", "notes in",
+                              "figure on", "numbers on", "chalk marks on", "sum on", "drawing on"])
             verb = self.pick(["read", "look at", "study", "go over", "make out", "run my eye over", "peer at",
                               "check", "squint at", "puzzle over"])
             questions = [f"what is written in {thing}?", f"what do the words on {thing} say?", f"what's in {thing}?"]
@@ -494,6 +506,41 @@ class Lines:
         verb = self.pick(["look at", "examine", "inspect", "read", "study", "search", "look out of",
                           "look under", "look behind"])
         return f"{verb} {thing}", label("examine", target, present=0)
+
+    def search_for(self):
+        """Looking FOR something searches the room; it is not an examine of a
+        thing in it. What is sought is not here, or is only described -- and a
+        description may borrow a word from a thing that is here -- so the line
+        names nothing."""
+        things = self.room.lying + self.room.carried
+        target = [NOTHING] if things else None
+        where = self.pick(SEARCHED)
+        present = 1
+        if self.rng.random() < 0.5:
+            sought = self.absent("item")
+            if not sought:
+                return None
+            present = 0
+        else:
+            mark = self.pick(["a mark", "a name", "a seal", "a date", "a number", "writing", "a stamp", "a crest",
+                              "initials", "a symbol"])
+            sought = self.pick([f"anything with {mark} on it", "anything useful", "anything that looks out of place",
+                                "something sharp", "anything I could carry", f"anything bearing {mark}"])
+            words = [w for _, e in things for w in strip_article(e["name"]).lower().split(" of ")[0].split()[:-1]
+                     if w.isalpha() and w not in ("the", "a", "an", "my", "some", "and", "or", "with", "in", "on")]
+            described = f"{self.pick(words)} {mark.split()[-1]}" if words and mark.startswith("a ") else None
+            if described and self.rng.random() < 0.4 and not any(described in n for n in self.room.names):
+                sought = f"anything with {'an' if described[0] in 'aeiou' else 'a'} {described} on it"
+        verb = self.pick(["look for", "search for", "hunt for", "feel around for", "check for", "rummage for",
+                          "dig around for"])
+        texts = [f"{verb} {sought}", f"{verb} {sought} in {where}", f"look round {where} for {sought}",
+                 f"search {where} for {sought}", f"go through {where} looking for {sought}"]
+        if not present:
+            texts.append(f"is {sought} somewhere in {where}?")
+        else:
+            texts.append(f"is there {sought} in {where}?")
+        text = self.pick(texts)
+        return text, label("examine", target, present=present)
 
     def look_around(self):
         target = [NOTHING] if self.room.lying or self.room.carried else None
@@ -716,7 +763,7 @@ class Lines:
         ("drop", 5), ("drop_absent", 1), ("drop_pronoun", 1), ("examine", 6), ("examine_absent", 3),
         ("look_around", 2), ("use", 5), ("other", 6), ("two_one_set", 5), ("collective", 1), ("two_sets", 4),
         ("other_about", 3), ("examine_person", 2), ("take_from", 1), ("offer_absent", 1),
-        ("destroy", 2), ("destroy_absent", 1), ("examine_detail", 3),
+        ("destroy", 2), ("destroy_absent", 1), ("examine_detail", 3), ("search_for", 2),
     )
 
     def sample(self, count):
