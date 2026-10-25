@@ -14,7 +14,7 @@
 # for no model call beyond the classifier that had already run.
 #
 # THE SHAPES, TOLD APART BECAUSE THEY ARE DIFFERENT FACTS -- three about the
-# LINE, one about a THING the line named, and three about the game it was typed
+# LINE, two about a THING the line named, and three about the game it was typed
 # into:
 #
 #   :named_more_than_one  it named two things the records really have, and a
@@ -38,7 +38,14 @@
 #                         neither drift (the reach resolved, twice) nor
 #                         overreach (one act was asked for). See
 #                         `data/ta-combat-scout` §13.3.
-#   :unreadable           the classifier's own answer was unusable -- an intent
+#   :cannot_carry         IT NAMED A THING THAT WOULD NOT FIT: hands, storage
+#                         or strength rule it out, in a world whose
+#                         `Universe#carrying` is `limited`. Only the engine
+#                         builds one (renderedstep/engine `carry.rs` and
+#                         `refusal.rs` own its words); it is listed here so a
+#                         served refusal of that kind is a kind this reads.
+#                         Nothing moves and no die is thrown.
+#   :unreadable          the classifier's own answer was unusable -- an intent
 #                         outside `Playthrough::IntentSchema::INTENTS` that
 #                         still named a record. Nothing counts it, because it is
 #                         a defect on our side rather than a reach on the
@@ -123,7 +130,7 @@
 # (`fact`, `offer`, `UNCHANGED`) so that both orders read as English rather than
 # as one string with another bolted onto the end.
 class Playthrough::Refusal
-  KINDS = %i[named_more_than_one unresolved immovable unreadable unplayable dead concluded stopped].freeze
+  KINDS = %i[named_more_than_one unresolved immovable cannot_carry unreadable unplayable dead concluded stopped].freeze
 
   # THE KINDS THAT ARE NOT A READING OF THE LINE BUT A STATE OF THE GAME.
   # All are terminal and none leaves the player anything to try again, which

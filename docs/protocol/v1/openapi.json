@@ -1090,6 +1090,7 @@
                       "named_more_than_one",
                       "unresolved",
                       "immovable",
+                      "cannot_carry",
                       "unreadable",
                       "unplayable",
                       "dead",

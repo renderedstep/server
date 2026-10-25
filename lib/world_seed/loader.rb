@@ -243,6 +243,7 @@ class WorldSeed::Loader
     universe.assign_attributes(universe_document.except("races"))
     # Written on every load, so a file that stops naming a gravity takes it off.
     universe.gravity = universe_document["gravity"].presence
+    universe.carrying = universe_document["carrying"].presence
 
     races = universe_document.fetch("races").map do |attributes|
       race = universe.races.detect { |candidate| candidate.name == attributes.fetch("name") } ||
@@ -1047,6 +1048,7 @@ class WorldSeed::Loader
     validate_materials!
     validate_surfaces!
     validate_gravity!
+    validate_carrying!
     validate_physical_parameters!
     validate_dangers!
     validate_populations!
@@ -1932,6 +1934,13 @@ class WorldSeed::Loader
     return if gravity.blank? || Universe::GRAVITIES.include?(gravity)
 
     raise InvalidWorld, "#{where}: the universe has `gravity: #{gravity.inspect}`; there is: #{Universe::GRAVITIES.join(", ")}"
+  end
+
+  def validate_carrying!
+    carrying = universe_document["carrying"]
+    return if carrying.blank? || Universe::CARRYINGS.include?(carrying)
+
+    raise InvalidWorld, "#{where}: the universe has `carrying: #{carrying.inspect}`; there is: #{Universe::CARRYINGS.join(", ")}"
   end
 
   # A mechanic that cannot run is the worst kind of seed-file typo: the world
