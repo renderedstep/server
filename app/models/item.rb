@@ -168,6 +168,13 @@ class Item < ApplicationRecord
   # `Story::Doctor`).
   MATERIALS = EngineData.fetch("item/kits").fetch("materials").keys.freeze
 
+  # WHERE ON A BODY A THING IS WORN: `wear` is one of these places, the
+  # engine's (its `data/item/wear.yml`, head to foot), or nil for a thing
+  # nobody wears. `worn` says it is worn, and a worn thing is still carried,
+  # never a fourth place. Both are inert until a line puts one on; the engine's
+  # doctor reads them (`Story::Doctor#worn_things`).
+  WEAR_PLACES = EngineData.fetch("item/wear").fetch("places")
+
   # HOW MANY CHARACTERS A THING CAN HAVE WRITTEN ON IT. What a player reads off
   # an object in one turn -- a note, a docket line, a sign, a page of an index --
   # and not a chapter. It is the cap `Item::InscriptionSchema` and

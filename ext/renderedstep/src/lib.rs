@@ -80,6 +80,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
     module.define_module_function("carry_findings", function!(carry_findings, 2))?;
     module.define_module_function("material_findings", function!(material_findings, 2))?;
+    module.define_module_function("wear_findings", function!(wear_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
     module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
@@ -329,6 +330,26 @@ fn material_findings(database: String, story: i64) -> Result<String, RubyError> 
     Ok(answer.to_string())
 }
 
+/// `RenderedStep.wear_findings(database, story_id)`: what the doctor reports
+/// about the worn and wearable things of a story, in the world and in each of
+/// its games (`Engine::wear_findings`), in `noticed_findings`' shape. Reads
+/// only.
+fn wear_findings(database: String, story: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.wear_findings(story) {
+            Ok(findings) => findings_json(&findings),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// Findings as `{"findings": [...]}`, each with its code, severity, message,
+/// remedy and the table and id of its row.
 fn findings_json(findings: &[renderedstep_engine::noticed::Finding]) -> Value {
     json!({ "findings": findings.iter().map(|finding| json!({
         "code": finding.code,

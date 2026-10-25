@@ -147,6 +147,15 @@ class Item::KitTest < ActiveSupport::TestCase
     assert_nil Item::Kit.material_of("empty bottle")
   end
 
+  test "a thing the kits table says is worn is written with its place on a body, and nothing is worn" do
+    room = create(:location, :stub, name: "Room 2", kind: "kitchen", density: "lived-in")
+    written = Item::Kit.new(room).furnish!
+
+    assert_equal({ "coat" => "outer", "cap" => "head" }, written.select(&:wear).to_h { |item| [ item.name, item.wear ] })
+    assert written.reject { |item| Item::Kit::TABLES.fetch("wear").key?(item.name) }.none?(&:wear)
+    assert written.none?(&:worn)
+  end
+
   test "a room with no word, and a place, are never furnished" do
     assert_empty Item::Kit.new(create(:location, :stub, kind: nil)).furnish!
     place = create(:location, :stub, kind: "study", density: "lived-in", width: 10, depth: 10)

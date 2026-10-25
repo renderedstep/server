@@ -235,6 +235,19 @@ module Playthrough::RustEngine
     answer["findings"]
   end
 
+  # WHAT THE DOCTOR REPORTS ABOUT A STORY'S WORN AND WEARABLE THINGS, in the
+  # world and in each of its games (`Engine::wear_findings`), in
+  # `.noticed_findings`' shape. Where a thing is worn is the engine's rule, so
+  # its checks are; `Story::Doctor#worn_things` is the one caller. Reads only.
+  def self.wear_findings(story)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.wear_findings(file, story.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["findings"]
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 

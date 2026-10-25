@@ -709,6 +709,8 @@ class WorldSeed::Loader
                          "material" => attributes["material"].presence,
                          "use_kind" => attributes["use_kind"].presence || "ordinary",
                          "combustible" => attributes["combustible"] == true,
+                         "wear" => attributes["wear"].presence,
+                         "worn" => attributes["worn"] == true,
                          "disposition" => "intact",
                          playthrough: nil, template: nil, **place)
                   .merge(Location::Spot::COLUMNS.to_h { |column| [ column, attributes[column] ] })
@@ -1783,6 +1785,7 @@ class WorldSeed::Loader
         raise InvalidWorld, "#{where}: a world template cannot be consumed or burned"
       end
     end
+    validate_wear!
     connection_documents.each do |edge|
       barrier = edge["barrier"].presence || "open"
       raise InvalidWorld, "#{where}: unknown passage barrier #{barrier.inspect}" unless LocationConnection::BARRIERS.include?(barrier)
@@ -1795,6 +1798,38 @@ class WorldSeed::Loader
         end
       elsif key.present?
         raise InvalidWorld, "#{where}: only a keyed passage can name a key_template"
+      end
+    end
+  end
+
+  # WHERE A THING IS WORN, AND WHETHER IT IS. `wear:` is one of
+  # `Item::WEAR_PLACES`, the engine's places on a body, and `worn:` a boolean
+  # on a thing somebody in the file is holding that names one -- a worn thing
+  # is carried, so a room's floor wears nothing. The engine's doctor reports
+  # each of these on a row (`Story::Doctor#worn_things`); a file is refused
+  # here instead, naming the file and the item.
+  def validate_wear!
+    [ [ character_documents, true ], [ location_documents, false ] ].each do |owners, held|
+      owners.each do |owner|
+        Array(owner["items"]).each do |item|
+          name = item.fetch("name").inspect
+          if item["wear"].present? && !Item::WEAR_PLACES.include?(item["wear"])
+            raise InvalidWorld, "#{where}: item #{name} has `wear: #{item["wear"].inspect}`; " \
+                                "the places on a body are: #{Item::WEAR_PLACES.join(", ")}"
+          end
+          next unless item.key?("worn")
+          raise InvalidWorld, "#{where}: item #{name} needs a boolean worn value" unless [ true, false ].include?(item["worn"])
+          next unless item["worn"]
+          raise InvalidWorld, "#{where}: item #{name} is `worn: true` and names no place on a body it is worn on" if item["wear"].blank?
+          raise InvalidWorld, "#{where}: item #{name} is `worn: true` and lies in a room; a worn thing is held by somebody" unless held
+        end
+        worn = Array(owner["items"]).select { |item| item["worn"] == true }.group_by { |item| item["wear"] }
+        worn.each do |place, items|
+          next if items.one?
+
+          raise InvalidWorld, "#{where}: #{items.map { |item| item.fetch("name").inspect }.join(" and ")} are all `worn: true` " \
+                              "on the #{place}, and a body wears one thing on each place"
+        end
       end
     end
   end

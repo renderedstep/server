@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_200000) do
   create_table "characters", force: :cascade do |t|
     t.integer "age"
     t.text "appearance"
@@ -127,6 +127,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
     t.datetime "searched_at"
     t.string "hold"
     t.string "material"
+    t.string "wear"
+    t.boolean "worn", default: false, null: false
     t.index ["character_id"], name: "index_items_on_character_id"
     t.index ["location_id", "character_id"], name: "index_items_on_location_id_and_character_id"
     t.index ["location_id"], name: "index_items_on_location_id"
