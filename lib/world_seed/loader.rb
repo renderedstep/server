@@ -41,7 +41,9 @@
 #                                        is written on every load, in both
 #                                        directions, and an absent key is
 #                                        Item::HANDY; `fragility` likewise, and
-#                                        an absent key is Item::STURDY. A
+#                                        an absent key is Item::STURDY;
+#                                        `material` likewise, and an absent
+#                                        key is none (unknown). A
 #                                        FIXTURE (`holds:`) and a row a kit
 #                                        wrote (`kit_key:`) are matched in
 #                                        their own ROOM instead: a fixture
@@ -684,7 +686,8 @@ class WorldSeed::Loader
       # longer marks would keep the thing unthrowable for ever with no way to
       # undo it from the file. An absent key is `Item::HANDY`, which is the
       # column's default and what almost everything is. `fragility` is written
-      # the same way, and an absent key is `Item::STURDY`, which never breaks.
+      # the same way, and an absent key is `Item::STURDY`, which never breaks;
+      # so is `material`, and an absent key is none, which is unknown.
       # AND WHERE IN THE ROOM THE FILE LAYS IT, written in both directions on
       # every load -- the box keys' own rule on `locations` and its reason: a
       # stale position left on a row the file no longer places would keep the
@@ -703,6 +706,7 @@ class WorldSeed::Loader
                          "within" => within,
                          "how" => within && (within.holds == "hollow" ? "in" : "on"),
                          "fragility" => attributes["fragility"].presence || Item::STURDY,
+                         "material" => attributes["material"].presence,
                          "use_kind" => attributes["use_kind"].presence || "ordinary",
                          "combustible" => attributes["combustible"] == true,
                          "disposition" => "intact",
@@ -1038,6 +1042,7 @@ class WorldSeed::Loader
     validate_bulks!
     validate_fixtures!
     validate_fragilities!
+    validate_materials!
     validate_surfaces!
     validate_gravity!
     validate_physical_parameters!
@@ -1861,6 +1866,18 @@ class WorldSeed::Loader
 
         raise InvalidWorld, "#{where}: item #{item.fetch("name").inspect} has `fragility: #{fragility.inspect}`; " \
                             "there is: #{Item::FRAGILITIES.join(", ")}"
+      end
+    end
+  end
+
+  def validate_materials!
+    (character_documents + location_documents).each do |owner|
+      Array(owner["items"]).each do |item|
+        material = item["material"]
+        next if material.blank? || Item::MATERIALS.include?(material)
+
+        raise InvalidWorld, "#{where}: item #{item.fetch("name").inspect} has `material: #{material.inspect}`; " \
+                            "there is: #{Item::MATERIALS.join(", ")}"
       end
     end
   end

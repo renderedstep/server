@@ -37,6 +37,7 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     assert_equal "database", JSON.parse(RenderedStep.write_paragraph("/nonexistent/game.sqlite3", 1, 1, "x", "owner")).dig("error", "kind")
     assert_equal "unsupported", JSON.parse(RenderedStep.write_paragraph("/nonexistent/game.sqlite3", 1, 1, "x", "everyone")).dig("error", "kind")
     assert_equal "database", JSON.parse(RenderedStep.noticed_findings("/nonexistent/game.sqlite3", 1)).dig("error", "kind")
+    assert_equal "database", JSON.parse(RenderedStep.material_findings("/nonexistent/game.sqlite3", 1)).dig("error", "kind")
     assert_equal "database", JSON.parse(RenderedStep.start("/nonexistent/game.sqlite3", 1, "player_narrates")).dig("error", "kind")
     assert_equal "unsupported", JSON.parse(RenderedStep.start("/nonexistent/game.sqlite3", 1, "sung")).dig("error", "kind")
   end

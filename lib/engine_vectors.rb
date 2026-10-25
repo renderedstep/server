@@ -82,9 +82,10 @@ module EngineVectors
   }.freeze
 
   # The portions whose files are the engine's (its `vectors/ENGINE_OWNED`).
-  # `physics`, `breakage`, `speech_choices`, `range` and `carry` never had a
-  # Ruby builder: falls, breakage, speaking up unasked, a throw's range and
-  # what a body can carry were written in the engine.
+  # `physics`, `breakage`, `speech_choices`, `range`, `carry` and `material`
+  # never had a Ruby builder: falls, breakage, speaking up unasked, a throw's
+  # range, what a body can carry and what a thing is made of were written in
+  # the engine.
   # `grammar` and `slash_menu` have none any more: the play box's menu and the
   # grammar's slash words and use lines are read off the engine now
   # (`Playthrough::RustEngine.glance`). Nor have the request builders
@@ -93,7 +94,7 @@ module EngineVectors
   # the engine for every request (`Playthrough::Requests`).
   ENGINE_OWNED = %w[shuffle_connections physics grammar grammar_corpus slash_menu classifier_intent refusal
                     cascade classifier_request dialogue_requests ledger memory moment volition_request
-                    breakage speech_choices range carry].freeze
+                    breakage speech_choices range carry material].freeze
 
   # EVERY PORTION'S FILE CONTENTS that this module writes, keyed by file
   # name: all but the engine's own. Needs a database with the current schema

@@ -55,6 +55,9 @@ module EngineData
   def self.map(value) = Map.new(value)
   def self.maybe(value) = Maybe.new(value)
 
+  # TRUE OR FALSE, which no one Ruby class is.
+  BOOLEAN = :boolean
+
   CRITERIA = map(String)
 
   # EVERY FILE AND ITS SHAPE. A file on disk with no entry here, or an entry
@@ -74,7 +77,8 @@ module EngineData
       "parts" => map(map({ "count" => [ Integer ], "hold" => String, "bulk" => String, "fragility" => String })),
       "hold_penalty" => map(Integer),
       "pools" => map({ "count" => [ Integer ], "from" => [ String ] }),
-      "readable" => [ String ], "use_kinds" => map(String), "combustible" => [ String ]
+      "readable" => [ String ], "use_kinds" => map(String), "combustible" => [ String ],
+      "materials" => map({ "combustible" => maybe(BOOLEAN), "fragility" => maybe([ String ]), "names" => [ String ] })
     },
     "location/generator" => { "nobody_here" => String, "system_prompt" => String, "parameters_instructions" => String },
     "location/kind" => {
@@ -172,11 +176,15 @@ module EngineData
       end
     when Hash
       raise Error, "#{where}: expected a mapping, got #{value.class}" unless value.is_a?(Hash)
-      unless value.keys.sort == spec.keys.sort
+      # A key whose shape is a `Maybe` may be left out; every other is required.
+      required = spec.reject { |_, inner| inner.is_a?(Maybe) }.keys
+      unless (value.keys - spec.keys).empty? && (required - value.keys).empty?
         raise Error, "#{where}: keys #{value.keys.sort.inspect} are not #{spec.keys.sort.inspect}"
       end
 
       spec.each { |key, inner| check!(value[key], inner, "#{where}.#{key}") }
+    when BOOLEAN
+      raise Error, "#{where}: expected true or false, got #{value.inspect}" unless [ true, false ].include?(value)
     when Array
       raise Error, "#{where}: expected a list, got #{value.class}" unless value.is_a?(Array)
 

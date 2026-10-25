@@ -159,6 +159,15 @@ class Item < ApplicationRecord
   STURDY = "sturdy"
   FRAGILITIES = [ STURDY, "fragile", "brittle" ].freeze
 
+  # WHAT A THING IS MADE OF: the keys of `materials` in the engine's
+  # `data/item/kits.yml`, or nothing, which is unknown and plays exactly as a
+  # thing always has. NO ACT READS IT YET. A kit writes it from the table's
+  # `names` (`Item::Kit`), a seed file sets it by hand, and a game's copy
+  # brings it along; what a material settles about a thing's other columns is
+  # the engine's to check (`Engine::material_findings`, through
+  # `Story::Doctor`).
+  MATERIALS = EngineData.fetch("item/kits").fetch("materials").keys.freeze
+
   # HOW MANY CHARACTERS A THING CAN HAVE WRITTEN ON IT. What a player reads off
   # an object in one turn -- a note, a docket line, a sign, a page of an index --
   # and not a chapter. It is the cap `Item::InscriptionSchema` and
@@ -272,6 +281,7 @@ class Item < ApplicationRecord
   # rather than this guessing which of the four was meant.
   validates :bulk, presence: true, inclusion: { in: BULK.keys }
   validates :fragility, presence: true, inclusion: { in: FRAGILITIES }
+  validates :material, inclusion: { in: MATERIALS }, allow_nil: true
   validates :use_kind, inclusion: { in: USE_KINDS }
   validates :disposition, inclusion: { in: DISPOSITIONS }
   validates :tier, inclusion: { in: TIERS }

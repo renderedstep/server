@@ -97,7 +97,8 @@ portions `grammar`, `grammar_corpus`, `slash_menu`, `classifier_intent` and
 read off the engine (`Playthrough::RustEngine.glance`). Two of those have no
 Ruby builder left: the menu and the grammar's slash words and use lines were
 only ever read for the panels. `physics` (falls), `breakage`, `speech_choices`,
-`range` (a throw's range) and `carry` (what one more thing fits about a body)
+`range` (a throw's range), `carry` (what one more thing fits about a body)
+and `material` (what a thing is made of, and what the doctor reports of it)
 were written in the engine and never had a Ruby
 builder, so they are the engine's from the start. Nor do the
 request builders (`cascade`, `classifier_request`, `volition_request`,

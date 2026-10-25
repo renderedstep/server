@@ -611,6 +611,8 @@ class WorldSeed::Exporter
       document["kit_key"] = item.kit_key if item.kit_key.present?
       # AND WHETHER IT BREAKS, omitted when it is `Item::STURDY` on the same rule.
       document["fragility"] = item.fragility unless item.fragility == Item::STURDY
+      # WHAT IT IS MADE OF, omitted when it is none.
+      document["material"] = item.material if item.material.present?
       document["use_kind"] = item.use_kind unless item.use_kind == "ordinary"
       document["combustible"] = true if item.combustible?
       # WHERE IN THE ROOM IT IS LYING, on the same terms as a character's pair

@@ -310,6 +310,21 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_equal Item::STURDY, Item.in_story(reloaded).templates.find_by(name: "A Pewter Mug").fragility
   end
 
+  # WHAT A THING IS MADE OF, quiet about a thing of no known material.
+  test "exports a thing's material, and a world with one round-trips" do
+    create(:character, :protagonist, story: @story, fullname: "Isbet Marrow")
+    create(:item, character: nil, location: @opening, name: "A Clay Jar", material: "pottery", fragility: "brittle")
+    create(:item, character: nil, location: @opening, name: "A Pewter Mug")
+
+    items = WorldSeed::Exporter.new(@story).document["locations"].first["items"].index_by { |item| item["name"] }
+    assert_equal "pottery", items["A Clay Jar"]["material"]
+    assert_not items["A Pewter Mug"].key?("material"), "a thing of no known material should not say so"
+
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(WorldSeed::Exporter.new(@story).document))).load!
+    assert_equal "pottery", Item.in_story(reloaded).templates.find_by(name: "A Clay Jar").material
+    assert_nil Item.in_story(reloaded).templates.find_by(name: "A Pewter Mug").material
+  end
+
   # WHAT STANDS IN A ROOM AND WHAT LIES ON IT, a kit's rows among them, and back
   # again whole: a generated world exported is a world file (`rake game:export`).
   test "exports fixtures, what lies on them and a kit's rows, and a world with them round-trips" do

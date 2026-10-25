@@ -134,9 +134,17 @@ class Item::KitTest < ActiveSupport::TestCase
     desk = written.find { |item| item.name == "desk" }
     assert_equal desk, written.find { |item| item.name == "ledger" }.within
     assert_equal "The ledger, on the desk.", written.find { |item| item.name == "ledger" }.description
+    assert_equal "wood", desk.material
+    assert_equal "paper", written.find { |item| item.name == "ledger" }.material
 
     assert_empty Item::Kit.new(room.reload).furnish!
     assert_equal written.size, room.items.count
+  end
+
+  test "a name is written with the material whose names list it, and with none where no material does" do
+    assert_equal "metal", Item::Kit.material_of("knife")
+    assert_equal "food", Item::Kit.material_of("apple")
+    assert_nil Item::Kit.material_of("empty bottle")
   end
 
   test "a room with no word, and a place, are never furnished" do

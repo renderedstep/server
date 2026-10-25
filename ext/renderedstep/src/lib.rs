@@ -79,6 +79,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("write_paragraph", function!(write_paragraph, 5))?;
     module.define_module_function("noticed_findings", function!(noticed_findings, 2))?;
     module.define_module_function("carry_findings", function!(carry_findings, 2))?;
+    module.define_module_function("material_findings", function!(material_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
     module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
@@ -304,6 +305,23 @@ fn carry_findings(database: String, story: i64) -> Result<String, RubyError> {
             Err(error) => return failed(&error),
         };
         match engine.carry_findings(story) {
+            Ok(findings) => findings_json(&findings),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.material_findings(database, story_id)`: what the doctor
+/// reports about what the things of a story are made of
+/// (`Engine::material_findings`), in `noticed_findings`' shape. Reads only.
+fn material_findings(database: String, story: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.material_findings(story) {
             Ok(findings) => findings_json(&findings),
             Err(error) => failed(&error),
         }

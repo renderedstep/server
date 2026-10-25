@@ -437,6 +437,23 @@ class ItemTest < ActiveSupport::TestCase
   end
 
   # ------------------------------------------------------------------------
+  # WHAT IT IS MADE OF, which is `material` -- one of the engine's closed list,
+  # or nothing, which is unknown. No act reads it yet.
+
+  test "every row is of no known material unless the world says otherwise, and a copy keeps its material" do
+    assert_nil create(:item).material
+    assert_predicate build(:item, material: "paper"), :valid?
+    assert_equal %w[paper cloth rope wood leather glass pottery metal stone food], Item::MATERIALS
+    assert_not_includes Item::NOT_COPIED, "material"
+  end
+
+  test "a material outside the closed list is refused" do
+    item = build(:item, material: "porcelain")
+    assert_not_predicate item, :valid?
+    assert_includes item.errors[:material], "is not included in the list"
+  end
+
+  # ------------------------------------------------------------------------
   # FIXED IN PLACE, and what lies on it -- `tier`, `holds`, `within`, `how`.
 
   test "every row is a portable thing holding nothing unless the world says otherwise" do
