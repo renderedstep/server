@@ -248,7 +248,8 @@ class Playthrough::RefusalTest < ActiveSupport::TestCase
   # would be a refusal with nothing in it. `:dead`, `:concluded`, `:stopped`
   # and `:unplayable` come off the other entry points rather than `.for`: all
   # four are facts about the GAME rather than readings of the line, which is
-  # exactly why each has a constructor of its own.
+  # exactly why each has a constructor of its own. `:cannot_carry` is the one
+  # this class never builds: only the engine's carrying gate refuses that way.
   test "every kind the class declares is one of the three entry points can produce" do
     produced = [
       refuse(intent(:take, item: @index, also_named: @apron)),
@@ -261,7 +262,7 @@ class Playthrough::RefusalTest < ActiveSupport::TestCase
       Playthrough::Refusal.over(playthrough: stopped, typed: "look")
     ].map(&:kind)
 
-    assert_equal Playthrough::Refusal::KINDS.sort, produced.sort
+    assert_equal (Playthrough::Refusal::KINDS - %i[cannot_carry]).sort, produced.sort
   end
 
   # --- an act the game itself cannot perform ---------------------------------

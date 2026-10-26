@@ -1,0 +1,163 @@
+# THE WEIGHING HOUSE: the one world whose carrying is limited.
+#
+# `universe.carrying: limited` is what turns the rule on (the Rust engine's
+# `carry.rs` and the `carry` table in its `data/physics.yml`): a thing takes
+# hands by its bulk (light and handy one, heavy both), a bare body keeps two
+# light things about the person, and a body bears its strength over two, where
+# light weighs 0, handy 1 and heavy 4. No die is thrown over any of it. A world
+# with no `carrying` plays exactly as it did before.
+#
+# Nell Fisk is the weak body: strength 5, so she bears 2. She comes in with
+# the tally board, a handy thing, in one hand. She can hold one more handy
+# thing and no third (the load), keep two of the coins at the market cross
+# about her and no third while both hands are full (the hands), and cannot
+# lift the market slate at all (heavy, weight 4), to take or to throw. No room
+# holds more than three of the world's own things.
+#
+# Bram Hale is the strong body: strength 16. He holds the yoke, a heavy thing
+# that takes both hands, and a weigh ticket. A give is offered only of what
+# would fit the player, so he can hand her the ticket and never the yoke.
+# Nobody here has a pursuit, so nobody acts on volition's die and the room
+# stays as each step leaves it.
+#
+# Loaded offline by the sweep. No model call, no API key, no network.
+---
+format: 2
+universe:
+  physics: Ordinary physics. What is heavy is heavy for anybody.
+  technology: Beams, scales, brass weights and stamped tickets.
+  weapons: A porter's staff.
+  geographies: A market town on a river crossing.
+  civilizations: A town that weighs everything sold in it.
+  history: The weighing house was built when the market outgrew honest guesses.
+  economics: Goods by the stone, paid in copper and silver.
+  politics: The market warden, who keeps the weights true.
+  religion: A blessing of the scales on market day.
+  races:
+  - name: Townsfolk
+    description: |-
+      Market people, who can tell a short weight by the look of it.
+  carrying: limited
+story:
+  title: The Weighing House
+  genre: market town
+  start_time: '2026-10-25T08:00:00Z'
+  preface: |-
+    The warden's slate has to be carried to the scales, and nobody small has managed it yet.
+  summary: |-
+    Nell Fisk comes into the weighing house to tally the morning's loads.
+opening_scene:
+  location: The Weighing House
+  characters: [Nell Fisk, Bram Hale]
+  description: |-
+    The beam scale hangs over the floor, and Bram Hale leans on the yoke by the door.
+  summary: |-
+    The story opens in the weighing house, at the start of market.
+characters:
+- fullname: Nell Fisk
+  race: Townsfolk
+  stats:
+    level: 1
+    hit_die: 6
+    strength: 5
+    dexterity: 13
+    will: 12
+  nickname: Nell
+  age: 14
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: |-
+    The warden's runner, sent with the tally and never with anything heavy.
+  personality: Quick, and certain she can carry more than she can.
+  appearance: Ink on her fingers and a satchel strap with no satchel.
+  likes: A tally that comes out even
+  dislikes: Being told something is too heavy
+  fears: Dropping the warden's slate
+  items:
+  - name: tally board
+    description: |-
+      A board of notched tallies, one row for every cart.
+    properties: '{}'
+- fullname: Bram Hale
+  race: Townsfolk
+  location: The Weighing House
+  stats:
+    level: 2
+    hit_die: 8
+    strength: 16
+    dexterity: 10
+    will: 10
+  nickname: Bram
+  age: 41
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: |-
+    Has carried the market's loads on the same yoke for twenty years.
+  personality: Slow to speak, and kind about other people's arms.
+  appearance: Shoulders like a door, and a weigh ticket tucked in his cap.
+  likes: An even load
+  dislikes: A yoke set down in the wet
+  fears: His back going
+  items:
+  - name: yoke
+    description: |-
+      An oak carrying yoke, iron-shod at both ends, that takes both hands to lift.
+    bulk: heavy
+    properties: '{}'
+  - name: weigh ticket
+    description: |-
+      A stamped paper ticket for one load of wool.
+    bulk: light
+    properties: '{}'
+locations:
+- name: The Weighing House
+  detail_level: realized
+  opening: true
+  teaser: The town's weighing house, by the market cross.
+  description: |-
+    A stone room with a beam scale over the floor and the town's weights in racks along the wall.
+  lore: |-
+    The weights in the racks were cast from the town's first bell.
+  items:
+  - name: market slate
+    description: |-
+      The warden's slate, a slab of black stone ruled for the day's weights, and heavier than it looks.
+    bulk: heavy
+    properties: '{}'
+  - name: brass scoop
+    description: |-
+      A brass grain scoop with a turned handle.
+    properties: '{}'
+  - name: pewter jug
+    description: |-
+      A pewter jug of small beer for the porters.
+    properties: '{}'
+- name: The Market Cross
+  detail_level: realized
+  teaser: The market cross outside.
+  description: |-
+    Carts stand in a ring around the old cross, waiting to be weighed.
+  lore: |-
+    The cross marks where the first market was held.
+  items:
+  - name: copper coin
+    description: |-
+      A worn copper coin, the price of weighing one load.
+    bulk: light
+    properties: '{}'
+  - name: silver coin
+    description: |-
+      A clipped silver coin.
+    bulk: light
+    properties: '{}'
+  - name: tin token
+    description: |-
+      A tin token, good for one free weighing.
+    bulk: light
+    properties: '{}'
+connections:
+- between: [The Weighing House, The Market Cross]
+  distance: adjacent
+  travel_method: walking

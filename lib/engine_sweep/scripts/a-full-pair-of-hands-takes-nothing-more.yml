@@ -1,0 +1,73 @@
+# A FULL PAIR OF HANDS TAKES NOTHING MORE, AND A THING PUT DOWN MAKES ROOM.
+#
+# In a world whose carrying is limited, Nell Fisk (strength 5, so she bears 2)
+# comes in with the tally board and takes the scoop into her other hand. A
+# third handy thing is refused on its weight before anything is asked of her
+# hands: she already bears what she can. At the market cross two coins go
+# about her person, where a bare body keeps two light things without a hand,
+# and a third has nowhere to go, so it is refused on her hands. Each refusal
+# says why in the engine's words, names what is in her hands, and changes
+# nothing. Putting the scoop down frees a hand, and the token she could not
+# take a moment ago is taken.
+story: The Weighing House
+why: hands, storage and strength gate a take, and a drop makes room for the next one
+steps:
+- id: a-scoop-in-the-other-hand
+  type: /take brass scoop
+  why: a handy thing takes one hand, and the tally board has the other
+  expect:
+    changed: true
+    carrying: [tally board, brass scoop]
+
+- id: the-jug-is-more-than-she-can-bear
+  type: /take pewter jug
+  why: weight is asked before hands, and her load is already her strength over two
+  expect:
+    refused: true
+    offers: You are already carrying as much as you can bear at strength 5 (the tally board and the brass scoop). Put something down first.
+    carrying: [tally board, brass scoop]
+    here: [market slate, pewter jug]
+
+- id: out-to-the-market-cross
+  type: /move The Market Cross
+  why: the coins lie at the cross
+  expect:
+    location: The Market Cross (realized)
+    here: [copper coin, silver coin, tin token]
+
+- id: a-coin-about-her-person
+  type: /take copper coin
+  why: a light thing weighs nothing and goes about the person before a hand
+  expect:
+    changed: true
+    carrying: [tally board, brass scoop, copper coin]
+
+- id: and-a-second
+  type: /take silver coin
+  why: a bare body keeps two light things about the person
+  expect:
+    changed: true
+    carrying: [tally board, brass scoop, copper coin, silver coin]
+
+- id: the-token-has-nowhere-to-go
+  type: /take tin token
+  why: no room about her and no free hand, so the take is refused and names what she holds
+  expect:
+    refused: true
+    offers: "Your hands are full: you are holding the tally board and the brass scoop, and there is no room about you for the tin token. Put something down first."
+    carrying: [tally board, brass scoop, copper coin, silver coin]
+    here: [tin token]
+
+- id: the-scoop-put-down
+  type: /drop brass scoop
+  why: a drop frees the hand the scoop took
+  expect:
+    changed: true
+    carrying: [tally board, copper coin, silver coin]
+
+- id: now-the-token-fits
+  type: /take tin token
+  why: the take refused a moment ago fits in the hand the drop freed
+  expect:
+    changed: true
+    carrying: [tally board, copper coin, silver coin, tin token]

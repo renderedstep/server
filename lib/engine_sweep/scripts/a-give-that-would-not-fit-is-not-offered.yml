@@ -1,0 +1,27 @@
+# A GIVE THAT WOULD NOT FIT IS NOT OFFERED.
+#
+# Bram Hale holds the yoke, a heavy thing, and a weigh ticket. What a person
+# may give the player is the engine's closed list, and in a world whose
+# carrying is limited it holds only what would fit the player: Nell Fisk
+# (strength 5) cannot bear the yoke, so no give of it is on offer, and a
+# decision to give it is rejected as unavailable with nothing moved. The
+# ticket weighs nothing and goes about her person, so its give is applied.
+story: The Weighing House
+why: a person is offered no give of what the player could not hold
+steps:
+- id: the-yoke-is-not-offered
+  type: talk to Bram
+  npc_action: 'give:yoke'
+  why: the yoke weighs more than she bears, so the give is not among his choices
+  expect:
+    refused: true
+    offers: "The proposed action was rejected: it is unavailable."
+    carrying: [tally board]
+
+- id: the-ticket-is
+  type: talk to Bram
+  npc_action: 'give:weigh ticket'
+  why: a light thing fits about her person, so the give is offered and applied
+  expect:
+    changed: true
+    carrying: [tally board, weigh ticket]

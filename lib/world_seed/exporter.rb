@@ -343,6 +343,7 @@ class WorldSeed::Exporter
     # Omitted rather than written empty: a world that says nothing about
     # gravity has none.
     fields["gravity"] = universe.gravity if universe.gravity.present?
+    fields["carrying"] = universe.carrying if universe.carrying.present?
     fields.merge(
       "races" => universe.races.order(:name).map do |race|
         document = { "name" => race.name }

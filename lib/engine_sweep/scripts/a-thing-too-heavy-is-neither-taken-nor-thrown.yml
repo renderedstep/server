@@ -1,0 +1,37 @@
+# A THING TOO HEAVY TO LIFT IS NEITHER TAKEN NOR THROWN.
+#
+# The market slate is heavy, and a heavy thing weighs 4 against a body's
+# strength over two. Nell Fisk bears 2, so she cannot lift it at all. A take
+# is refused in the engine's words. A throw of the slate from the floor is a
+# lift and a throw in one act, so it is refused the same way before any die is
+# thrown: no check, no blow, nothing moved. Where nothing limits carrying the
+# same throw would be a strength check she fails; here it is not attempted.
+# The scoop, which weighs 1, is still hers to take beside the tally board.
+story: The Weighing House
+why: a thing a body cannot lift is refused, to take and to throw from the floor
+steps:
+- id: the-slate-will-not-come-up
+  type: /take market slate
+  why: its weight on its own is more than she bears
+  expect:
+    refused: true
+    offers: The market slate is heavy. At strength 5 you cannot lift something that heavy.
+    carrying: [tally board]
+    here: [market slate, brass scoop, pewter jug]
+
+- id: nor-be-thrown-from-the-floor
+  type: /throw market slate at Bram Hale
+  why: a throw of a thing lying here asks the same of her as a take, before any die
+  expect:
+    refused: true
+    offers: The market slate is heavy. At strength 5 you cannot lift something that heavy.
+    carrying: [tally board]
+    blows: 0
+    here: [market slate, brass scoop, pewter jug]
+
+- id: a-scoop-is-light-enough
+  type: /take brass scoop
+  why: the limit is the slate's weight, not the take
+  expect:
+    changed: true
+    carrying: [tally board, brass scoop]

@@ -52,6 +52,12 @@ class Universe < ApplicationRecord
   # nothing about gravity, and in one a fall costs nothing.
   GRAVITIES = %w[light ordinary heavy].freeze
 
+  # WHETHER WHAT A BODY CAN HOLD IS LIMITED HERE, as the engine reads it
+  # (renderedstep/engine `carry.rs`): `limited` is hands, storage and strength
+  # gating every pickup. Nil is a world that says nothing, and in one nothing
+  # limits what anybody holds.
+  CARRYINGS = %w[limited].freeze
+
   has_many :stories, dependent: :destroy
   has_many :races, dependent: :destroy
 
@@ -66,6 +72,7 @@ class Universe < ApplicationRecord
   validates :religion, presence: true
   validates :races, presence: true
   validates :gravity, inclusion: { in: GRAVITIES }, allow_nil: true
+  validates :carrying, inclusion: { in: CARRYINGS }, allow_nil: true
 
   # One "Name -- description" line per race. Characters are assigned from this
   # list, so prompts need to show what is on offer.
