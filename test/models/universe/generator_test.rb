@@ -126,4 +126,14 @@ class Universe::GeneratorTest < ActiveSupport::TestCase
 
     assert_raises(RubyLLM::Error) { generate_with(failing) }
   end
+
+  # A NEW WORLD LIMITS WHAT A BODY CAN HOLD, and no prompt says so: the column
+  # is the engine's to read, never a model's.
+  test "writes every new world with carrying limited, and tells no model" do
+    agent = fake_agent
+    universe = generate_with(agent)
+
+    assert_equal "limited", universe.carrying
+    assert_empty agent.prompts.grep(/carry|limited/i)
+  end
 end

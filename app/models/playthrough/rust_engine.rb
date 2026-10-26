@@ -211,7 +211,8 @@ module Playthrough::RustEngine
   # WHAT THE DOCTOR REPORTS ABOUT A STORY'S ARCS ASKING THE PLAYER TO HOLD A
   # THING NOTHING CAN PICK UP, in the engine's words (`Engine::carry_findings`),
   # in `noticed_findings`' shape. Whether a bulk can be held is the engine's
-  # carrying rule, so the check is; `Story::Doctor#uncarriable_quest_targets`
+  # carrying rule, so the check is, and so is whether somebody in a limited
+  # world starts out holding more than fits them; `Story::Doctor#carried_things`
   # is the one caller. Reads only.
   def self.carry_findings(story)
     raise unbuilt if extension.nil?

@@ -41,6 +41,12 @@ class Universe::Generator
     universe.politics = sanitize_string(societal["politics"])
     universe.religion = sanitize_string(societal["religion"])
 
+    # EVERY NEW WORLD LIMITS WHAT A BODY CAN HOLD. No model reads the column
+    # (it is in no `Universe::AUDIENCE_FIELDS`), so this changes no prompt. A
+    # stored world and a seed with no `carrying` key keep nil, and nothing
+    # limits them; a handmade world is switched on in its own seed file.
+    universe.carrying = Universe::CARRYINGS.first
+
     universe
   end
 
