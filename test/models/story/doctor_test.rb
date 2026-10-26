@@ -2447,6 +2447,27 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_includes codes, :character_without_desires
     assert_not_includes codes, :character_without_a_stat_block
   end
+
+  # --- carrying -------------------------------------------------------------
+
+  # SOMEBODY WHO STARTS OUT HOLDING MORE THAN FITS THEM, in a world that limits
+  # it. The rule is the engine's (`carry.rs`), so this asks the built
+  # extension; the same hands in a world that says nothing are not a finding.
+  test "a person holding more than fits them is warned about only where carrying is limited" do
+    story = healthy_story
+    porter = create(:character, story: story, fullname: "Jory Pask", strength: 6)
+    %w[anvil millstone ingot].each { |name| create(:item, :heavy, character: porter, name: name) }
+
+    assert_not_includes codes(story.reload), :starts_carrying_more_than_fits
+
+    story.universe.update!(carrying: "limited")
+    found = finding(story.reload, :starts_carrying_more_than_fits)
+
+    assert_not_nil found
+    assert_equal [ :warning, :manual, porter ], [ found.severity, found.remedy, found.subject ]
+    assert_includes found.message, "Jory"
+    assert Story::Doctor.new(story).playable?
+  end
 end
 
 # THE DOCTOR OVER ROWS THE ENGINE WROTE ON A WALK: the walk is played by the
