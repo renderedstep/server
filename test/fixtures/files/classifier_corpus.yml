@@ -204,6 +204,20 @@ positions:
     clothing, two ways out, and one person to receive the offers a dress line is
     most at risk of becoming.
 
+- id: court-desk
+  story: A Key on the Court Desk
+  room: The Causeway Court
+  why: >-
+    THE ONE POSITION WITH PLACES IN THE ROOM TO PUT THINGS AND WALK TO. A sweep
+    world (`lib/engine_sweep/worlds`), because no seeded world has carried
+    things and furniture to set them on in one room: an oilskin coat, a
+    hand-bell and a brass key in the hands; a desk and a windowsill to put
+    things on, a shut chest to put them in, a hearth and hooks to put them by
+    or walk to, and a lamp and a cap loose on the floor; two ways out, Mournwell
+    Lane and The Bell Tower, that a walk across the room could be mistaken for;
+    and one person, Ammon Brace ("Justicar Brace"), to walk to, back away from
+    and receive offers.
+
 lines:
 # ===========================================================================
 # ONE ACT: A MOVE THAT RESOLVES
@@ -4590,3 +4604,307 @@ lines:
   target: Offer wool scarf to Orrin Tace; they may refuse
   shape: use-offer
   why: THE CONTROL beside "button my coat"; a real offer of a carried thing stays the offer
+
+# ===========================================================================
+# PUTTING A THING SOMEWHERE, AND WALKING TO SOMETHING IN THE ROOM, WHICH
+# NOTHING YET OFFERS
+#
+# The game sets a thing down only at the player's feet and moves the player
+# only out through a way out, so a line that puts a carried thing on, in or by
+# another thing, or walks to, over to or back from something inside the room,
+# asks for an act nobody offered. The rule the open scuttle and the dress lines
+# follow applies: `use` with nothing, refused `:unresolved`. That refusal IS
+# the right answer today, and the one the owner's rule asks for: a line the
+# game does not understand is better refused than played as something else.
+# What these lines are at risk of is exactly that something else -- "put the
+# key on the desk" read as a drop to the floor, "go to the window" as leaving
+# by The Bell Tower -- because the reader learned "put/place/set/lay/leave + a
+# thing" as drop and "go to/walk over to + a noun" as move. A `drop` with
+# nothing or a `move` with nothing would also refuse, but as the wrong act; it
+# is not accepted, so the board keeps a refusal for the right reason apart from
+# one for the wrong one. When putting and walking within the room become
+# offered attempts, the lines that name a thing move to that attempt (`use` ->
+# a put of the key on the desk, an approach to the hearth); the lines that name
+# a thing not to hand stay where they are. The twins at the end are the same
+# verbs where today's acts DO answer -- a put-down with no place, a walk to a
+# way out -- and they must stay that act.
+# ===========================================================================
+- id: put-key-on-desk
+  position: court-desk
+  typed: put the brass key on the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    THE PLAIN PUT-ON, of a carried thing onto a top; a drop would leave the key
+    on the floor, not on the desk
+
+- id: put-key-in-chest
+  position: court-desk
+  typed: put the key in the chest
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: a put into a container; must not be read as dropping the key or as searching the chest
+
+- id: put-bell-place-windowsill
+  position: court-desk
+  typed: place the hand-bell on the windowsill
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: '"place" for put, onto the second top in the room'
+
+- id: put-bell-set-down-on-desk
+  position: court-desk
+  typed: set the hand-bell down on the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    "set down" with a place after it; "set the hand-bell down" alone is a drop,
+    and the place is what makes it a put
+
+- id: put-coat-lay-on-chest
+  position: court-desk
+  typed: lay the oilskin coat on the chest
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: '"lay" for put, onto a shut chest''s lid'
+
+- id: put-coat-hang-on-hooks
+  position: court-desk
+  typed: hang the coat on the hooks
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    a put onto the hooks, phrased as hanging. Nothing changes if it is
+    narrated, so it is not a wrong action, but it is not accepted either: the
+    player asked for the coat to be on the hooks
+
+- id: put-coat-hang-up
+  position: court-desk
+  typed: hang up my coat
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    the same hang with no place named, in the room with hooks in it; the twin
+    of the peg position's "hang up my coat", which is labelled the same
+
+- id: put-bell-back-on-windowsill
+  position: court-desk
+  typed: put the bell back on the windowsill
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: '"back on" a place; "put the bell" must not stop at a drop'
+
+- id: put-key-leave-on-desk
+  position: court-desk
+  typed: leave the key on the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: '"leave" for put; must not be read as a drop or as leaving the room'
+
+- id: put-key-drop-on-desk
+  position: court-desk
+  typed: drop the key on the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    THE DROP VERB WITH A PLACE. The player names where the key should land, and
+    today's drop would put it on the floor instead, so it is a put; a drop is
+    not accepted
+
+- id: put-coat-down-by-hearth
+  position: court-desk
+  typed: put the coat down by the hearth
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: a put beside a thing that holds nothing; a drop would put the coat wherever it fell
+
+- id: put-bell-set-down-next-to-lamp
+  position: court-desk
+  typed: set the bell down next to the lamp
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: a put beside a loose thing on the floor
+
+- id: put-key-hide-in-chest
+  position: court-desk
+  typed: hide the key in the chest
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: a put for a purpose; must not be read as a search or an opening of the chest
+
+- id: put-cap-not-carried-on-desk
+  position: court-desk
+  typed: put the cap on the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-put
+  why: >-
+    a put of a thing on the floor, not in the hands. It stays a refused `use`
+    once putting is offered, because nothing carried is named; it must not be
+    read as a take of the cap
+
+- id: walk-to-window
+  position: court-desk
+  typed: go to the window
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: >-
+    THE SHAPE MOST AT RISK: a walk to the window inside the room. No way out is
+    a window, so a move to The Bell Tower takes the player somewhere they did
+    not ask to go
+
+- id: walk-to-desk
+  position: court-desk
+  typed: go to the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: a walk to a piece of furniture; must not be read as leaving or as taking the desk
+
+- id: walk-to-hearth-walk-over
+  position: court-desk
+  typed: walk over to the hearth
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: '"walk over to" a thing in the room; must not be read as leaving by Mournwell Lane'
+
+- id: walk-to-brace-walk-over
+  position: court-desk
+  typed: walk over to Brace
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: a walk to a person; must not be read as talking to or attacking him
+
+- id: walk-to-brace-approach
+  position: court-desk
+  typed: approach Brace
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: the verb the act will be named for, of a person
+
+- id: walk-to-desk-approach
+  position: court-desk
+  typed: approach the desk
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: the verb the act will be named for, of a thing; must not be read as taking the desk
+
+- id: step-back-from-brace
+  position: court-desk
+  typed: step back from Brace
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-step-back
+  why: a step away from a person inside the room; must not be read as leaving
+
+- id: step-back-back-away-justicar
+  position: court-desk
+  typed: back away from Justicar Brace
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-step-back
+  why: the same, with Brace named by his nickname
+
+- id: step-back-move-away
+  position: court-desk
+  typed: move away from Brace
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-step-back
+  why: '"move" for a step back; the move verb must not carry the player out of the room'
+
+- id: walk-to-stand-by-door
+  position: court-desk
+  typed: stand by the door
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: >-
+    a walk to a place no list holds (the door is no way out's name), so `use`
+    with nothing; it must not leave by either way out. `other` is accepted too,
+    since nothing is reached for and nothing would change
+  also_accept:
+  - intent: other
+    target:
+
+- id: walk-to-stand-next-to-hearth
+  position: court-desk
+  typed: go and stand next to the hearth
+  intent: use
+  refusal: unresolved
+  shape: unresolved-use-approach
+  why: a walk to a thing phrased as standing beside it
+
+- id: drop-not-put-key-down
+  position: court-desk
+  typed: put the key down
+  intent: drop
+  target: brass key
+  shape: drop
+  why: THE TWIN of the put lines with no place named; a put-down at the feet stays a drop
+
+- id: drop-not-put-bell-set-down
+  position: court-desk
+  typed: set down the hand-bell
+  intent: drop
+  target: hand-bell
+  shape: drop
+  why: THE TWIN of "set the hand-bell down on the desk" without the desk; it stays a drop
+
+- id: drop-not-put-coat
+  position: court-desk
+  typed: drop the coat
+  intent: drop
+  target: oilskin coat
+  shape: drop
+  why: THE CONTROL beside the put lines; a plain drop of a carried thing stays a drop
+
+- id: take-not-put-cap
+  position: court-desk
+  typed: pick up the cap
+  intent: take
+  target: cap
+  shape: take
+  why: THE CONTROL beside "put the cap on the desk"; a pick-up of the cap stays a take
+
+- id: use-not-put-key-offer
+  position: court-desk
+  typed: give the key to Brace
+  intent: use
+  target: Offer brass key to Ammon Brace; they may refuse
+  shape: use-offer
+  why: THE CONTROL beside the put lines; a real offer of a carried thing stays the offer
+
+- id: move-not-approach-bell-tower
+  position: court-desk
+  typed: go to The Bell Tower
+  intent: move
+  target: The Bell Tower
+  shape: move
+  why: THE TWIN of "go to the window"; a "go to" naming a way out still leaves by it
+
+- id: move-not-approach-lane-walk-over
+  position: court-desk
+  typed: walk over to Mournwell Lane
+  intent: move
+  target: Mournwell Lane
+  shape: move
+  why: THE TWIN of "walk over to the hearth"; a "walk over to" naming a way out still leaves by it
