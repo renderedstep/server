@@ -713,7 +713,9 @@ flowchart TD
         CT{"does a word of the line name a throw?"}
         C1 --> CT
         CT -->|"yes: resolved_by = typed_model_throw<br/>not asked: refused, pointed at /throw"| R
-        CT -->|"no"| CS["MODEL CALL, typed questions, not a chat<br/>the LOCAL POINTER MODEL, a sidecar on this machine<br/>at POINTER_CLASSIFIER_URL, no key, no cost<br/>6-11 Choice/Noul questions built from<br/>THIS position's own sets"]
+        CT -->|"no"| CD{"does the line put a thing on or take one off?"}
+        CD -->|"yes: resolved_by = typed_model_dress<br/>not asked: refused, pointed at /wear and /remove"| R
+        CD -->|"no"| CS["MODEL CALL, typed questions, not a chat<br/>the LOCAL POINTER MODEL, a sidecar on this machine<br/>at POINTER_CLASSIFIER_URL, no key, no cost<br/>6-11 Choice/Noul questions built from<br/>THIS position's own sets"]
         CS --> CK{"did it answer, with answers the engine can compose?"}
         CK -->|"no: resolved_by = typed_model_down<br/>(not set up, loading, down, bad body)<br/>refused, pointed at the slash commands<br/>NO OTHER READER IS ASKED"| R
         CK -->|"yes"| CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15?"}
@@ -806,7 +808,7 @@ flowchart TD
     class CS,M3,M4,M6,T1,T2,P3,I2,N2,A3 llm
     class W0,C1,C3,G1,M1,M3N,M3A,M3B,M3C,M5,M7,M8,TE,T5,T6,T7,P2,I1,I3,N3,X1,V0,A0,A2 rec
     class N1 gap
-    class IN,SSE,OUT,OUT2,D,R,G0,G2,P1,A1,CT,CK,CG io
+    class IN,SSE,OUT,OUT2,D,R,G0,G2,P1,A1,CT,CD,CK,CG io
 ```
 
 **The teal box above the arc is everybody else in the room, and it is teal for

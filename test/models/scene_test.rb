@@ -272,7 +272,7 @@ class SceneTest < ActiveSupport::TestCase
   # One key puts a second model reader in front of the model call.
   test "the readers that write a turn are the ones that read a typed line" do
     assert_equal %w[grammar model typed_model typed_model_escalated typed_model_unavailable
-                    typed_model_unsure typed_model_throw typed_model_down engine_leave],
+                    typed_model_unsure typed_model_throw typed_model_dress typed_model_down engine_leave],
                  Scene::TURN_READERS
     assert_not_includes Scene::TURN_READERS, "engine_view"
   end

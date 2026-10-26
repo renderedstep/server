@@ -31,7 +31,8 @@
 # model is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
 # 0.15) is played on its own reading and recorded `typed_model_unsure`, a
 # target read as absent is refused with what is here, and a free throw is
-# never asked and is recorded `typed_model_throw`. No chat model is asked, so
+# never asked and is recorded `typed_model_throw`, as a free put-on or
+# take-off is recorded `typed_model_dress`. No chat model is asked, so
 # a run needs no key and spends nothing.
 #
 # `.escalated_reading` is the Ruby restatement of that composition the pointer
