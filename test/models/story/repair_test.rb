@@ -193,7 +193,7 @@ class Story::RepairTest < ActiveSupport::TestCase
 
     assert_empty repair.plan
     assert_empty repair.deferred
-    assert_empty repair.manual
+    assert_empty but_the_layouts(repair.manual)
   end
   # THE ANSWER IS ON RECORD IN A CHECKED-IN FILE, which is what makes putting a
   # displaced character back a `safe` repair rather than an invention -- the
@@ -369,7 +369,7 @@ class Story::RepairTest < ActiveSupport::TestCase
 
     assert_predicate result, :repaired?
     assert_predicate perrin.reload, :absent?
-    assert_predicate Story::Doctor.new(story), :healthy?
+    assert_empty but_the_layouts(Story::Doctor.new(story).findings)
   end
 
   # THE MARKER WINS over a whereabouts, the same way the file wins over a moved
@@ -496,7 +496,7 @@ class Story::RepairTest < ActiveSupport::TestCase
     assert_equal "The Supply Closet", closet.reload.name
     assert_equal closet, apron.reload.location, "what was on the row a re-seed made moved rather than went with it"
     assert_equal [ "The Supply Closet", "The Long Hallway" ], story.opening_location.exits.reload.pluck(:name)
-    assert_predicate Story::Doctor.new(story.reload), :healthy?
+    assert_empty but_the_layouts(Story::Doctor.new(story.reload).findings)
   end
 
   # A CELL OF THE GHOST'S FLOOR IS NOT A CELL OF THE SURVIVOR'S, and nothing on
@@ -531,7 +531,7 @@ class Story::RepairTest < ActiveSupport::TestCase
     repair = Story::Repair.new(story)
 
     assert_empty repair.plan
-    assert_equal [ :duplicate_locations ], repair.manual.map(&:code)
+    assert_equal [ :duplicate_locations ], but_the_layouts(repair.manual).map(&:code)
   end
 
   test "removes the leftover of a renamed item" do
@@ -545,7 +545,7 @@ class Story::RepairTest < ActiveSupport::TestCase
     assert_predicate repair.apply!.sole, :repaired?
     assert_nil Item.find_by(id: leftover.id)
     assert_equal "ward stamp", stamp.reload.name
-    assert_predicate Story::Doctor.new(story), :healthy?
+    assert_empty but_the_layouts(Story::Doctor.new(story).findings)
   end
 
   test "closes the doorway a re-seed wrote back over the arrangement the world had moved to" do
@@ -706,6 +706,11 @@ class Story::RepairTest < ActiveSupport::TestCase
   end
 
   private
+
+  # A doctor's findings and a repair's manual list less `room_without_a_layout`:
+  # no room of these stories has a box, so every one is counted, and nothing
+  # here is about that (`Story::DoctorTest` counts them).
+  def but_the_layouts(findings) = findings.reject { |finding| finding.code == :room_without_a_layout }
 
   # Both directions of one doorway, the way every writer in the app makes one.
   def join(from, to)

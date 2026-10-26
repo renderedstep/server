@@ -1,12 +1,36 @@
 {
   "script": "a-foe-demands-and-still-strikes",
   "doctor": {
-    "headline": "playable, 1 warning",
+    "headline": "playable, 5 warnings",
     "findings": [
       [
         "no_arc",
         "warning",
         "this story has no arc, so no playthrough of it can ever reach an ending: there is no quest for a beat to belong to and no outcome to select. A world file's `quests:` block is where one is written",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Gate Passage\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Porters' Lodge\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Toll Booth\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Back Stair\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ]
     ]

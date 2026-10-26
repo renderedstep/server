@@ -116,11 +116,17 @@ class SeededWorldsTest < ActiveSupport::TestCase
   # Perrin Lasco is nowhere on purpose and nothing said so, so the doctor
   # reported the world working exactly as written. `absent: true` in the file
   # is what says it.
+  #
+  # BUT FOR ITS ROOMS WITH NO LAYOUT: no room of a handmade world has a box,
+  # so the doctor counts each one (`room_without_a_layout`, a warning that
+  # stops nothing) until a world is given one.
   test "every checked-in world is healthy, with nothing for the doctor to report" do
     WorldSeed::Loader.load_all(io: nil).each do |story|
       doctor = Story::Doctor.new(story)
+      findings = doctor.findings.reject { |finding| finding.code == :room_without_a_layout }
 
-      assert_predicate doctor, :healthy?, "#{story.title}: #{doctor.findings.map(&:message).join("; ")}"
+      assert_predicate doctor, :playable?, story.title
+      assert_empty findings, "#{story.title}: #{findings.map(&:message).join("; ")}"
     end
   end
 

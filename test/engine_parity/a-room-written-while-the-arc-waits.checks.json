@@ -1,8 +1,33 @@
 {
   "script": "a-room-written-while-the-arc-waits",
   "doctor": {
-    "headline": "healthy",
-    "findings": []
+    "headline": "playable, 4 warnings",
+    "findings": [
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Chapter Hall\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Gatehouse\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Lower Cloister\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"the Bell Tower\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
   },
   "audit": {
     "headline": "5 scenes, nothing to report",

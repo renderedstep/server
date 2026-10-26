@@ -26,6 +26,24 @@
         "fatal",
         "\"The Silent Bell\" has 3 beat(s) and not one of them names a row this world contains, so there is nothing in it to walk toward. The engine places an unbound target itself once 3 room(s) have been written (`Quest::Deadline`); a world past that with nothing bound is one that has stopped growing",
         "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Chapter Hall\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Gatehouse\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Lower Cloister\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
       ]
     ]
   },

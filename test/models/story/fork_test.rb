@@ -56,8 +56,9 @@ class Story::ForkTest < ActiveSupport::TestCase
     end
 
     # BUT FOR THE ARC, which this fixture world does not have: a world with
-    # none is warned that nothing can end it, fork or original alike.
-    findings = Story::Doctor.new(forked).findings.reject { |finding| finding.code == :no_arc }
+    # none is warned that nothing can end it, fork or original alike. And but
+    # for its rooms with no layout, which no room of it has, fork or original.
+    findings = Story::Doctor.new(forked).findings.reject { |finding| %i[no_arc room_without_a_layout].include?(finding.code) }
     assert_empty findings, "the fork is not healthy: #{findings.map(&:message).join("; ")}"
   end
 

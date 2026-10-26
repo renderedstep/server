@@ -1,8 +1,27 @@
 {
   "script": "the-salt-assizes-to-an-ending",
   "doctor": {
-    "headline": "healthy",
-    "findings": []
+    "headline": "playable, 3 warnings",
+    "findings": [
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Causeway Court\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Tide Post\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Vestry Hulk\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
   },
   "audit": {
     "headline": "1 scenes, nothing to report",

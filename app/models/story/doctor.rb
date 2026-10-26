@@ -81,7 +81,8 @@ class Story::Doctor
       *event_stream,
       *noticed_records,
       *material_records,
-      *worn_things
+      *worn_things,
+      *layouts
     ]
   end
 
@@ -3049,6 +3050,26 @@ class Story::Doctor
 
     [ finding(:worn_things_unchecked, :warning,
               "this story has things that can be worn, and they could not be checked: #{e.message}", :manual) ]
+  end
+
+  # ------------------------------------------------------------------------
+  # A PLACE WITH NO LAYOUT: neither a box nor a footprint, so nobody can be
+  # given a spot in it and what is within arm's length there cannot be
+  # measured. The reach rule is the ENGINE'S (`reach.rs`), so the check is
+  # too -- `Engine::layout_findings`, asked through
+  # `Playthrough::RustEngine.layout_findings`. One code,
+  # `room_without_a_layout`, a warning and `manual`: no turn reads a spot
+  # yet, so it counts what a layout would have to cover and stops nothing.
+  def layouts
+    Playthrough::RustEngine.layout_findings(story).map do |found|
+      finding(found.fetch("code").to_sym, found.fetch("severity").to_sym, found.fetch("message"),
+              found.fetch("remedy").to_sym, subject: Location.find_by(id: found.fetch("subject").fetch("id")))
+    end
+  rescue Playthrough::RustEngine::EngineError => e
+    raise unless e.kind == "not_built"
+
+    [ finding(:room_without_a_layout, :warning,
+              "this story's places could not be checked for a layout: #{e.message}", :manual) ]
   end
 
   # The engine names a finding's row by table and id; the repair acts on it.

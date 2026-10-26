@@ -248,6 +248,19 @@ module Playthrough::RustEngine
     answer["findings"]
   end
 
+  # WHAT THE DOCTOR REPORTS ABOUT A STORY'S PLACES THAT HAVE NO LAYOUT
+  # (`Engine::layout_findings`), in `.noticed_findings`' shape. What is within
+  # reach is the engine's rule, so where it cannot be measured is its finding;
+  # `Story::Doctor#layouts` is the one caller. Reads only.
+  def self.layout_findings(story)
+    raise unbuilt if extension.nil?
+
+    answer = JSON.parse(reading { |file| extension.layout_findings(file, story.id) })
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["findings"]
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 

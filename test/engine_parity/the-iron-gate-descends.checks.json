@@ -1,8 +1,69 @@
 {
   "script": "the-iron-gate-descends",
   "doctor": {
-    "headline": "healthy",
-    "findings": []
+    "headline": "playable, 10 warnings",
+    "findings": [
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Iron Gate Chamber\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"tunnel upward\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"obsidian maw\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Blackfang Tunnel\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"surface\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Spire’s Rest\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Hollow’s End\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Ashen Spire\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Rust Market\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"black pines\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
   },
   "audit": {
     "headline": "1 scenes, nothing to report",

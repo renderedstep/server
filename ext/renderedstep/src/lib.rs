@@ -81,6 +81,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("carry_findings", function!(carry_findings, 2))?;
     module.define_module_function("material_findings", function!(material_findings, 2))?;
     module.define_module_function("wear_findings", function!(wear_findings, 2))?;
+    module.define_module_function("layout_findings", function!(layout_findings, 2))?;
     module.define_module_function("start", function!(start, 3))?;
     module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
@@ -341,6 +342,23 @@ fn wear_findings(database: String, story: i64) -> Result<String, RubyError> {
             Err(error) => return failed(&error),
         };
         match engine.wear_findings(story) {
+            Ok(findings) => findings_json(&findings),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.layout_findings(database, story_id)`: what the doctor
+/// reports about the places of a story that have no layout
+/// (`Engine::layout_findings`), in `noticed_findings`' shape. Reads only.
+fn layout_findings(database: String, story: i64) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.layout_findings(story) {
             Ok(findings) => findings_json(&findings),
             Err(error) => failed(&error),
         }
