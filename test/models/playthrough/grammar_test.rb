@@ -292,10 +292,11 @@ class Playthrough::GrammarTest < ActiveSupport::TestCase
   # Pinning only the literal would let the two drift apart silently.
   test "the closed list of readers is the one every consumer reads" do
     assert_equal %w[grammar model typed_model typed_model_escalated typed_model_unavailable
-                    typed_model_unsure typed_model_throw typed_model_down engine_leave engine_view],
+                    typed_model_unsure typed_model_throw typed_model_dress typed_model_down engine_leave
+                    engine_view],
                  Playthrough::Grammar::PATHS
     assert_equal %w[grammar model typed_model typed_model_escalated typed_model_unavailable
-                    typed_model_unsure typed_model_throw typed_model_down engine_leave],
+                    typed_model_unsure typed_model_throw typed_model_dress typed_model_down engine_leave],
                  Scene::TURN_READERS
     assert_equal Playthrough::Classifier::PATHS,
                  Playthrough::Grammar::PATHS - %w[grammar engine_leave engine_view]

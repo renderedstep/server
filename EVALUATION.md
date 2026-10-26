@@ -381,6 +381,8 @@ reading on the bench is the reading a turn makes:
   absent is refused with what is here;
 * a free throw is never asked and is refused with the pointer to `/throw`,
   `typed_model_throw`;
+* a free put-on or take-off is never asked and is refused with the pointer to
+  `/wear` and `/remove`, `typed_model_dress`;
 * a reader that does not answer is `typed_model_down` in play, and a FAILURE on
   the bench rather than a reading, so an outage is never scored as misses.
 

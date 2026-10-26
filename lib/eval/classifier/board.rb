@@ -228,8 +228,10 @@ class Eval::Classifier::Board
       # The local reader escalates nothing: it plays what it is unsure of.
       if (counts.keys & Playthrough::Classifier::LOCAL_PATHS).any?
         unsure = counts["typed_model_unsure"].to_i
-        return format("%.3f unsure, played as read (%d of %d), %d throws pointed at /throw",
-                      unsure.fdiv(total), unsure, total, counts["typed_model_throw"].to_i)
+        return format("%.3f unsure, played as read (%d of %d), %d throws pointed at /throw, " \
+                      "%d dress lines pointed at /wear and /remove",
+                      unsure.fdiv(total), unsure, total, counts["typed_model_throw"].to_i,
+                      counts["typed_model_dress"].to_i)
       end
 
       escalated = counts["typed_model_escalated"].to_i

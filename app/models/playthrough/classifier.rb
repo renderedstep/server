@@ -186,7 +186,7 @@ class Playthrough::Classifier
   #   typed_model_unavailable   the cascade was tried and could not be believed;
   #                             the model call answered it
   #
-  # AND THE THREE ONLY THE ENGINE WRITES, where the classifier has its local
+  # AND THE FOUR ONLY THE ENGINE WRITES, where the classifier has its local
   # reader (`PointerClassifierAgent`, the engine's `classifier::read_locally`),
   # which is every turn the game plays. This class is the frozen Ruby
   # reference and produces none of them; no model call is made on any:
@@ -195,6 +195,8 @@ class Playthrough::Classifier
   #                             was played on its own reading all the same
   #   typed_model_throw         a free-typed throw, not read and pointed at
   #                             `/throw`
+  #   typed_model_dress         a free-typed put-on or take-off, not read and
+  #                             pointed at `/wear` and `/remove`
   #   typed_model_down          the local reader is down or not set up, and the
   #                             line was refused with a pointer to the slash
   #                             commands
@@ -205,7 +207,7 @@ class Playthrough::Classifier
   # Both are otherwise silent, because the game keeps playing either way. A
   # run of `typed_model_down` is the local reader's outage, and is not silent:
   # the player is refused.
-  LOCAL_PATHS = %w[typed_model_unsure typed_model_throw typed_model_down].freeze
+  LOCAL_PATHS = %w[typed_model_unsure typed_model_throw typed_model_dress typed_model_down].freeze
   PATHS = (%w[model typed_model typed_model_escalated typed_model_unavailable] + LOCAL_PATHS).freeze
 
   # The paths on which the model call actually happened, so a caller that has to
