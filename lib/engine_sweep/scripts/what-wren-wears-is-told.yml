@@ -1,0 +1,117 @@
+---
+story: The Cloakroom at the Ferry
+why: >-
+  What the player wears is told from the records, never from prose: the
+  narrator's moment says it on a line of its own after what the player
+  carries, head to foot, and a person spoken to is told it beside what they
+  can see of the player. Neither line is there while the player wears
+  nothing, which is why no stored request moved when it was added. A worn
+  thing is not listed as carried as well.
+steps:
+- id: the-ferryman-sees-the-coat
+  why: >-
+    Wren comes in wearing her oilskin coat. Abel is told it beside what he
+    can see of her (the walk's records hold his whole request), and the
+    exchange's narrator is told it in the moment.
+  type: "/talk Abel"
+  browser:
+    token: coat
+    replies:
+    - purpose: character
+      content:
+        pre_thought: Another one off the morning crossing.
+        pre_feeling: tired
+        action: Abel nods at the bench.
+        post_thought: She can wait like the rest.
+        post_feeling: indifferent
+        inner_resolution: I will let her sit.
+        engine_action: none
+    - purpose: interaction-narration
+      content: Abel nods you toward the bench without a word.
+      prompt_includes:
+      - "The player is carrying: linen shirt, wool scarf.\n\nThe player is wearing: oilskin coat."
+  expect:
+    changed: true
+- id: the-narrator-is-told-the-coat
+  why: A turn the narrator tells is told the same line.
+  type: "/examine hand-bell"
+  browser:
+    token: bell
+    replies:
+    - purpose: narration
+      content: The hand-bell's brass is green at the lip.
+      prompt_includes:
+      - "The player is carrying: linen shirt, wool scarf.\n\nThe player is wearing: oilskin coat."
+  expect:
+    changed: true
+- id: the-coat-comes-off
+  type: "/remove oilskin coat"
+  expect:
+    changed: true
+    change: You take off the oilskin coat. It stays in your hands.
+- id: wearing-nothing-is-not-told
+  why: >-
+    With nothing worn the line is gone and the coat is carried again, in the
+    words every turn was told before anything could be worn.
+  type: "/examine hand-bell"
+  browser:
+    token: bare
+    replies:
+    - purpose: narration
+      content: The bell hangs quiet on its hook.
+      prompt_includes:
+      - 'The player is carrying: oilskin coat, linen shirt, wool scarf.'
+      prompt_excludes:
+      - wearing
+  expect:
+    changed: true
+- id: the-shirt-goes-on
+  type: "/wear linen shirt"
+  expect:
+    changed: true
+    change: You put on the linen shirt.
+- id: the-coat-goes-on-over-it
+  type: "/wear oilskin coat"
+  expect:
+    changed: true
+    change: You put on the oilskin coat.
+- id: the-scarf-goes-on
+  type: "/wear wool scarf"
+  expect:
+    changed: true
+    change: You put on the wool scarf.
+- id: layers-are-told-head-to-foot
+  why: >-
+    Three things worn, told head to foot: the scarf at the neck, the coat
+    over the shirt. Nothing is left carried.
+  type: "/examine hand-bell"
+  browser:
+    token: layers
+    replies:
+    - purpose: narration
+      content: You turn the bell over in your hands.
+      prompt_includes:
+      - "The player is carrying: nothing.\n\nThe player is wearing: wool scarf, oilskin coat, linen shirt."
+  expect:
+    changed: true
+- id: the-ferryman-sees-the-layers
+  why: Abel is told all three, in the same order.
+  type: "/talk Abel"
+  browser:
+    token: layers-talk
+    replies:
+    - purpose: character
+      content:
+        pre_thought: She has bundled up for the crossing.
+        pre_feeling: approving
+        action: Abel says, "You'll want all of that on the water."
+        post_thought: At least she listens.
+        post_feeling: content
+        inner_resolution: I will tell her when the ferry docks.
+        engine_action: none
+    - purpose: interaction-narration
+      content: Abel looks you over and grunts, "You'll want all of that on the water."
+      prompt_includes:
+      - 'The player is wearing: wool scarf, oilskin coat, linen shirt.'
+  expect:
+    changed: true
