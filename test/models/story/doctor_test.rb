@@ -353,6 +353,21 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_match(/no longer exists/, finding(story, :instance_without_a_template).message)
   end
 
+  # THE PIECES OF A THING TORN OR SMASHED have no template by design: the
+  # engine begins them in the game's own layer and says what they are pieces
+  # of (`pieces_of`).
+  test "does not report the pieces of a divided thing as a copy of nothing" do
+    story = healthy_story
+    room = story.locations.first
+    create(:item, :lying, location: room, name: "letter")
+    played = create(:playthrough, story: story, character: story.protagonist, current_location: room)
+    letter = played.items_lying_in(room).sole
+    letter.update!(disposition: "divided", location: nil, x: nil, y: nil)
+    create(:item, :carried, playthrough: played, name: "scraps of the letter", properties: { "pieces_of" => letter.id }.to_json)
+
+    assert_not_includes codes(story), :instance_without_a_template
+  end
+
   # EVERY GAME HOLDS ITS OWN COPY OF WHAT IS LYING IN THE ROOMS IT HAS WALKED
   # THROUGH, and a database older than the layers holds none of them.
   test "reports a playthrough standing in a room it has no copy of" do

@@ -1235,7 +1235,7 @@ class Story::Doctor
   # that no longer exists cannot be re-linked, and guessing by name is the one
   # thing every backfill in this app refuses to do.
   def copies_without_a_template(items)
-    orphans = items.select { |item| item.instance? && item.template_id.nil? }
+    orphans = items.select { |item| item.instance? && item.template_id.nil? && item.get_property("pieces_of").nil? }
     return [] if orphans.empty?
 
     [ finding(:instance_without_a_template, :warning,

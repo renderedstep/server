@@ -221,10 +221,14 @@ class Story::Audit
   # `destruction_invented` is `#check_break` from the other side: the prose
   # destroys a thing and the records still have it whole. See
   # `#check_destruction`.
+  #
+  # `division_untold` is `break_untold` for a tear or a smash: the records say
+  # the turn divided a thing and its receipt does not say so. See
+  # `#check_division`.
   CONTRADICTIONS = %i[unreachable_transition item_not_held unrecorded_departure unrecorded_arrival
                       take_denied pickup_invented inscription_misquoted
                       dead_shown_alive carried_shown_lying handover_invented
-                      break_untold destruction_invented].freeze
+                      break_untold destruction_invented division_untold].freeze
 
 
   # THE PROSE BROKE A RULE THE APP STATES, provable from the row itself and one
@@ -548,6 +552,8 @@ class Story::Audit
       # THE TURNS THAT BROKE SOMETHING, and nothing else: a turn that broke
       # nothing has no break to leave untold.
       scenes.count { |scene| broke_on?(scene) }
+    when :division_untold
+      scenes.count { |scene| divided_on?(scene) }
     when :dead_shown_alive, :carried_shown_lying, :handover_invented
       # THE SCENES WHOSE RECEIPT STATES WHAT THIS CHECK READS, and nothing else:
       # a receipt with nobody dead on it cannot be contradicted by prose about
@@ -628,6 +634,7 @@ class Story::Audit
       check_inscription(scene)
       check_receipt(scene)
       check_break(scene)
+      check_division(scene)
       check_destruction(scene) if available_checks.include?(:destruction_invented)
     end
 
@@ -1468,6 +1475,46 @@ class Story::Audit
   end
 
   # ------------------------------------------------------------------------
+  # THE ENGINE TORE OR SMASHED A THING AND DID NOT TELL THE WRITER.
+  #
+  # `#check_break` for the two acts that divide a thing on purpose. A `tear`
+  # or a `smash` that comes off spends the thing as `divided` and begins its
+  # pieces where it was (the Rust engine's `turn/divide.rs`); the fact the
+  # writer is handed then says only that it was attempted and that it worked,
+  # and the engine's words for that success say the thing "is gone", which its
+  # words for a failure never do (`Story::Audit::Receipt#divided?`). So, as with a break, two records and no prose: the
+  # thing this scene acted on is divided, this is the last tear or smash of it,
+  # and its receipt does not say it is gone.
+  #
+  # A thing that held together is still `intact`, so a failed attempt has no
+  # division to leave untold. A divided thing reads as spent to
+  # `#check_destruction` like any other that is not `intact`.
+  # ------------------------------------------------------------------------
+  DIVIDING_ACTIONS = %w[tear smash].freeze
+
+  def check_division(scene)
+    return unless divided_on?(scene)
+
+    item = scene.acted_on_record
+    receipt = scene.recorded_engine_fact
+    if receipt.blank?
+      return unjudge(:division_untold, scene,
+                     "the #{item.name} was #{scene.recorded_action == "smash" ? "smashed" : "torn apart"} on this turn " \
+                     "and the scene has no engine receipt to read")
+    end
+    return if Receipt.new(receipt).divided?
+
+    flag(:division_untold, scene,
+         "the #{item.name} was divided on this turn, and the fact the writer was handed does not say so",
+         item: item.name,
+         "the records say" => "the #{item.name} is divided",
+         "the receipt says" => receipt.truncate(220),
+         typed: scene.typed.presence,
+         where: scene.location&.name,
+         at: scene.story_timestamp)
+  end
+
+  # ------------------------------------------------------------------------
   # THE PROSE DESTROYS A THING THE RECORDS STILL HAVE WHOLE.
   #
   # The case behind it: "Tear up the closet writ" was read as a take of the
@@ -1536,6 +1583,15 @@ class Story::Audit
     return false unless item.is_a?(Item) && item.broken? && BREAKING_ACTIONS.include?(scene.recorded_action)
 
     last_breaking_act(item) == scene
+  end
+
+  # Whether this scene is the turn that divided the thing it acted on: the last
+  # tear or smash of a thing that is divided now. Every earlier one held.
+  def divided_on?(scene)
+    item = scene.acted_on_record
+    return false unless item.is_a?(Item) && item.divided? && DIVIDING_ACTIONS.include?(scene.recorded_action)
+
+    all_scenes.reverse.find { |other| other.acted_on_record == item && DIVIDING_ACTIONS.include?(other.recorded_action) } == scene
   end
 
   def last_breaking_act(item)

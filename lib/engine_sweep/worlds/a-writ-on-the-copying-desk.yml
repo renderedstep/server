@@ -1,0 +1,131 @@
+# THINGS THAT BREAK APART, AND ONE THE STORY STILL NEEDS.
+#
+# Built for `divide` in the engine: every thing here says what it is made of,
+# so the room offers a `tear` for the paper and the cloth and a `smash` for
+# the glass and the pottery, and nothing for the iron key. Tamsin carries a
+# letter to tear, a tinderbox to burn what is left of it, a clay pot and the
+# iron key; the room holds the writ, an apron and a glass jar, inside the
+# cap on what one room may hold.
+#
+# THE BLANK WRIT IS WHAT THE ARC ASKS TAMSIN TO HOLD, so while that step is
+# open it is neither torn nor burned (the beat guard): a line asking for
+# either is refused in the engine's words until arcs can branch on a thing
+# being gone. A second step, the Archive, keeps the arc open after the writ
+# is in hand.
+#
+# Nothing here is written by a model, and nobody else is in the room, so no
+# step of a walk here asks one for anything but the narration it replays.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Pens, ink, lamps and tinderboxes.
+  weapons: Nothing anybody carries.
+  geographies: A copying house and its archive.
+  civilizations: A town that keeps its records by hand.
+  history: The copying house has copied every deed in the town.
+  economics: A fee a page.
+  politics: The registrar signs what the copyists write.
+  religion: The town keeps a quiet calendar.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the town.
+story:
+  title: A Writ On The Copying Desk
+  genre: town adventure
+  start_time: '2026-10-25T09:00:00Z'
+  preface: The registrar wants the blank writ carried to the archive before noon.
+  summary: Tamsin has the copying room to herself and a writ to deliver.
+opening_scene:
+  location: The Copying Room
+  characters: [Tamsin Rook]
+  description: You are alone in the copying room, with the blank writ on the desk.
+  summary: Tamsin comes into the copying room for the blank writ.
+characters:
+- fullname: Tamsin Rook
+  nickname: Tamsin
+  race: Townsfolk
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A copyist who has been asked to run an errand instead of copying.
+  personality: Careful, and tired of being careful.
+  appearance: Ink on both cuffs.
+  likes: A clean page.
+  dislikes: Errands.
+  fears: Losing a deed.
+  stats: {level: 3, hit_die: 8, strength: 15, dexterity: 12, will: 12}
+  items:
+  - name: letter
+    description: A letter from her sister, read too many times.
+    material: paper
+    combustible: true
+    bulk: light
+    properties: '{}'
+  - name: tinderbox
+    description: A tin tinderbox with a flint and a little char cloth.
+    material: metal
+    use_kind: firestarter
+    bulk: light
+    properties: '{}'
+  - name: clay pot
+    description: A clay pot of ink, nearly dry.
+    material: pottery
+    fragility: brittle
+    bulk: light
+    properties: '{}'
+  - name: iron key
+    description: The archive's spare key, on a loop of string.
+    material: metal
+    bulk: light
+    properties: '{}'
+locations:
+- name: The Copying Room
+  detail_level: realized
+  opening: true
+  description: Two desks under a high window, ink and sand, and a door to the archive.
+  teaser: Two desks and a high window.
+  lore: Every deed in the town was copied in this room.
+  items:
+  - name: blank writ
+    description: A writ with the registrar's seal and nothing written under it.
+    material: paper
+    combustible: true
+    bulk: light
+    properties: '{}'
+  - name: linen apron
+    description: A copyist's apron, stiff with old ink.
+    material: cloth
+    combustible: true
+    properties: '{}'
+  - name: glass jar
+    description: A jar of fine sand for blotting.
+    material: glass
+    fragility: fragile
+    bulk: light
+    properties: '{}'
+- name: The Archive
+  detail_level: realized
+  description: Shelves of deed boxes, floor to ceiling.
+  teaser: Shelves of deed boxes.
+  lore: Nothing that comes into the archive leaves it.
+connections:
+- between: [The Copying Room, The Archive]
+  distance: adjacent
+  travel_method: walking
+quests:
+- title: The Blank Writ
+  premise: Carry the blank writ from the copying room to the archive.
+  status: open
+  contributes: true
+  steps:
+  - summary: Take up the blank writ.
+    trigger: hold_item
+    target: blank writ
+  - summary: Carry it into the Archive.
+    trigger: reach_location
+    target: The Archive
+  outcomes:
+  - name: filed
+    summary: The blank writ is filed in the archive, unwritten.
+    default: true
