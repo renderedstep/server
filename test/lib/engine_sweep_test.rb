@@ -77,7 +77,7 @@ class EngineSweepTest < ActiveSupport::TestCase
   test "a world of the sweep's own loads and is healthy" do
     Dir.glob(EngineSweep::WORLDS.join("*.yml")).sort.each do |path|
       story = WorldSeed::Loader.new(WorldSeed.parse(File.read(path)), source: path).load!
-      findings = Story::Doctor.new(story).findings.reject { |finding| finding.code == :no_arc }
+      findings = Story::Doctor.new(story).findings.reject { |finding| %i[no_arc room_without_a_layout].include?(finding.code) }
       findings = findings.reject { |finding| WAITING_FINDINGS.include?(finding.code) } if WAITING_ARCS.include?(File.basename(path))
 
       assert_empty findings, "#{File.basename(path)}: #{findings.map(&:message).join("; ")}"

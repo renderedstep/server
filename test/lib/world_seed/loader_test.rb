@@ -1644,10 +1644,11 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
 
   # BUT FOR THE ARC, which this fixture world does not have -- a world with none
   # is warned that nothing can end it (`no_arc`), and this test is about the
-  # interior.
+  # interior. Nor for the place outside the building, which has no layout of
+  # its own (`room_without_a_layout`).
   test "the fixture world is healthy" do
     story = WorldSeed::Loader.new(interior_document).load!
-    findings = Story::Doctor.new(story).findings.reject { |finding| finding.code == :no_arc }
+    findings = Story::Doctor.new(story).findings.reject { |finding| %i[no_arc room_without_a_layout].include?(finding.code) }
 
     assert_empty findings, findings.map(&:message).join("; ")
   end

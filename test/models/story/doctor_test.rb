@@ -31,7 +31,13 @@ class Story::DoctorTest < ActiveSupport::TestCase
   # EVERYTHING BUT `no_arc`. The stories built here have no arc on purpose --
   # each test is about something else -- and a story with none is warned that
   # nothing can end it (`Story::DoctorArcTest` owns that finding).
-  def but_the_arc(doctor) = doctor.findings.reject { |finding| finding.code == :no_arc }
+  def but_the_arc(doctor) = but_the_layouts(doctor).reject { |finding| finding.code == :no_arc }
+
+  # EVERYTHING BUT `room_without_a_layout`. A room built here has no box, as
+  # every room of a handmade world has none, so each is counted; the count is
+  # the engine's (`Playthrough::RustEngine.layout_findings`) and its test is
+  # "every place without a layout is counted, and the warning stops nothing".
+  def but_the_layouts(doctor) = doctor.findings.reject { |finding| finding.code == :room_without_a_layout }
 
   def codes(story)
     Story::Doctor.new(story).findings.map(&:code)
@@ -98,10 +104,25 @@ class Story::DoctorTest < ActiveSupport::TestCase
   test "a story generated the way the game generates them is healthy" do
     doctor = Story::Doctor.new(healthy_story)
 
-    assert_empty doctor.findings, doctor.findings.map(&:message).join("\n")
+    assert_empty but_the_layouts(doctor), but_the_layouts(doctor).map(&:message).join("\n")
     assert doctor.playable?
-    assert doctor.healthy?
-    assert_equal "healthy", doctor.headline
+    assert_equal "playable, 2 warnings", doctor.headline
+  end
+
+  # A PLACE WITH NO LAYOUT IS COUNTED, AND THE COUNT STOPS NOTHING: each
+  # handmade world's places all lack a box, so each is warned once, and the
+  # story is as playable as it was.
+  test "every place without a layout is counted, and the warning stops nothing" do
+    { "the-salt-assizes" => 3, "the-lunar-cartographer" => 7, "the-unrecorded-hour" => 3 }.each do |world, count|
+      story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("#{world}.yml"))
+      doctor = Story::Doctor.new(story)
+      unlaid = doctor.findings.select { |finding| finding.code == :room_without_a_layout }
+
+      assert_equal count, unlaid.size, world
+      assert_equal story.locations.count, unlaid.map(&:subject).uniq.size, world
+      assert unlaid.all? { |finding| finding.severity == :warning && finding.remedy == :manual }, world
+      assert_predicate doctor, :playable?, world
+    end
   end
 
   # THE CHECK THE APP ALREADY MAKES. PlaythroughsController#opening_location
@@ -922,7 +943,7 @@ class Story::DoctorTest < ActiveSupport::TestCase
     story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("the-unrecorded-hour.yml"))
 
     assert_predicate story.characters.find_by(fullname: "Perrin Lasco"), :absent?
-    assert_predicate Story::Doctor.new(story), :healthy?
+    assert_empty but_the_layouts(Story::Doctor.new(story))
   end
 
   # The same finding read from the file's side, and the only one that can see a
