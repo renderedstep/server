@@ -78,7 +78,12 @@ module EngineData
       "hold_penalty" => map(Integer),
       "pools" => map({ "count" => [ Integer ], "from" => [ String ] }),
       "readable" => [ String ], "use_kinds" => map(String), "combustible" => [ String ],
-      "materials" => map({ "combustible" => maybe(BOOLEAN), "fragility" => maybe([ String ]), "names" => [ String ] }),
+      "materials" => map({
+        "combustible" => maybe(BOOLEAN), "fragility" => maybe([ String ]),
+        "tear" => maybe({ "leaves" => String, "strength" => maybe(Integer), "dexterity" => maybe(Integer), "will" => maybe(Integer) }),
+        "smash" => maybe({ "leaves" => String, "strength" => maybe(Integer), "dexterity" => maybe(Integer), "will" => maybe(Integer) }),
+        "names" => [ String ]
+      }),
       "wear" => map(String)
     },
     "item/wear" => { "places" => [ String ], "under" => map(String) },

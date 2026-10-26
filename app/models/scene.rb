@@ -61,7 +61,11 @@ class Scene < ApplicationRecord
   # `ending` IS THE FIFTH AND IT IS THE SAME ACT WITH THE WORDS REPLACED --
   # `NARRATED_ENDING` below is the whole of what it is for. Nothing will ever
   # type this one either.
-  ACTIONS = (Playthrough::IntentSchema::INTENTS + %w[attack hazard throw conclude ending]).uniq.freeze
+  #
+  # `tear` AND `smash` are offered by the engine and kept out of every reader
+  # request (its `turn/divide.rs`), so the classifier never names them; the
+  # engine records them, and the narrator tells them as it tells a `take`.
+  ACTIONS = (Playthrough::IntentSchema::INTENTS + %w[attack hazard throw conclude ending tear smash]).uniq.freeze
 
   # THE ENDING, ONCE THE NARRATOR HAS WRITTEN IT. `Playthrough::Arc` writes the
   # closing row as `conclude` with the reached outcome's own sentence on it, and

@@ -170,6 +170,12 @@ module Roll
   # engine's `turn/snap.rs`), seeded on the story, the part's own row and the
   # story time. Rolled nowhere in this app; named for the reason `CHOICE` is.
   SNAP = 17
+  # 18 AND 19 ARE THE RUST ENGINE'S TOO: the check to tear a thing apart and
+  # to smash one, where its material asks one (`kits.yml`, the engine's
+  # `turn/divide.rs`). Rolled nowhere in this app; named for the reason
+  # `CHOICE` is.
+  TEAR = 18
+  SMASH = 19
 
   # THE SEED, FROM FIVE INTEGERS AND NOTHING ELSE. Public because it is the part
   # worth asserting on its own: `RollTest` pins that the same inputs give the

@@ -19,6 +19,7 @@
 #   <name> changes no possessions, travel ...      -> #possessions_unchanged?
 #   The proposed action was rejected: ... changed. -> #possessions_unchanged?
 #   ... it BROKE ...                               -> #broke?
+#   ... is gone: it is in no place now ...         -> #divided?
 #
 # AND IT HOLDS THE COMPARISON, so there is one reading of a receipt against a
 # passage: `Story::Audit#check_receipt` turns `#contradictions` into flags, and
@@ -39,6 +40,7 @@ class Story::Audit::Receipt
   LYING = /\ALying here: (?<names>.+)\.\z/
   CARRIED = /\AYou are carrying: (?<names>.+)\.\z/
   BROKE = /\bBROKE\b/
+  GONE = / is gone: it is in no place now\b/
   # The clause a dead line carries where a blow killed them, and the "; "
   # that then joins the bodies, because the clause may hold a ", " of its own.
   KILLED = /, killed by .+\z/
@@ -92,6 +94,11 @@ class Story::Audit::Receipt
   # Rust engine writes that fact in its own words, and every one of them says
   # BROKE in capitals, which no other receipt does.
   def broke? = text.match?(BROKE)
+
+  # Whether the receipt says the thing the turn tore or smashed came apart. The
+  # engine's words for that success (its `facts::divided`) say it "is gone: it
+  # is in no place now"; its words for an attempt that held never do.
+  def divided? = text.match?(GONE)
 
   # Whether this receipt states the fact `code` reads: the check's denominator.
   def states?(code)

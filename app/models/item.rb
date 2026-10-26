@@ -147,8 +147,11 @@ class Item < ApplicationRecord
   # leave the intact state; templates always describe the world's initial item.
   # `broken` is written by the Rust engine alone, when a fragile thing comes
   # down on a floor and its break die comes up (its `physics` module): the
-  # broken copy is in no place, exactly as a consumed one is.
-  DISPOSITIONS = %w[intact consumed burned broken].freeze
+  # broken copy is in no place, exactly as a consumed one is. `divided` is the
+  # engine's too, when a tear or a smash comes off (its `turn/divide.rs`): the
+  # thing is in no place and its pieces are a new row of the game's own,
+  # carrying `pieces_of` in its properties.
+  DISPOSITIONS = %w[intact consumed burned broken divided].freeze
 
   # WHETHER A THING BREAKS WHEN IT COMES DOWN ON A FLOOR, as the Rust engine
   # rolls it: the rows of `fragility` in its `data/physics.yml`, each a share of
@@ -453,6 +456,7 @@ class Item < ApplicationRecord
   # game:doctor` names the row.
   def intact? = disposition == "intact"
   def broken? = disposition == "broken"
+  def divided? = disposition == "divided"
   def consumable? = CONSUMABLES.include?(use_kind)
   def healing_points = use_kind == "healing" ? HEALING_POINTS : 0
 

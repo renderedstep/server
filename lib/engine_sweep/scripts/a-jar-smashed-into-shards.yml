@@ -1,0 +1,56 @@
+---
+story: A Writ On The Copying Desk
+why: >-
+  Smashing a thing apart (`divide` in the engine): the room offers a `smash`
+  for a thing of glass or pottery in the player's hands or lying here. The
+  thing ends and one row of its shards begins where it was, which can be
+  picked up like any other thing.
+steps:
+- id: smash-the-glass-jar
+  why: >-
+    Glass smashes with no check. The jar lay on the floor, so its shards lie
+    there now, and the jar is nowhere. The narrator is told what it left.
+  type: "/smash the glass jar"
+  browser:
+    token: smash-jar
+    replies:
+    - purpose: narration
+      content: The jar bursts on the boards, and the sand goes everywhere.
+      prompt_includes:
+      - smashed the glass jar apart
+      - What is left of it is the shards of the glass jar, lying where it was.
+  expect:
+    changed: true
+    refused: false
+    resolved_by: grammar
+    here:
+    - blank writ
+    - linen apron
+    - shards of the glass jar
+- id: smash-the-clay-pot
+  why: >-
+    Pottery smashes the same way. The pot was in Tamsin's hands, so its
+    shards are in her hands now.
+  type: "/smash the clay pot"
+  expect:
+    changed: true
+    refused: false
+    carrying:
+    - letter
+    - tinderbox
+    - iron key
+    - shards of the clay pot
+- id: take-the-shards
+  why: What a smash leaves is a thing like any other, and can be picked up.
+  type: take shards of the glass jar
+  expect:
+    changed: true
+    here:
+    - blank writ
+    - linen apron
+    carrying:
+    - letter
+    - tinderbox
+    - iron key
+    - shards of the clay pot
+    - shards of the glass jar
