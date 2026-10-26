@@ -14,6 +14,7 @@ require "test_helper"
 # requests less the one line.
 class Eval::PartsKeptSetsTest < ActiveSupport::TestCase
   ARM = "mistralai/mistral-medium-3.1".freeze
+  CHECK = "It was a strength check, a d20 under 10 less 3 for a firm hold: it came up 18, and failed.".freeze
   LINE = /^Attached to the (?:old tree|stalagmite), and could be broken off: [^\n]*\n/
 
   def set(name) = Rails.root.join("db/eval", name)
@@ -42,9 +43,14 @@ class Eval::PartsKeptSetsTest < ActiveSupport::TestCase
 
   test "the narrator pair scored the parts corpus, and the after side is today's request" do
     corpus = Eval::Prompt.corpus("parts")
-    here = Eval::Prompt::RequestVersion.offline(corpus)
-    prompt = Eval::Prompt::RequestVersion.requests(corpus).fetch("break").fetch(:user)
+    requests = Eval::Prompt::RequestVersion.requests(corpus)
+    prompt = requests.fetch("break").fetch(:user)
     assert_includes prompt, "Attached to the old tree, and could be broken off: two branches, bark.\n"
+    # Both sets were bought while the break-off fact still told the narrator
+    # the check behind it (renderedstep/engine before 17bf217); today's fact
+    # says only that the branch held, so that sentence is put back to read them.
+    told = prompt.sub("off the old tree. The branch held:", "off the old tree. #{CHECK} The branch held:")
+    assert_not_equal prompt, told
 
     %w[before after].each do |side|
       kept = Eval::Prompt::Result.load(set("prompt-parts-#{side}-2026-10-18"))
@@ -54,9 +60,10 @@ class Eval::PartsKeptSetsTest < ActiveSupport::TestCase
       assert_equal Eval::Noise::MIN_RUNS, kept.reps, side
       assert_equal Eval::Noise::MIN_RUNS, kept.rows.size, side
       # The narrator's moment sets each line off with a blank one.
-      kept.rows.each { |row| assert_equal(side == "after" ? prompt : prompt.sub(/#{LINE}\n/, ""), row.fetch("prompt"), side) }
+      kept.rows.each { |row| assert_equal(side == "after" ? told : told.sub(/#{LINE}\n/, ""), row.fetch("prompt"), side) }
     end
-    assert_equal here.fetch(:prompt_digest), Eval::Prompt::Result.load(set("prompt-parts-after-2026-10-18")).prompt_digest
+    then_told = requests.map { |shape, request| "#{shape}\n#{shape == 'break' ? told : request[:user]}" }
+    assert_equal Eval::Prompt::Version.digest(then_told), Eval::Prompt::Result.load(set("prompt-parts-after-2026-10-18")).prompt_digest
     assert_empty corpus.problems
   end
 
