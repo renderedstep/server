@@ -727,13 +727,13 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
   test "a room left placed inside nothing is exported as it stands, with a warning" do
     place = create(:location, :stub, story: @story, name: "The Rusted Anchor", width: 12, depth: 8)
     create(:location, story: @story, parent_location: place, name: "The Taproom",
-                      x: 0, y: 0, z: 0, width: 7, depth: 8)
+                      x: 3, y: 0, z: 0, width: 7, depth: 8)
     place.destroy!
 
     exporter = WorldSeed::Exporter.new(@story.reload)
     document = exporter.document
 
-    assert_equal 0, document["locations"].detect { |row| row["name"] == "The Taproom" }["x"]
+    assert_equal 3, document["locations"].detect { |row| row["name"] == "The Taproom" }["x"]
     assert_match(/location_with_a_box_and_no_parent/, exporter.warnings.join)
     assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load! }
   end

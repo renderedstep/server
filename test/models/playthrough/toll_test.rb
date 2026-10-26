@@ -94,10 +94,12 @@ class Playthrough::TollTest < ActiveSupport::TestCase
   # A FALL'S SAVE HALVES IT, so a saved fall that still cost something is told
   # as a cost, with how far it was and the landing that halved it.
   test "a fall reads out how far it was, and a saved one what the landing did" do
-    # Only the two storeys matter to the words, so no whole box is built.
-    @here.update_columns(z: 0)
+    # Only the two storeys of one place matter to the words, so no whole box
+    # is built; a room inside nothing is on no storey (`Location#storey`).
+    place = create(:location, story: @story, name: "The Mill")
+    @here.update_columns(z: 0, parent_location_id: place.id)
     loft = create(:location, story: @story, name: "The Loft")
-    loft.update_columns(z: 1)
+    loft.update_columns(z: 1, parent_location_id: place.id)
     edge = create(:location_connection, location: loft, connected_location: @here, hazard: "fall")
     fell = create(:playthrough_toll, playthrough: @game, hazard: "fall", damage: 5,
                                      location: @here, location_connection: edge)

@@ -246,6 +246,43 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     end
   end
 
+  test "a room that stands on its own is boxed at its own origin, sized by the engine" do
+    room = Location.new(id: 7, story_id: 3, kind: "forest")
+    box = Playthrough::RustEngine.own_box(room)
+
+    assert_equal [ 0, 0, 0 ], box.values_at("x", "y", "z")
+    assert_operator box.fetch("width"), :positive?
+    assert_equal box, Playthrough::RustEngine.own_box(room), "the size is rolled on the room's own row"
+  end
+
+  # The post-pull step on a world nobody seeded and one that is: a dry run
+  # writes nothing, the run lays out every room that stands on its own, a
+  # second run finds nothing, and a checked-in world is left to its own edit.
+  test "the layout step lays out the stored rooms of every story but a checked-in world's, once" do
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "laid.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        world = Rails.root.join("lib/engine_sweep/worlds/the-ropewalk-at-saltmarsh.yml")
+        story = WorldSeed::Loader.new(WorldSeed.parse(world.read)).load!
+        seeded = create(:story, title: "The Salt Assizes")
+        untouched = create(:location, story: seeded)
+        alone = story.locations.where(parent_location_id: nil).reject(&:interior?)
+        assert_predicate alone, :any?
+
+        dry = Update::Steps::LayOutRooms.new(dry_run: true).call
+        assert_match(/\A#{story.title}: would lay out #{alone.size} room/, dry.lines.sole)
+        assert alone.none? { |room| room.reload.placed? }
+
+        assert_equal dry.lines.sole.sub("would lay out", "laid out"), Update::Steps::LayOutRooms.new.call.lines.sole
+        assert alone.all? { |room| room.reload.own_plane? }
+        assert_not_predicate untouched.reload, :placed?
+        assert_predicate Update::Steps::LayOutRooms.new.call, :nothing_to_do?
+        assert_not_includes Story::Doctor.new(story).findings.map(&:code), :room_without_a_layout
+      end
+    end
+  end
+
   private
 
   # A live models document, which the sweep's guard refuses: with no key in

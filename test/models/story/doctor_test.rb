@@ -1784,15 +1784,25 @@ class Story::DoctorTest < ActiveSupport::TestCase
 
   # A POSITION READ AGAINST NOTHING. There is no global space, so five numbers
   # on a row inside nothing are unreadable rather than wrong.
-  test "a placed room inside nothing is reported and cannot be repaired" do
+  test "a room placed off the origin inside nothing is reported and cannot be repaired" do
     story = healthy_story
     room = story.locations.realized.first
-    room.update!(parent_location: nil, x: 0, y: 0, z: 0, width: 4, depth: 4)
+    room.update!(parent_location: nil, x: 2, y: 0, z: 0, width: 4, depth: 4)
 
     assert_includes codes(story), :location_with_a_box_and_no_parent
     assert_equal :warning, finding(story, :location_with_a_box_and_no_parent).severity
     assert_equal :manual, finding(story, :location_with_a_box_and_no_parent).remedy
-    assert_match(/4x4 paces at 0,0 on storey 0/, finding(story, :location_with_a_box_and_no_parent).message)
+    assert_match(/4x4 paces at 2,0 on storey 0/, finding(story, :location_with_a_box_and_no_parent).message)
+  end
+
+  # A ROOM THAT STANDS ON ITS OWN is its own plane, and its box sits at the
+  # origin of it: laid out, not orphaned.
+  test "a room boxed at the origin inside nothing is its own plane and is not reported" do
+    story = healthy_story
+    room = story.locations.realized.first
+    room.update!(parent_location: nil, x: 0, y: 0, z: 0, width: 4, depth: 4)
+
+    assert_not_includes codes(story), :location_with_a_box_and_no_parent
   end
 
   # THE ONE THAT MUST NOT FIRE, and it is why there are two whole shapes: an

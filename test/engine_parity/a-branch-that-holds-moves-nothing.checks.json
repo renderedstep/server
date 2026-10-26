@@ -1,7 +1,7 @@
 {
   "script": "a-branch-that-holds-moves-nothing",
   "doctor": {
-    "headline": "playable, 3 warnings",
+    "headline": "playable, 2 warnings",
     "findings": [
       [
         "no_arc",
@@ -13,12 +13,6 @@
         "room_without_a_layout",
         "warning",
         "\"The Back Gate\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Rook Wood\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ]
     ]

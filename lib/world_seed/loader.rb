@@ -1507,9 +1507,11 @@ class WorldSeed::Loader
   #   integers   whole numbers, with a positive width and depth. A room zero
   #              paces across is a room nothing can stand in.
   #   framed     a BOX needs a `parent`, because coordinates are local to a
-  #              parent and there is no global space. A footprint does not, and
-  #              must not be made to: something has to sit at the top of the
-  #              containment tree.
+  #              parent and there is no global space -- or, inside nothing,
+  #              sits at the origin of its own plane (`0, 0` on storey `0`),
+  #              which is how a room that stands on its own is laid out. A
+  #              footprint needs neither, and must not be made to: something
+  #              has to sit at the top of the containment tree.
   #   footprint  and that parent needs an extent of its own, or the plane the
   #              child's position is read in does not exist.
   #   declared   `parent` names one of this file's own locations, and not
@@ -1570,10 +1572,12 @@ class WorldSeed::Loader
 
     if parent.blank?
       return unless placed
+      return if Location::Box::POSITION.all? { |column| attributes[column].zero? }
 
-      raise InvalidWorld, "#{where}: location #{room.inspect} has a position and is inside nothing -- " \
-                          "#{Location::Box::POSITION.join(", ")} are read in the parent's own plane, so a placed " \
-                          "room needs a `parent`. A place at the top of an interior carries " \
+      raise InvalidWorld, "#{where}: location #{room.inspect} has a position off the origin and is inside " \
+                          "nothing -- #{Location::Box::POSITION.join(", ")} are read in the parent's own plane, so " \
+                          "a room placed anywhere else needs a `parent`. A room that stands on its own sits at " \
+                          "0, 0 on storey 0 of its own plane; a place at the top of an interior carries " \
                           "#{Location::Box::EXTENT.join(" and ")} alone."
     end
 
@@ -1622,7 +1626,8 @@ class WorldSeed::Loader
   # `Location::Box` -- so the file and the database cannot disagree about what
   # an overlap is.
   def validate_boxes_do_not_overlap!
-    placed = location_documents.select { |attributes| Location::Box.of(attributes) }
+    # A room inside nothing is its own plane, so it has no siblings.
+    placed = location_documents.select { |attributes| Location::Box.of(attributes) && attributes["parent"].present? }
 
     placed.group_by { |attributes| [ WorldSeed.natural_key(attributes.fetch("parent")), attributes.fetch("z") ] }
           .each_value do |siblings|

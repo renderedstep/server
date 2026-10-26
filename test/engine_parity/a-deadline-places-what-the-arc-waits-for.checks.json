@@ -1,7 +1,7 @@
 {
   "script": "a-deadline-places-what-the-arc-waits-for",
   "doctor": {
-    "headline": "playable, 7 warnings",
+    "headline": "playable, 4 warnings",
     "findings": [
       [
         "character_in_a_stub",
@@ -25,24 +25,6 @@
         "room_without_a_layout",
         "warning",
         "\"Loft\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Cold Store\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Wash House\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Byre\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ]
     ]

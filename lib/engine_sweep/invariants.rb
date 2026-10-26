@@ -681,6 +681,7 @@ class EngineSweep::Invariants
       wanted = geometry_in_file.fetch(room.name, no_geometry)
       now = geometry_on_record(room)
       next if comparable_geometry(now) == comparable_geometry(wanted)
+      next if wanted == no_geometry && laid_out_alone?(room)
 
       "#{room.name} is #{describe_geometry(now)} and the file says #{describe_geometry(wanted)}"
     end
@@ -706,6 +707,13 @@ class EngineSweep::Invariants
 
   def no_geometry
     (Location::Box::COLUMNS + [ "parent" ]).index_with(nil)
+  end
+
+  # A ROOM THE FILE LEFT UNLAID AND INSIDE NOTHING, given its own plane when
+  # it was realized: the box the engine sizes for it and no other
+  # (`Playthrough::RustEngine.own_box`), so the engine is still the one writer.
+  def laid_out_alone?(room)
+    room.own_plane? && Location::Box::COLUMNS.to_h { |column| [ column, room[column] ] } == Playthrough::RustEngine.own_box(room)
   end
 
   # THE PARENT IS COMPARED THE WAY THE LOADER RESOLVED IT, on

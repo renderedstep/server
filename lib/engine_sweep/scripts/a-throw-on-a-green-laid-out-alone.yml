@@ -1,0 +1,45 @@
+# A THROW ON A GREEN THAT STANDS ON ITS OWN IS HELD AGAINST ITS LAYOUT.
+#
+# The Green at Saltmarsh is the ropewalk's village with the green given a box
+# of its own at the origin: a room with no parent, read in a plane of its own.
+# The player throws the tar pot at the way out to the ropewalk, the lead sinker
+# at Wat Coyle, and sets the twine down.
+#
+# WHY IT ASSERTS WHAT IT ASSERTS: the golden holds every die on the pinned ids,
+# and the script asserts only what is true whatever they came up. Each throw is
+# measured now, where `a-throw-on-open-ground-is-only-told` is told "no floor
+# plan": a throw at the way out is held against the paces to the middle of the
+# side the engine rolls for that doorway, plus one through it, and a throw at
+# Wat against the paces to his spot. On this walk's ids both fall short (25
+# paces to the ropewalk, 18 to Wat), the pot breaks, and the sinker lies on the
+# green at the cell along the line where it came down; the dropped twine lies
+# at a spot rolled inside the green. The golden and the records hold each.
+story: The Green at Saltmarsh
+why: a room that stands on its own has a layout, so a throw on it is measured
+steps:
+- id: the-pot-at-the-ropewalk
+  type: throw the tar pot at the ropewalk
+  why: a throw at a way out of a room that stands on its own is held against the side the doorway leaves by
+  expect:
+    refused: false
+    note:
+    - 'threw: tar pot at The Ropewalk'
+    - 'range: tar pot -- light, 16 paces at ordinary gravity;'
+    - paces to The Ropewalk,
+
+- id: the-sinker-at-wat
+  type: throw the lead sinker at wat coyle
+  why: a throw at a person on the green is held against the paces to their spot
+  expect:
+    refused: false
+    note:
+    - 'threw: lead sinker at Wat Coyle'
+    - 'range: lead sinker -- heavy, 7 paces at ordinary gravity;'
+    - paces to Wat Coyle,
+
+- id: the-twine-set-down
+  type: drop the hank of twine
+  why: a thing set down on the green lies at a spot inside its box
+  expect:
+    changed: true
+    refused: false

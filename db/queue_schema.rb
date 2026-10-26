@@ -10,7 +10,579 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 1) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_202606) do
+  create_table "characters", force: :cascade do |t|
+    t.integer "age"
+    t.text "appearance"
+    t.text "backstory"
+    t.text "conscious_desire"
+    t.datetime "created_at", null: false
+    t.boolean "deliberately_absent", default: false, null: false
+    t.string "desire_pursuit"
+    t.integer "dexterity"
+    t.text "dislikes"
+    t.text "fears"
+    t.string "fullname"
+    t.integer "hit_die"
+    t.boolean "hostile", default: false, null: false
+    t.boolean "is_companion"
+    t.boolean "is_protagonist", default: false, null: false
+    t.integer "level"
+    t.text "likes"
+    t.integer "location_id"
+    t.string "need_pursuit"
+    t.string "nickname"
+    t.text "personality"
+    t.integer "race_id", null: false
+    t.text "recognized_need"
+    t.string "sex"
+    t.integer "story_id", null: false
+    t.integer "strength"
+    t.text "unconscious_desire"
+    t.text "unrecognized_need"
+    t.datetime "updated_at", null: false
+    t.integer "will"
+    t.integer "x"
+    t.integer "y"
+    t.index "story_id, LOWER(fullname)", name: "index_characters_on_story_id_and_lower_fullname", unique: true
+    t.index ["location_id", "hostile"], name: "index_characters_on_location_id_and_hostile"
+    t.index ["location_id", "id"], name: "index_characters_on_location_id_and_id"
+    t.index ["location_id"], name: "index_characters_on_location_id"
+    t.index ["race_id"], name: "index_characters_on_race_id"
+    t.index ["story_id", "is_protagonist"], name: "index_characters_on_story_id_and_is_protagonist"
+    t.index ["story_id"], name: "index_characters_on_story_id"
+  end
+
+  create_table "characters_scenes", id: false, force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.integer "scene_id", null: false
+    t.index ["character_id", "scene_id"], name: "index_characters_scenes_on_character_id_and_scene_id"
+    t.index ["scene_id", "character_id"], name: "index_characters_scenes_on_scene_id_and_character_id"
+  end
+
+  create_table "chats", force: :cascade do |t|
+    t.integer "character_id"
+    t.datetime "created_at", null: false
+    t.integer "model_id"
+    t.string "model_id_string"
+    t.integer "playthrough_id"
+    t.string "purpose"
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_chats_on_character_id"
+    t.index ["model_id"], name: "index_chats_on_model_id"
+    t.index ["playthrough_id", "character_id", "purpose"], name: "index_chats_on_conversation_key"
+    t.index ["playthrough_id"], name: "index_chats_on_playthrough_id"
+  end
+
+  create_table "interactions", force: :cascade do |t|
+    t.text "action"
+    t.text "action_fact"
+    t.string "action_status"
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.string "engine_action"
+    t.text "inner_resolution"
+    t.integer "location_id"
+    t.text "post_feeling"
+    t.text "post_thought"
+    t.text "pre_feeling"
+    t.text "pre_thought"
+    t.integer "scene_id"
+    t.text "summary"
+    t.datetime "updated_at", null: false
+    t.text "user_input"
+    t.index ["character_id"], name: "index_interactions_on_character_id"
+    t.index ["location_id"], name: "index_interactions_on_location_id"
+    t.index ["scene_id"], name: "index_interactions_on_scene_id"
+  end
+
+  create_table "items", force: :cascade do |t|
+    t.string "bulk", default: "handy", null: false
+    t.integer "character_id"
+    t.boolean "combustible", default: false, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "disposition", default: "intact", null: false
+    t.text "inscription"
+    t.integer "location_id"
+    t.string "name"
+    t.integer "playthrough_id"
+    t.text "properties"
+    t.boolean "readable", default: false, null: false
+    t.integer "template_id"
+    t.datetime "updated_at", null: false
+    t.string "use_kind", default: "ordinary", null: false
+    t.integer "x"
+    t.integer "y"
+    t.index ["character_id"], name: "index_items_on_character_id"
+    t.index ["location_id", "character_id"], name: "index_items_on_location_id_and_character_id"
+    t.index ["location_id"], name: "index_items_on_location_id"
+    t.index ["playthrough_id", "id"], name: "index_items_on_playthrough_id_and_id"
+    t.index ["playthrough_id", "template_id"], name: "index_items_on_playthrough_id_and_template_id"
+    t.index ["playthrough_id"], name: "index_items_on_playthrough_id"
+    t.index ["template_id"], name: "index_items_on_template_id"
+  end
+
+  create_table "lab_exits_judgements", force: :cascade do |t|
+    t.text "aspects"
+    t.datetime "created_at", null: false
+    t.text "expects_inside"
+    t.text "expects_population"
+    t.string "name", null: false
+    t.string "name_key", null: false
+    t.text "note"
+    t.datetime "updated_at", null: false
+    t.integer "vantage_id", null: false
+    t.string "verdict"
+    t.index ["vantage_id", "name_key"], name: "index_lab_exits_judgements_on_place", unique: true
+    t.index ["vantage_id"], name: "index_lab_exits_judgements_on_vantage_id"
+  end
+
+  create_table "lab_exits_samples", force: :cascade do |t|
+    t.text "aspects"
+    t.datetime "created_at", null: false
+    t.text "note"
+    t.json "row", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.integer "vantage_id", null: false
+    t.string "verdict"
+    t.index ["vantage_id"], name: "index_lab_exits_samples_on_vantage_id"
+  end
+
+  create_table "lab_exits_vantages", force: :cascade do |t|
+    t.text "absent"
+    t.datetime "created_at", null: false
+    t.string "danger"
+    t.string "expects_inside_quantifier"
+    t.text "expects_population"
+    t.string "name", null: false
+    t.string "reached_from"
+    t.text "teaser", null: false
+    t.datetime "updated_at", null: false
+    t.string "world", null: false
+  end
+
+  create_table "lab_realization_kinds", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "danger"
+    t.text "expects_danger"
+    t.text "expects_gradient"
+    t.text "expects_hazard"
+    t.text "expects_inside"
+    t.text "expects_population"
+    t.text "expects_storeys_above"
+    t.text "expects_storeys_below"
+    t.string "inside"
+    t.string "name", null: false
+    t.string "population"
+    t.string "reached_from"
+    t.text "teaser", null: false
+    t.datetime "updated_at", null: false
+    t.string "world", null: false
+  end
+
+  create_table "lab_realization_samples", force: :cascade do |t|
+    t.text "aspects"
+    t.datetime "created_at", null: false
+    t.integer "kind_id", null: false
+    t.text "note"
+    t.json "row", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.string "verdict"
+    t.index ["kind_id"], name: "index_lab_realization_samples_on_kind_id"
+  end
+
+  create_table "location_connections", force: :cascade do |t|
+    t.string "barrier", default: "open", null: false
+    t.integer "connected_location_id", null: false
+    t.datetime "created_at", null: false
+    t.text "distance"
+    t.string "hazard"
+    t.integer "hazard_die"
+    t.integer "key_template_id"
+    t.integer "location_id", null: false
+    t.text "time_to_travel"
+    t.text "travel_method"
+    t.datetime "updated_at", null: false
+    t.index ["connected_location_id"], name: "index_location_connections_on_connected_location_id"
+    t.index ["key_template_id"], name: "index_location_connections_on_key_template_id"
+    t.index ["location_id", "connected_location_id"], name: "idx_on_location_id_connected_location_id_a0efda2bf6", unique: true
+    t.index ["location_id"], name: "index_location_connections_on_location_id"
+  end
+
+  create_table "locations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "danger", default: "safe", null: false
+    t.integer "depth"
+    t.text "description"
+    t.string "detail_level", default: "stub", null: false
+    t.json "generation_checkpoint"
+    t.string "hazard"
+    t.integer "hazard_die"
+    t.datetime "last_protagonist_visit"
+    t.text "lore"
+    t.boolean "mobile", default: false, null: false
+    t.string "name"
+    t.integer "parent_location_id"
+    t.string "population"
+    t.integer "story_id", null: false
+    t.text "teaser"
+    t.datetime "updated_at", null: false
+    t.integer "width"
+    t.integer "x"
+    t.integer "y"
+    t.integer "z"
+    t.index ["parent_location_id"], name: "index_locations_on_parent_location_id"
+    t.index ["story_id", "detail_level"], name: "index_locations_on_story_id_and_detail_level"
+    t.index ["story_id"], name: "index_locations_on_story_id"
+  end
+
+  create_table "locations_world_events", id: false, force: :cascade do |t|
+    t.integer "location_id", null: false
+    t.integer "world_event_id", null: false
+    t.index ["location_id"], name: "index_locations_world_events_on_location_id"
+    t.index ["world_event_id", "location_id"], name: "index_locations_world_events_on_world_event_id_and_location_id", unique: true
+    t.index ["world_event_id"], name: "index_locations_world_events_on_world_event_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.integer "chat_id", null: false
+    t.text "content"
+    t.json "content_raw"
+    t.datetime "created_at", null: false
+    t.integer "input_tokens"
+    t.integer "model_id"
+    t.string "model_id_string"
+    t.integer "output_tokens"
+    t.string "role"
+    t.integer "scene_id"
+    t.integer "tool_call_id"
+    t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_messages_on_chat_id"
+    t.index ["model_id"], name: "index_messages_on_model_id"
+    t.index ["scene_id"], name: "index_messages_on_scene_id"
+    t.index ["tool_call_id"], name: "index_messages_on_tool_call_id"
+  end
+
+  create_table "models", force: :cascade do |t|
+    t.json "capabilities", default: []
+    t.integer "context_window"
+    t.datetime "created_at", null: false
+    t.string "family"
+    t.date "knowledge_cutoff"
+    t.integer "max_output_tokens"
+    t.json "metadata", default: {}
+    t.json "modalities", default: {}
+    t.datetime "model_created_at"
+    t.string "model_id", null: false
+    t.string "name", null: false
+    t.json "pricing", default: {}
+    t.string "provider", null: false
+    t.datetime "updated_at", null: false
+    t.index ["family"], name: "index_models_on_family"
+    t.index ["provider", "model_id"], name: "index_models_on_provider_and_model_id", unique: true
+    t.index ["provider"], name: "index_models_on_provider"
+  end
+
+  create_table "playthrough_beats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playthrough_id", null: false
+    t.integer "quest_step_id", null: false
+    t.datetime "reached_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playthrough_id", "quest_step_id"], name: "index_playthrough_beats_on_playthrough_id_and_quest_step_id", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_beats_on_playthrough_id"
+    t.index ["quest_step_id"], name: "index_playthrough_beats_on_quest_step_id"
+  end
+
+  create_table "playthrough_blows", force: :cascade do |t|
+    t.integer "attacker_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "damage", null: false
+    t.integer "hp_after", null: false
+    t.integer "location_id", null: false
+    t.integer "playthrough_id", null: false
+    t.integer "round", null: false
+    t.integer "scene_id"
+    t.integer "sequence", null: false
+    t.datetime "story_timestamp", null: false
+    t.integer "target_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attacker_id"], name: "index_playthrough_blows_on_attacker_id"
+    t.index ["location_id"], name: "index_playthrough_blows_on_location_id"
+    t.index ["playthrough_id", "scene_id", "id"], name: "index_playthrough_blows_on_playthrough_and_scene"
+    t.index ["playthrough_id"], name: "index_playthrough_blows_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_blows_on_scene_id"
+    t.index ["target_id"], name: "index_playthrough_blows_on_target_id"
+  end
+
+  create_table "playthrough_commands", force: :cascade do |t|
+    t.text "command", null: false
+    t.datetime "created_at", null: false
+    t.string "error_kind"
+    t.json "journal", default: {}, null: false
+    t.integer "playthrough_id", null: false
+    t.json "refusal", default: {}, null: false
+    t.string "request_token", null: false
+    t.integer "result_scene_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playthrough_id", "request_token", "command"], name: "index_playthrough_commands_on_submission", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_commands_on_playthrough_id"
+    t.index ["result_scene_id"], name: "index_playthrough_commands_on_result_scene_id"
+  end
+
+  create_table "playthrough_drifts", force: :cascade do |t|
+    t.string "action", null: false
+    t.text "command", null: false
+    t.datetime "created_at", null: false
+    t.integer "location_id"
+    t.text "offered"
+    t.integer "playthrough_id", null: false
+    t.integer "scene_id"
+    t.datetime "story_timestamp"
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_playthrough_drifts_on_action"
+    t.index ["location_id"], name: "index_playthrough_drifts_on_location_id"
+    t.index ["playthrough_id", "story_timestamp"], name: "index_playthrough_drifts_on_playthrough_id_and_story_timestamp"
+    t.index ["playthrough_id"], name: "index_playthrough_drifts_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_drifts_on_scene_id"
+  end
+
+  create_table "playthrough_endings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playthrough_id", null: false
+    t.integer "quest_outcome_id", null: false
+    t.datetime "reached_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playthrough_id", "quest_outcome_id"], name: "idx_on_playthrough_id_quest_outcome_id_7ea31b4171", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_endings_on_playthrough_id"
+    t.index ["quest_outcome_id"], name: "index_playthrough_endings_on_quest_outcome_id"
+  end
+
+  create_table "playthrough_feedbacks", force: :cascade do |t|
+    t.text "answering_models"
+    t.datetime "created_at", null: false
+    t.integer "input_tokens"
+    t.text "note"
+    t.integer "output_tokens"
+    t.integer "playthrough_id", null: false
+    t.string "prose_model"
+    t.text "prose_models"
+    t.string "prose_prompt_digest"
+    t.string "prose_purpose"
+    t.integer "scene_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "verdict", null: false
+    t.index ["playthrough_id", "scene_id"], name: "index_playthrough_feedbacks_on_playthrough_id_and_scene_id", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_feedbacks_on_playthrough_id"
+    t.index ["prose_model"], name: "index_playthrough_feedbacks_on_prose_model"
+    t.index ["prose_prompt_digest"], name: "index_playthrough_feedbacks_on_prose_prompt_digest"
+    t.index ["scene_id"], name: "index_playthrough_feedbacks_on_scene_id"
+    t.index ["verdict"], name: "index_playthrough_feedbacks_on_verdict"
+  end
+
+  create_table "playthrough_npc_states", force: :cascade do |t|
+    t.boolean "ceasefire", default: false, null: false
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.boolean "following", default: false, null: false
+    t.integer "location_id"
+    t.integer "peace_after_blow_id", default: 0, null: false
+    t.integer "playthrough_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_playthrough_npc_states_on_character_id"
+    t.index ["location_id"], name: "index_playthrough_npc_states_on_location_id"
+    t.index ["playthrough_id", "character_id"], name: "idx_on_playthrough_id_character_id_008ae03862", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_npc_states_on_playthrough_id"
+  end
+
+  create_table "playthrough_overreaches", force: :cascade do |t|
+    t.text "acted", null: false
+    t.string "action", null: false
+    t.text "command", null: false
+    t.datetime "created_at", null: false
+    t.integer "location_id"
+    t.integer "playthrough_id", null: false
+    t.integer "scene_id"
+    t.datetime "story_timestamp"
+    t.text "unacted", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_playthrough_overreaches_on_action"
+    t.index ["location_id"], name: "index_playthrough_overreaches_on_location_id"
+    t.index ["playthrough_id", "story_timestamp"], name: "idx_on_playthrough_id_story_timestamp_b54cd36315"
+    t.index ["playthrough_id"], name: "index_playthrough_overreaches_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_overreaches_on_scene_id"
+  end
+
+  create_table "playthrough_passages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "location_connection_id", null: false
+    t.string "means", null: false
+    t.datetime "opened_at", null: false
+    t.integer "opened_by_item_id"
+    t.integer "playthrough_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["location_connection_id"], name: "index_playthrough_passages_on_location_connection_id"
+    t.index ["opened_by_item_id"], name: "index_playthrough_passages_on_opened_by_item_id"
+    t.index ["playthrough_id", "location_connection_id"], name: "idx_on_playthrough_id_location_connection_id_6d3a29d910", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_passages_on_playthrough_id"
+  end
+
+  create_table "playthrough_tolls", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "damage", null: false
+    t.string "hazard", null: false
+    t.integer "hp_after", null: false
+    t.integer "location_connection_id"
+    t.integer "location_id", null: false
+    t.integer "playthrough_id", null: false
+    t.boolean "saved", default: false, null: false
+    t.integer "scene_id"
+    t.integer "sequence", null: false
+    t.datetime "story_timestamp", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_playthrough_tolls_on_character_id"
+    t.index ["location_connection_id"], name: "index_playthrough_tolls_on_location_connection_id"
+    t.index ["location_id"], name: "index_playthrough_tolls_on_location_id"
+    t.index ["playthrough_id", "scene_id", "id"], name: "index_playthrough_tolls_on_playthrough_and_scene"
+    t.index ["playthrough_id"], name: "index_playthrough_tolls_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_tolls_on_scene_id"
+  end
+
+  create_table "playthrough_vitals", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "hp_current", null: false
+    t.integer "playthrough_id", null: false
+    t.datetime "provoked_at"
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_playthrough_vitals_on_character_id"
+    t.index ["playthrough_id", "character_id"], name: "index_playthrough_vitals_on_playthrough_and_character", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_vitals_on_playthrough_id"
+  end
+
+  create_table "playthrough_volitions", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.string "chosen", null: false
+    t.datetime "created_at", null: false
+    t.text "fact", null: false
+    t.integer "location_id", null: false
+    t.integer "playthrough_id", null: false
+    t.integer "round", null: false
+    t.integer "scene_id"
+    t.string "serves", null: false
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_playthrough_volitions_on_character_id"
+    t.index ["location_id"], name: "index_playthrough_volitions_on_location_id"
+    t.index ["playthrough_id", "scene_id", "id"], name: "index_playthrough_volitions_on_playthrough_and_scene"
+    t.index ["playthrough_id"], name: "index_playthrough_volitions_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_volitions_on_scene_id"
+  end
+
+  create_table "playthroughs", force: :cascade do |t|
+    t.integer "character_id"
+    t.datetime "created_at", null: false
+    t.integer "current_location_id"
+    t.integer "current_scene_id"
+    t.datetime "ended_at"
+    t.integer "story_id", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_playthroughs_on_character_id"
+    t.index ["current_location_id"], name: "index_playthroughs_on_current_location_id"
+    t.index ["current_scene_id"], name: "index_playthroughs_on_current_scene_id"
+    t.index ["story_id"], name: "index_playthroughs_on_story_id"
+    t.index ["token"], name: "index_playthroughs_on_token", unique: true
+  end
+
+  create_table "quest_outcomes", force: :cascade do |t|
+    t.string "condition"
+    t.datetime "created_at", null: false
+    t.boolean "is_default", default: false, null: false
+    t.integer "minutes"
+    t.string "name", null: false
+    t.integer "quest_id", null: false
+    t.integer "ramification_minutes"
+    t.text "ramification_summary"
+    t.text "summary", null: false
+    t.datetime "updated_at", null: false
+    t.index ["quest_id", "name"], name: "index_quest_outcomes_on_quest_id_and_name", unique: true
+    t.index ["quest_id"], name: "index_quest_outcomes_on_quest_id"
+  end
+
+  create_table "quest_steps", force: :cascade do |t|
+    t.datetime "bound_at"
+    t.datetime "created_at", null: false
+    t.integer "minutes"
+    t.integer "position", null: false
+    t.integer "quest_id", null: false
+    t.text "summary", null: false
+    t.integer "target_id"
+    t.string "target_name"
+    t.string "target_type"
+    t.text "teaser"
+    t.string "trigger_kind", null: false
+    t.datetime "updated_at", null: false
+    t.index ["quest_id", "position"], name: "index_quest_steps_on_quest_id_and_position", unique: true
+    t.index ["quest_id"], name: "index_quest_steps_on_quest_id"
+    t.index ["target_type", "target_id"], name: "index_quest_steps_on_target"
+  end
+
+  create_table "quests", force: :cascade do |t|
+    t.boolean "contributes", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "origin", default: "seeded", null: false
+    t.integer "parent_quest_id"
+    t.text "premise", null: false
+    t.string "status", default: "open", null: false
+    t.integer "story_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_quest_id"], name: "index_quests_on_parent_quest_id"
+    t.index ["story_id", "title"], name: "index_quests_on_story_id_and_title", unique: true
+    t.index ["story_id"], name: "index_quests_on_story_id"
+  end
+
+  create_table "races", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.boolean "monstrous", default: false, null: false
+    t.string "name", null: false
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["universe_id", "name"], name: "index_races_on_universe_id_and_name", unique: true
+    t.index ["universe_id"], name: "index_races_on_universe_id"
+  end
+
+  create_table "scenes", force: :cascade do |t|
+    t.integer "acted_on_id"
+    t.string "acted_on_type"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "engine_fact"
+    t.boolean "engine_fallback", default: false, null: false
+    t.boolean "is_opening", default: false, null: false
+    t.integer "location_id", null: false
+    t.integer "previous_scene_id"
+    t.string "resolved_action"
+    t.string "resolved_by"
+    t.integer "story_id", null: false
+    t.datetime "story_timestamp"
+    t.text "summary"
+    t.text "typed"
+    t.datetime "updated_at", null: false
+    t.index ["acted_on_type", "acted_on_id"], name: "index_scenes_on_acted_on"
+    t.index ["location_id"], name: "index_scenes_on_location_id"
+    t.index ["previous_scene_id"], name: "index_scenes_on_previous_scene_id"
+    t.index ["story_id", "is_opening"], name: "index_scenes_on_story_id_and_is_opening"
+    t.index ["story_id", "resolved_action"], name: "index_scenes_on_story_id_and_resolved_action"
+    t.index ["story_id", "story_timestamp"], name: "index_scenes_on_story_id_and_story_timestamp"
+    t.index ["story_id"], name: "index_scenes_on_story_id"
+  end
+
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
     t.string "concurrency_key", null: false
     t.datetime "created_at", null: false
@@ -132,10 +704,157 @@ ActiveRecord::Schema[8.1].define(version: 1) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "stories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "generation_snapshot"
+    t.string "genre"
+    t.text "preface"
+    t.datetime "start_time"
+    t.text "summary"
+    t.string "title"
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["universe_id"], name: "index_stories_on_universe_id"
+  end
+
+  create_table "tool_calls", force: :cascade do |t|
+    t.json "arguments", default: {}
+    t.datetime "created_at", null: false
+    t.integer "message_id", null: false
+    t.string "name", null: false
+    t.string "tool_call_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["message_id"], name: "index_tool_calls_on_message_id"
+    t.index ["tool_call_id"], name: "index_tool_calls_on_tool_call_id"
+  end
+
+  create_table "universes", force: :cascade do |t|
+    t.text "civilizations"
+    t.datetime "created_at", null: false
+    t.text "economics"
+    t.text "geographies"
+    t.text "history"
+    t.text "physics"
+    t.text "politics"
+    t.text "religion"
+    t.text "technology"
+    t.datetime "updated_at", null: false
+    t.text "weapons"
+  end
+
+  create_table "world_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "fired_at"
+    t.datetime "occurred_at", null: false
+    t.integer "playthrough_id"
+    t.datetime "scheduled_for"
+    t.string "source", null: false
+    t.integer "story_id", null: false
+    t.text "summary", null: false
+    t.datetime "updated_at", null: false
+    t.integer "world_mechanic_id"
+    t.index ["playthrough_id"], name: "index_world_events_on_playthrough_id"
+    t.index ["story_id", "occurred_at"], name: "index_world_events_on_story_id_and_occurred_at"
+    t.index ["story_id", "scheduled_for"], name: "index_world_events_on_story_id_and_scheduled_for"
+    t.index ["story_id"], name: "index_world_events_on_story_id"
+    t.index ["world_mechanic_id"], name: "index_world_events_on_world_mechanic_id"
+  end
+
+  create_table "world_mechanics", force: :cascade do |t|
+    t.string "cadence", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "kind", null: false
+    t.datetime "last_run_at"
+    t.string "name", null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["story_id", "name"], name: "index_world_mechanics_on_story_id_and_name", unique: true
+    t.index ["story_id"], name: "index_world_mechanics_on_story_id"
+  end
+
+  add_foreign_key "characters", "locations"
+  add_foreign_key "characters", "races"
+  add_foreign_key "characters", "stories"
+  add_foreign_key "chats", "characters"
+  add_foreign_key "chats", "models"
+  add_foreign_key "chats", "playthroughs"
+  add_foreign_key "interactions", "characters"
+  add_foreign_key "interactions", "locations"
+  add_foreign_key "interactions", "scenes"
+  add_foreign_key "items", "characters"
+  add_foreign_key "items", "locations"
+  add_foreign_key "items", "playthroughs"
+  add_foreign_key "lab_exits_judgements", "lab_exits_vantages", column: "vantage_id"
+  add_foreign_key "lab_exits_samples", "lab_exits_vantages", column: "vantage_id"
+  add_foreign_key "lab_realization_samples", "lab_realization_kinds", column: "kind_id"
+  add_foreign_key "location_connections", "items", column: "key_template_id", on_delete: :nullify
+  add_foreign_key "location_connections", "locations"
+  add_foreign_key "location_connections", "locations", column: "connected_location_id"
+  add_foreign_key "locations", "locations", column: "parent_location_id"
+  add_foreign_key "locations", "stories"
+  add_foreign_key "locations_world_events", "locations"
+  add_foreign_key "locations_world_events", "world_events"
+  add_foreign_key "messages", "chats"
+  add_foreign_key "messages", "models"
+  add_foreign_key "messages", "scenes"
+  add_foreign_key "playthrough_beats", "playthroughs"
+  add_foreign_key "playthrough_beats", "quest_steps"
+  add_foreign_key "playthrough_blows", "characters", column: "attacker_id"
+  add_foreign_key "playthrough_blows", "characters", column: "target_id"
+  add_foreign_key "playthrough_blows", "locations"
+  add_foreign_key "playthrough_blows", "playthroughs"
+  add_foreign_key "playthrough_blows", "scenes"
+  add_foreign_key "playthrough_commands", "playthroughs"
+  add_foreign_key "playthrough_commands", "scenes", column: "result_scene_id"
+  add_foreign_key "playthrough_drifts", "locations"
+  add_foreign_key "playthrough_drifts", "playthroughs"
+  add_foreign_key "playthrough_drifts", "scenes"
+  add_foreign_key "playthrough_endings", "playthroughs"
+  add_foreign_key "playthrough_endings", "quest_outcomes"
+  add_foreign_key "playthrough_feedbacks", "playthroughs"
+  add_foreign_key "playthrough_feedbacks", "scenes"
+  add_foreign_key "playthrough_npc_states", "characters"
+  add_foreign_key "playthrough_npc_states", "locations"
+  add_foreign_key "playthrough_npc_states", "playthroughs"
+  add_foreign_key "playthrough_overreaches", "locations"
+  add_foreign_key "playthrough_overreaches", "playthroughs"
+  add_foreign_key "playthrough_overreaches", "scenes"
+  add_foreign_key "playthrough_passages", "items", column: "opened_by_item_id", on_delete: :nullify
+  add_foreign_key "playthrough_passages", "location_connections", on_delete: :cascade
+  add_foreign_key "playthrough_passages", "playthroughs", on_delete: :cascade
+  add_foreign_key "playthrough_tolls", "characters"
+  add_foreign_key "playthrough_tolls", "location_connections"
+  add_foreign_key "playthrough_tolls", "locations"
+  add_foreign_key "playthrough_tolls", "playthroughs"
+  add_foreign_key "playthrough_tolls", "scenes"
+  add_foreign_key "playthrough_vitals", "characters"
+  add_foreign_key "playthrough_vitals", "playthroughs"
+  add_foreign_key "playthrough_volitions", "characters"
+  add_foreign_key "playthrough_volitions", "locations"
+  add_foreign_key "playthrough_volitions", "playthroughs"
+  add_foreign_key "playthrough_volitions", "scenes"
+  add_foreign_key "playthroughs", "characters"
+  add_foreign_key "playthroughs", "locations", column: "current_location_id"
+  add_foreign_key "playthroughs", "scenes", column: "current_scene_id"
+  add_foreign_key "playthroughs", "stories"
+  add_foreign_key "quest_outcomes", "quests"
+  add_foreign_key "quest_steps", "quests"
+  add_foreign_key "quests", "quests", column: "parent_quest_id"
+  add_foreign_key "quests", "stories"
+  add_foreign_key "races", "universes"
+  add_foreign_key "scenes", "locations"
+  add_foreign_key "scenes", "scenes", column: "previous_scene_id"
+  add_foreign_key "scenes", "stories"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "stories", "universes"
+  add_foreign_key "tool_calls", "messages"
+  add_foreign_key "world_events", "stories"
+  add_foreign_key "world_events", "world_mechanics"
+  add_foreign_key "world_mechanics", "stories"
 end

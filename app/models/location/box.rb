@@ -32,9 +32,18 @@
 # *"connected locations don't necessarily have to be planar distances"* are both
 # true BY CONSTRUCTION rather than by convention. There is no global space for
 # the non-planar world graph to be inconsistent with, because there is no global
-# space. A box is therefore meaningless without a parent, and comparing two
-# boxes under different parents is meaningless too: `Location#overlaps?` is the
-# reader that knows that, and it refuses the comparison rather than answering it.
+# space. A box is therefore read in its parent's plane, and comparing two boxes
+# under different parents is meaningless: `Location#overlaps?` is the reader
+# that knows that, and it refuses the comparison rather than answering it.
+#
+# A ROOM THAT STANDS ON ITS OWN -- a street, a field, a one-room shop, any room
+# with no parent -- IS ITS OWN PLANE. Its box sits at that plane's origin
+# (`0, 0` on storey `0`) and is sized from its sort by the engine
+# (`layout.rs`, `Playthrough::RustEngine.own_box`), so every room has a layout,
+# outdoors too. Two such rooms share no plane, so a missing parent on both is
+# never the same parent: nothing compares them, and they are on no storey of
+# any place (`Location#storey`). A parentless box anywhere but the origin is
+# still unreadable (`Story::Doctor`, `location_with_a_box_and_no_parent`).
 #
 # `z` IS A STOREY INDEX AND NOT A HEIGHT, which follows from ruling 3: there is
 # no vertical extent to be measured, only which plane you are standing on. And

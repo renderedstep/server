@@ -13,9 +13,10 @@ class EngineDataTest < ActiveSupport::TestCase
   end
 
   # The engine's data is every engine-owned file this game declares, and
-  # physics and the speech die's table, which only the engine reads.
+  # physics, the speech die's table and a lone room's size bands, which only
+  # the engine reads (Ruby asks it for a box, `Location::Generator#own_box!`).
   test "the files the engine owns are the engine's own data files" do
-    assert_equal (EngineData::ENGINE_OWNED + [ "physics", "playthrough/volition/speech" ]).sort,
+    assert_equal (EngineData::ENGINE_OWNED + [ "location/size", "physics", "playthrough/volition/speech" ]).sort,
                  Playthrough::Requests.data.keys.sort
   end
 

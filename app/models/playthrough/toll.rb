@@ -162,7 +162,7 @@ class Playthrough::Toll < ApplicationRecord
   # `physics::words`, word for word.
   def fall_words
     edge = location_connection
-    storeys = edge && edge.location.z && edge.connected_location.z && (edge.location.z - edge.connected_location.z)
+    storeys = edge && edge.location.storey && edge.connected_location.storey && (edge.location.storey - edge.connected_location.storey)
     words =
       if storeys.nil? || storeys < 1 then "a fall"
       elsif storeys == 1 then "a fall of 1 storey"

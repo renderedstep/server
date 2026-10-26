@@ -2216,14 +2216,14 @@ class Story::Doctor
   def frontier_turned_away_from_the_goal
     step = next_bound_step
     goal = step && room_of(step)
-    return [] if goal.nil? || goal.z.nil?
+    return [] if goal.nil? || goal.storey.nil?
 
     unexplored = story.locations.where(last_protagonist_visit: nil).where.not(id: goal.id)
     return [] if unexplored.none?
-    return [] if unexplored.any? { |room| room.z.to_i <= goal.z }
+    return [] if unexplored.any? { |room| room.storey.to_i <= goal.storey }
 
     [ finding(:frontier_turned_away_from_the_goal, :warning,
-              "#{goal.name.inspect} stands on storey #{goal.z}, and every place in this world nobody has opened yet " \
+              "#{goal.name.inspect} stands on storey #{goal.storey}, and every place in this world nobody has opened yet " \
               "is level with the way out or above it. #{step.quest.title.inspect} step #{step.position} needs the " \
               "player down there, and nothing left to explore leads down -- the only way on is back through rooms " \
               "somebody has already walked",
@@ -2371,11 +2371,16 @@ class Story::Doctor
   # no position is exactly what the outermost place of an interior carries, and
   # it is the plane its children are read in. That is the whole reason there are
   # two whole shapes -- see `Location::Box`.
+  #
+  # NOR IS A BOX AT THE ORIGIN: a room that stands on its own is a plane of its
+  # own, and its box sits at `0, 0` on storey `0` of it (`Location#own_plane?`).
+  # Only a parentless box anywhere else is three numbers read against nothing.
   def boxes_with_no_parent
-    story.locations.with_a_box.where(parent_location_id: nil).order(:id).map do |room|
+    story.locations.with_a_box.where(parent_location_id: nil).order(:id).reject(&:own_plane?).map do |room|
       finding(:location_with_a_box_and_no_parent, :warning,
               "#{room.name} is #{room.box} and is inside nothing, and a box is read in its parent's own plane -- " \
-              "so there is nothing for those numbers to be measured against",
+              "or, for a room that stands on its own, sits at 0, 0 on storey 0 of its own -- so there is " \
+              "nothing for those numbers to be measured against",
               :manual, subject: room)
     end
   end

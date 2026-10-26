@@ -1693,10 +1693,25 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     assert_match(/neither a footprint/, error.message)
   end
 
-  test "a file that gives a room a position and no parent is refused" do
-    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(laid_out(parent: nil)).load! }
+  test "a file that gives a room a position off the origin and no parent is refused" do
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(laid_out(parent: nil, x: 2)).load! }
 
-    assert_match(/has a position and is inside nothing/, error.message)
+    assert_match(/has a position off the origin and is inside nothing/, error.message)
+  end
+
+  # A ROOM THAT STANDS ON ITS OWN is its own plane, and its box sits at that
+  # plane's origin -- so two of them at 0, 0 on storey 0 are not an overlap.
+  test "a file that boxes rooms inside nothing at the origin loads, and they are never compared" do
+    world = document
+    world["locations"].first(2).each { |row| row.merge!("x" => 0, "y" => 0, "z" => 0, "width" => 7, "depth" => 8) }
+
+    story = WorldSeed::Loader.new(world).load!
+    rooms = story.locations.where(parent_location_id: nil).with_a_box.to_a
+
+    assert_equal 2, rooms.size
+    assert rooms.all?(&:own_plane?)
+    assert_nil rooms.first.storey
+    assert_not rooms.first.overlaps?(rooms.last)
   end
 
   # THE MIRROR OF THE ONE ABOVE, and the reason there are two whole shapes: an

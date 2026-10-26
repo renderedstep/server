@@ -318,6 +318,15 @@ class Location < ApplicationRecord
   # place has a plane; this says it has been put on one.
   def placed? = !box.nil?
 
+  # WHICH STOREY OF THE PLACE AROUND IT THIS ROOM IS ON, or nil for a room
+  # that stands on its own: its box is its own plane (`Location::Box`), so its
+  # `z` is never compared with another room's. The engine's `plan::storey`.
+  def storey = parent_location_id && z
+
+  # WHETHER THIS ROOM'S BOX IS A PLANE OF ITS OWN -- no parent, and sitting at
+  # that plane's origin on storey 0, the one place such a box can be.
+  def own_plane? = parent_location_id.nil? && placed? && [ x, y, z ] == [ 0, 0, 0 ]
+
   # WHETHER THIS IS A PLACE TO BE LAID OUT INSIDE -- a row carrying a FOOTPRINT
   # and no position, which is what the outermost place of an interior carries
   # (`Location::Box`). It is the ONE question `Location::Generator` asks before

@@ -46,6 +46,13 @@ class Update::RegistryTest < ActiveSupport::TestCase
     end
   end
 
+  # A place folded back into its room is laid out as that room, and the
+  # repairs and the doctor read the laid-out world.
+  test "the layouts run after the one-room folds and before the repairs" do
+    assert_operator index_of(Update::Steps::FoldOneRoomPlaces), :<, index_of(Update::Steps::LayOutRooms)
+    assert_operator index_of(Update::Steps::LayOutRooms), :<, index_of(Update::Steps::SafeRepairs)
+  end
+
   test "the doctor is last, and reports rather than writes" do
     assert_equal Update::Steps::Doctor, Update::REGISTRY.last
     assert_predicate Update::Steps::Doctor, :reports_only?
