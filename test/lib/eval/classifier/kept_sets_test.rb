@@ -231,15 +231,27 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
 
   # THE WEAR AND REMOVE LINES, after the local reader's set was bought: lines
   # that put clothes on and take them off, at the one position with clothes in
-  # reach. No kept set scored them, so every one is checked against today's
-  # corpus less these.
+  # reach. Then the put and approach lines: lines that set a carried thing on,
+  # in or by another, or walk to or back from something in the room, at the one
+  # position with furniture to put things on. No kept set scored either, so
+  # every one is checked against today's corpus less these.
   ADDED_SINCE_POINTER = %w[wear-cap-put-on wear-cap-wear wear-cap-put-on-split wear-apron-don wear-apron-tie-on
                            wear-apron-wear wear-scarf-put-on-my wear-scarf-wrap wear-scarf-wear remove-coat-take-off-my
                            remove-coat-take-off-full remove-coat-take-off-split remove-coat-remove-my
                            remove-coat-remove-full remove-coat-shrug-off remove-scarf-take-off wear-get-dressed
                            remove-undress wear-apron-change-into wear-coat-back-on wear-hood-pull-up other-coat-button
                            remove-coat-hang-up wear-apron-disguise take-not-wear-cap drop-not-remove-coat
-                           use-not-wear-scarf-offer].freeze
+                           use-not-wear-scarf-offer
+                           put-key-on-desk put-key-in-chest put-bell-place-windowsill put-bell-set-down-on-desk
+                           put-coat-lay-on-chest put-coat-hang-on-hooks put-coat-hang-up put-bell-back-on-windowsill
+                           put-key-leave-on-desk put-key-drop-on-desk put-coat-down-by-hearth
+                           put-bell-set-down-next-to-lamp put-key-hide-in-chest put-cap-not-carried-on-desk
+                           walk-to-window walk-to-desk walk-to-hearth-walk-over walk-to-brace-walk-over
+                           walk-to-brace-approach walk-to-desk-approach step-back-from-brace step-back-back-away-justicar
+                           step-back-move-away walk-to-stand-by-door walk-to-stand-next-to-hearth
+                           drop-not-put-key-down drop-not-put-bell-set-down drop-not-put-coat take-not-put-cap
+                           use-not-put-key-offer move-not-approach-bell-tower
+                           move-not-approach-lane-walk-over].freeze
 
   def pointer_corpus = Eval::Classifier.corpus.subset { |line| !ADDED_SINCE_POINTER.include?(line.id) }
 

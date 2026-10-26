@@ -1,0 +1,134 @@
+# THINGS TO SET DOWN SOMEWHERE, AND PLACES IN A ROOM TO WALK TO.
+#
+# The classifier bench's position for lines that put a carried thing on, in or
+# by another thing, and for lines that walk to or back from something inside
+# the room. The game offers no such act yet -- a thing is only ever dropped at
+# the player's feet, and a move only ever leaves by a way out -- so every such
+# line is labelled a reach for an act nobody offered; the world is here so the
+# lines have real records to be read against. It is the room the design probe
+# used: a desk, a shut chest, a hearth, a windowsill and a row of hooks to put
+# things on or in or walk to, a lamp and a cap loose beside them, a coat, a
+# bell and a key in the hands, two ways out whose names a walk across the room
+# could be mistaken for, and one person to walk to, back away from and offer
+# things to.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Oil lamps, ropes and hand carts.
+  weapons: Walking sticks.
+  geographies: A walled court town on a tidal causeway.
+  civilizations: A town that tries its cases at the tide.
+  history: The court has sat on the causeway for two centuries.
+  economics: Coins and sealed writs.
+  politics: The justicars keep the court.
+  religion: The town swears its oaths on the tide bell.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the causeway town.
+story:
+  title: A Key on the Court Desk
+  genre: town adventure
+  start_time: '2026-10-25T08:00:00Z'
+  preface: A court room on the causeway, before the day's sitting.
+  summary: Wren Carrow brings the court its key and its bell.
+opening_scene:
+  location: The Causeway Court
+  characters: [Wren Carrow, Ammon Brace]
+  description: You stand in the court room before the sitting.
+  summary: Wren arrives at the court.
+characters:
+- fullname: Wren Carrow
+  nickname: Wren
+  race: Townsfolk
+  age: 31
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: The court's runner, who opens the room each morning.
+  personality: Quick and tidy.
+  appearance: Salt on her boots.
+  likes: A room set out before the justicar comes.
+  dislikes: A thing left where it does not belong.
+  fears: A lost key.
+  stats: {level: 3, hit_die: 8, strength: 10, dexterity: 12, will: 12}
+  items:
+  - name: oilskin coat
+    description: A long oilskin coat, wet from the causeway.
+    bulk: light
+    properties: '{}'
+  - name: hand-bell
+    description: A small brass bell rung to open the sitting.
+    bulk: light
+    properties: '{}'
+  - name: brass key
+    description: The key to the court's chest.
+    bulk: light
+    properties: '{}'
+- fullname: Ammon Brace
+  nickname: Justicar Brace
+  race: Townsfolk
+  location: The Causeway Court
+  age: 61
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: The justicar who has sat in this court for twenty years.
+  personality: Stern and patient.
+  appearance: A black robe and a silver chain.
+  likes: An orderly room.
+  dislikes: Lateness.
+  fears: A verdict given wrongly.
+  stats: {level: 3, hit_die: 8, strength: 11, dexterity: 10, will: 13}
+locations:
+- name: The Causeway Court
+  detail_level: realized
+  opening: true
+  description: A stone court room with a desk, a chest, a hearth, hooks by the door and a window over the causeway.
+  teaser: The court room.
+  lore: The justicars have tried the town's cases here for two centuries.
+  items:
+  - name: desk
+    description: The justicar's desk, its top bare.
+    properties: '{}'
+    holds: top
+  - name: chest
+    description: An iron-bound chest with its lid shut.
+    properties: '{}'
+    holds: closed
+  - name: hearth
+    description: A wide stone hearth, the fire laid but not lit.
+    properties: '{}'
+    holds: nothing
+  - name: windowsill
+    description: A deep sill under the window over the causeway.
+    properties: '{}'
+    holds: top
+  - name: hooks
+    description: A row of iron hooks by the door.
+    properties: '{}'
+    holds: nothing
+  - name: lamp
+    description: An oil lamp, unlit.
+    bulk: light
+    properties: '{}'
+  - name: cap
+    description: A clerk's cloth cap.
+    bulk: light
+    properties: '{}'
+- name: Mournwell Lane
+  detail_level: realized
+  description: A narrow lane running down to the causeway.
+  teaser: The lane outside.
+  lore: The lane is named for the old well at its foot.
+- name: The Bell Tower
+  detail_level: realized
+  description: A tower over the court where the tide bell hangs.
+  teaser: A tower up a stair.
+  lore: The tide bell is rung for every verdict.
+connections:
+- between: [The Causeway Court, Mournwell Lane]
+  distance: adjacent
+  travel_method: walking
+- between: [The Causeway Court, The Bell Tower]
+  distance: adjacent
+  travel_method: climbing
