@@ -622,7 +622,7 @@ class Location::Generator
       ## The Place
       name: #{location.name}
       teaser: #{location.teaser}
-      #{geometry_facts}#{already_here}
+      #{geometry_facts}#{already_here}#{already_standing}
       ## Instructions
       Write this place out in full.
       - The description is what the player reads on arrival. Address them as "you"
@@ -768,6 +768,43 @@ class Location::Generator
     "\n#{lines.join("\n")}"
   end
 
+  # WHO THE STORY ALREADY HAS STANDING IN THIS ROOM, stated before the room is
+  # described so that it is described with them in it -- `#already_here`'s rule
+  # applied to people. A seed file, a world mechanic or an earlier admission can
+  # put somebody in a room nobody has written yet (`Story::Doctor`'s
+  # `character_in_a_stub`), and a writer not told so describes an empty room
+  # around them, or writes them a second time under a new name, which
+  # `Character::Registry` cannot tell from a new person. Every line is a record
+  # read out of `Character.present_in`; the player is left off, since nobody
+  # writes the player.
+  #
+  # IT IS THE INFORM HALF AND NOT THE VERIFY HALF. Nobody here is moved by what
+  # the writer answers: a person named again resolves to the row that is already
+  # here (`Character::Registry#admit_one`), and the room's cap already counts
+  # them (`#room_for_people`).
+  #
+  # EMPTY FOR EVERY ROOM NOBODY STANDS IN, and empty means the prompt is the one
+  # a baseline was measured on, character for character -- appended to
+  # `#already_here`'s line for that method's reason.
+  def already_standing
+    return "" if standing.empty?
+
+    lines = [ "## Already Standing Here, Decided By The Game",
+              "The game's own records of who is in this room, already decided and not yours",
+              "to change. Write the room with them in it, as they are, and do not write any",
+              "of them again as a new person." ]
+    standing.each do |character|
+      # `#sex_label` for `#slot_details`' reason: the stored value reads as English.
+      line = "  #{character.fullname}, #{character.race&.name}, about #{character.age}, #{character.sex_label}"
+      lines << (character.appearance.present? ? "#{line}: #{character.appearance}" : line)
+    end
+    "\n#{lines.join("\n")}"
+  end
+
+  def standing
+    @standing ||= Character.present_in(location).where(is_protagonist: false).includes(:race).to_a
+  end
+
   # THE FLOOR LIST'S FIRST LINE IN A FURNISHED ROOM, and nothing in any other.
   # Measured, not guessed: with only `#already_here`'s closing line, the room
   # writer re-listed the kit's loose things as its own, 143 of 168 proposals on
@@ -860,11 +897,19 @@ class Location::Generator
   def people_instructions
     wanted = cast_registry.allowance
 
-    return NOBODY_HERE if wanted.zero?
+    # NOUGHT WITH SOMEBODY ALREADY STANDING HERE is not a room with nobody in
+    # it, so it is not told `NOBODY_HERE`. Same heading, for `Version`'s scrub.
+    if wanted.zero?
+      return NOBODY_HERE if standing.empty?
+
+      return "## Who Is Here\nWrite NOBODY new into this place. The people Already Standing Here above are\neveryone who is here."
+    end
+
+    besides = standing.empty? ? "" : ", besides the people Already Standing Here above"
 
     <<~PROMPT.rstrip
       ## Who Is Here
-      Write EXACTLY #{wanted} #{"person".pluralize(wanted)} who #{wanted == 1 ? "is" : "are"} in this place right now.
+      Write EXACTLY #{wanted} #{"person".pluralize(wanted)} who #{wanted == 1 ? "is" : "are"} in this place right now#{besides}.
       - Anyone you write is somebody the player can walk up to and talk to, so they
         have to have a reason to be standing here and an enduring aim that today's
         reason serves, threatens or exposes
