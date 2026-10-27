@@ -81,6 +81,7 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("carry_findings", function!(carry_findings, 2))?;
     module.define_module_function("material_findings", function!(material_findings, 2))?;
     module.define_module_function("wear_findings", function!(wear_findings, 2))?;
+    module.define_module_function("mark_wearable", function!(mark_wearable, 3))?;
     module.define_module_function("layout_findings", function!(layout_findings, 2))?;
     module.define_module_function("lay_out_rooms", function!(lay_out_rooms, 3))?;
     module.define_module_function("own_box", function!(own_box, 3))?;
@@ -345,6 +346,29 @@ fn wear_findings(database: String, story: i64) -> Result<String, RubyError> {
         };
         match engine.wear_findings(story) {
             Ok(findings) => findings_json(&findings),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.mark_wearable(database, story_id, dry_run)`: every thing of
+/// a story, in the world and in each of its games, that names no place on a
+/// body and that the kits' wear table reads as a garment by its name, given
+/// that place in one transaction (`Engine::mark_wearable`), or with `dry_run`
+/// only said. Each thing as its id, name and place. Asks no model.
+fn mark_wearable(database: String, story: i64, dry_run: bool) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let mut engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.mark_wearable(story, dry_run) {
+            Ok(marked) => json!({ "items": marked.iter().map(|thing| json!({
+                "id": thing.item,
+                "name": thing.name,
+                "wear": thing.place,
+            })).collect::<Vec<_>>() }),
             Err(error) => failed(&error),
         }
     });

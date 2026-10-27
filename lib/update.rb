@@ -89,6 +89,8 @@ module Update
   #   layouts after the folds,      a place folded back into its room is laid
   #   before repairs                out as the room it now is, and the repairs
   #                                 and the doctor read the laid-out world.
+  #   wear marks before repairs     the doctor's wear checks read the marked
+  #                                 things.
   #   doctor last                  it reports and never writes, so it is the
   #                                 summary of everything above it.
   REGISTRY = [
@@ -99,6 +101,7 @@ module Update
     Update::Steps::StampResolvedBy,
     Update::Steps::FoldOneRoomPlaces,
     Update::Steps::LayOutRooms,
+    Update::Steps::MarkWearable,
     Update::Steps::SafeRepairs,
     Update::Steps::PointerReader,
     Update::Steps::Doctor

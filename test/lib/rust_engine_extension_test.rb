@@ -279,6 +279,37 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     end
   end
 
+  # The post-pull wear step on a stored world: a dry run writes nothing, the
+  # run marks every thing whose name is a garment and no other, and a second
+  # run finds nothing.
+  test "the wear step marks the stored garments of every story, once" do
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "worn.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        world = Rails.root.join("lib/engine_sweep/worlds/the-ropewalk-at-saltmarsh.yml")
+        story = WorldSeed::Loader.new(WorldSeed.parse(world.read)).load!
+        room = story.locations.first
+        made = ->(name) { room.items.create!(name: name, description: "A #{name}.", tier: "portable", bulk: "handy") }
+        cloak = made.("tattered wool cloak")
+        boots = made.("Boots")
+        crate = made.("box of gloves")
+
+        dry = Update::Steps::MarkWearable.new(dry_run: true).call
+        line = dry.lines.find { |said| said.start_with?("#{story.title}:") }
+        assert_includes line, "##{cloak.id} tattered wool cloak on the outer"
+        assert_includes line, "##{boots.id} Boots on the feet"
+        assert_not_includes line, crate.name
+        assert_nil cloak.reload.wear
+
+        Update::Steps::MarkWearable.new.call
+        assert_equal %w[outer feet], [ cloak.reload.wear, boots.reload.wear ]
+        assert_nil crate.reload.wear
+        assert_predicate Update::Steps::MarkWearable.new.call, :nothing_to_do?
+      end
+    end
+  end
+
   # A HANDMADE WORLD STORED BEFORE IT HAD A LAYOUT, BROUGHT UP TO DATE, IS THE
   # WORLD A FRESH SEED WRITES: the step's engine call and the loader's own
   # lay out give every room, thing and person the same numbers.
