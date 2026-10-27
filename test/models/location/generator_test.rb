@@ -1647,15 +1647,84 @@ class Location::GeneratorTest < ActiveSupport::TestCase
                  agent.prompts.first)
   end
 
-  # ASKED FOR AT MOST WHAT IS LEFT, the way the exits and the items prompts are.
-  test "a room already at its cast cap is asked for nobody" do
+  # ASKED FOR AT MOST WHAT IS LEFT, the way the exits and the items prompts are
+  # -- and the room full of people is not told it is a room with nobody in it.
+  test "a room already at its cast cap is asked for nobody new" do
     location = stub_location(name: "The Drowned Ledger")
     Character::Registry::MAX_PER_ROOM.times { create(:character, story: @story, location: location) }
     agent = FakeAgent.new(DETAIL, EXITS)
 
     realize(location, agent)
 
-    assert_match(/Write NOBODY into this place/, agent.prompts.first)
+    assert_match(/Write NOBODY new into this place/, agent.prompts.first)
+    assert_no_match(/There is nobody here/, agent.prompts.first)
+  end
+
+  # --- who already stands in a room nobody has written ------------------------
+  #
+  # `Story::Doctor`'s `character_in_a_stub`: somebody a world placed in a room
+  # before anybody wrote it. The room is written with them in it.
+
+  test "the people already standing in a stub are named before it is written" do
+    location = stub_location(name: "The Drowned Ledger")
+    neb = create(:character, story: @story, location: location, fullname: "Neb Halloran", age: 33,
+                             appearance: "A rope-scar around the left wrist.")
+    ida = create(:character, story: @story, location: location, fullname: "Ida Crane", age: 61, appearance: "Grey.")
+    create(:character, story: @story, location: location, fullname: "The Player", is_protagonist: true)
+    agent = FakeAgent.new(DETAIL, EXITS)
+
+    Location::Population.stub(:count_for, 1) { realize(location, agent) }
+    prompt = agent.prompts.first
+
+    assert_includes prompt, <<~BLOCK
+      teaser: #{location.teaser}
+
+      ## Already Standing Here, Decided By The Game
+      The game's own records of who is in this room, already decided and not yours
+      to change. Write the room with them in it, as they are, and do not write any
+      of them again as a new person.
+        Neb Halloran, #{neb.race.name}, about 33, #{neb.sex_label}: A rope-scar around the left wrist.
+        Ida Crane, #{ida.race.name}, about 61, #{ida.sex_label}: Grey.
+      ## Instructions
+    BLOCK
+    assert_not_includes prompt, "  The Player,"
+    assert_includes prompt, "## Who Is Here\nWrite NOBODY new into this place. The people Already Standing Here " \
+                            "above are\neveryone who is here.\n"
+  end
+
+  test "the people asked for are asked for besides the ones already standing there" do
+    location = stub_location(name: "The Drowned Ledger")
+    create(:character, story: @story, location: location, fullname: "Neb Halloran")
+    agent = FakeAgent.new(DETAIL, EXITS)
+
+    Location::Population.stub(:count_for, 1) { realize(location, agent) }
+
+    assert_includes agent.prompts.first, "Write EXACTLY 1 person who is in this place right now, " \
+                                         "besides the people Already Standing Here above.\n"
+  end
+
+  test "a room nobody stands in is not told about anybody standing there" do
+    location = stub_location(name: "The Drowned Ledger")
+    create(:character, story: @story, location: stub_location(name: "Elsewhere"), fullname: "Neb Halloran")
+    agent = FakeAgent.new(DETAIL, EXITS)
+
+    Location::Population.stub(:count_for, 1) { realize(location, agent) }
+
+    assert_not_includes agent.prompts.first, "Already Standing Here"
+    assert_includes agent.prompts.first, "Write EXACTLY 1 person who is in this place right now.\n"
+  end
+
+  # THE VERIFY HALF: a writer that names them again anyway moves nobody and
+  # makes nobody new.
+  test "a person already standing here and written again is neither copied nor moved" do
+    location = stub_location(name: "The Drowned Ledger")
+    maren = create(:character, story: @story, location: location, fullname: "Maren Vosk")
+
+    assert_no_difference -> { Character.count } do
+      Location::Population.stub(:count_for, 1) { realize(location, FakeAgent.new(PEOPLED, EXITS)) }
+    end
+
+    assert_equal [ maren ], Character.present_in(location).to_a
   end
 
   test "a world already at its cast cap is asked for nobody" do

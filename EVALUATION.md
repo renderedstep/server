@@ -1295,7 +1295,15 @@ bin/rails runner 'Eval::Prompt::Result.load(Eval.root.join("my-set")) \
 
 ### Current kept sets and historical comparisons
 
-**`realization-2026-10-02` is the current realization baseline.** Rooms are
+**`realization-2026-10-27` is the current realization baseline.** A room
+somebody already stands in before it is written is told who, in an "Already
+Standing Here" block, and is asked for its new people besides them; a room
+nobody stands in is asked exactly what it was before. Against
+`realization-2026-10-02` every check read NOISE
+(`db/eval/realization-2026-10-27/README.md`). `realization-2026-10-02` is
+history from then on.
+
+**`realization-2026-10-02` was the realization baseline before it.** Rooms are
 furnished from their kits (`Item::Kit`) before the writer is asked anything,
 and the detail prompt says what is there; each corpus case names the kind and
 density its room would have been dealt. Against a before side bought at the
