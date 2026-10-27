@@ -224,11 +224,19 @@ class Playthrough::Arc
     when "slower_than" then slower_than?(outcome.minutes)
     when "out_of_order" then out_of_order?(outcome.quest)
     when "while_alive" then alive_at_beat?(outcome.step, outcome.character)
+    when "with_you" then outcome.character_id.present? && with_player?(outcome.character_id)
     else false
     end
   end
 
+  # THE STEP'S OWN TRIGGER, AND ITS COMPANION WITH THE PLAYER AS IT IS MET. A
+  # step that names nobody needs nobody, so every arc written before
+  # `companion` existed is reached exactly as it was.
   def reached?(step)
+    trigger_met?(step) && (step.companion_id.nil? || with_player?(step.companion_id))
+  end
+
+  def trigger_met?(step)
     return false if step.nil?
     return elapsed?(step) if step.time_passed?
     return false if step.unbound?
@@ -415,6 +423,10 @@ class Playthrough::Arc
 
     "it stopped at #{step.summary}"
   end
+
+  # "WITH YOU" IS `Playthrough#followers`: in the room, alive, following and
+  # not a foe -- the one record of it the game keeps.
+  def with_player?(character_id) = playthrough.followers.any? { |row| row.character_id == character_id }
 
   def standing_in?(location_id) = location_id.present? && playthrough.current_location_id == location_id
 

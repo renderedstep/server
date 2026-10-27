@@ -206,6 +206,16 @@ class Playthrough::EndNoticeTest < ActiveSupport::TestCase
                  "still alive, which is what this ending is for.", Playthrough::EndNotice.for(@game).finished.reason
   end
 
+  test "an ending reached with somebody along names them" do
+    prince = create(:character, story: @story, fullname: "Prince Aurel Durn")
+    @outcome = create(:quest_outcome, :with_you, quest: @quest, name: "rescued-with-him", character: prince)
+    met!(1, 2, 3)
+    conclude!
+
+    assert_equal "Goal 3 was the last you met, and it finished the story. You met it with Prince Aurel Durn " \
+                 "alive and with you, which is what this ending is for.", Playthrough::EndNotice.for(@game).finished.reason
+  end
+
   test "an ending reached late says by how much it was late" do
     @outcome = create(:quest_outcome, :slower_than, quest: @quest, name: "too-late", minutes: 150)
     met!(1, 2, 3)

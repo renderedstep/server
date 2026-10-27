@@ -1,0 +1,37 @@
+{
+  "script": "an-ending-reached-without-company",
+  "doctor": {
+    "headline": "playable, 3 warnings",
+    "findings": [
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Market\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Courtyard\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Lane\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
+  },
+  "audit": {
+    "headline": "1 scenes, nothing to report",
+    "flags": [],
+    "unjudged": [
+      [
+        "third_person_protagonist",
+        1000000001,
+        "this story has no protagonist on record, so there is no name to check the narration against"
+      ]
+    ]
+  }
+}

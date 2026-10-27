@@ -1,0 +1,39 @@
+story: A Friend at the Gate
+why: an ending that wants the companion with the player is not selected when the companion stayed behind before the last beat
+steps:
+- id: she-comes-along
+  type: talk to Maren
+  npc_action: follow
+  expect:
+    changed: true
+    present: [Maren]
+- id: there-together
+  type: go to Courtyard
+  expect:
+    changed: true
+    location: Courtyard (realized)
+    present: [Maren]
+    quest:
+      1: reached
+      2: bound
+- id: she-stays
+  type: talk to Maren
+  npc_action: stop_following
+  expect:
+    changed: true
+- id: out-by-the-lane-alone
+  type: go to Lane
+  why: the last beat without Maren, so the ending that wants her with the player does not hold
+  expect:
+    changed: true
+    location: Lane (realized)
+    present: []
+    quest:
+      1: reached
+      2: reached
+    ending: none
+- id: and-the-story-ends
+  type: "/end"
+  expect:
+    changed: true
+    ending: alone

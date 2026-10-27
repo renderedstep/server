@@ -99,6 +99,12 @@ FactoryBot.define do
       character { association :character, story: quest.story }
     end
 
+    # Somebody of the quest's own story, and no beat: the last one.
+    trait :with_you do
+      condition { "with_you" }
+      character { association :character, story: quest.story }
+    end
+
     # AND WHAT THE WORLD DOES ABOUT IT AFTERWARDS: one scheduled `WorldEvent`,
     # two story hours after the ending.
     trait :with_a_ramification do

@@ -1,0 +1,107 @@
+# A small world for a beat that waits for company. The arc's first step is to
+# reach the courtyard WITH Maren (`companion:`), so standing there alone meets
+# nothing; its ending `together` is selected only when Maren is still with the
+# player at the last beat (`when: with_you`), and `alone` otherwise. Maren
+# follows only on a talk the walk supplies (`npc_action: follow`), so no model
+# decides anything here.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Keys, locks and lanterns.
+  weapons: Wooden staves.
+  geographies: A market, its courtyard and the lane beyond.
+  civilizations: A small trading town.
+  history: Traders built the market together.
+  economics: Goods traded for coins.
+  politics: A town council keeps the peace.
+  religion: The town keeps its own festivals.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the town.
+story:
+  title: A Friend at the Gate
+  genre: town adventure
+  start_time: '2026-09-08T12:00:00Z'
+  preface: Maren has agreed to walk the old way with Cal, if Cal asks.
+  summary: Cal and Maren cross the courtyard to the lane together, or Cal goes alone.
+opening_scene:
+  location: Market
+  characters: [Cal, Maren]
+  description: You stand with Maren beside the gate to the courtyard.
+  summary: Cal meets Maren at the market gate.
+characters:
+- fullname: Cal
+  nickname: Cal
+  race: Townsfolk
+  age: 30
+  sex: male
+  is_protagonist: true
+  is_companion: false
+  backstory: A trader returning to the market.
+  personality: Patient and practical.
+  appearance: A travel-worn coat.
+  likes: A fair bargain.
+  dislikes: Needless arguments.
+  fears: Losing a friend.
+  stats: {level: 10, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+- fullname: Maren
+  nickname: Maren
+  race: Townsfolk
+  location: Market
+  age: 32
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  backstory: A gatekeeper who knows the old way through the courtyard.
+  personality: Willing to listen and keep a promise.
+  appearance: A blue coat and a wooden staff.
+  likes: Clear agreements.
+  dislikes: Deception.
+  fears: Betraying a trust.
+  stats: {level: 10, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+locations:
+- name: Market
+  detail_level: realized
+  opening: true
+  description: A quiet square beside the courtyard gate.
+  teaser: A market square.
+  lore: Traders meet here each morning.
+- name: Courtyard
+  detail_level: realized
+  description: A sheltered courtyard beyond the market.
+  teaser: A sheltered courtyard.
+  lore: The market's oldest meetings happened here.
+- name: Lane
+  detail_level: realized
+  description: A narrow lane running on from the courtyard.
+  teaser: A narrow lane.
+  lore: The old way out of town.
+connections:
+- between: [Market, Courtyard]
+  distance: adjacent
+  travel_method: walking
+- between: [Courtyard, Lane]
+  distance: adjacent
+  travel_method: walking
+quests:
+- title: The Old Way
+  premise: Cross the courtyard with Maren and take the old way out.
+  status: open
+  contributes: true
+  steps:
+  - summary: Reach the courtyard with Maren.
+    trigger: reach_location
+    target: Courtyard
+    companion: Maren
+  - summary: Take the lane out of town.
+    trigger: reach_location
+    target: Lane
+  outcomes:
+  - name: alone
+    summary: Cal takes the old way out of town alone.
+    default: true
+  - name: together
+    summary: Cal and Maren take the old way out of town together.
+    default: false
+    when: with_you
+    alive: Maren

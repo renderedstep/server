@@ -36,6 +36,46 @@ class Playthrough::ArcTest < ActiveSupport::TestCase
     assert arc.reached?(step)
   end
 
+  # --- companion -------------------------------------------------------------
+  #
+  # THE IRON GATE'S LAST BEAT: the surface counts only with the prince along.
+  # "With you" is `Playthrough#followers` -- here, alive, following, not a foe.
+
+  test "a beat that names a companion is not reached by standing there alone" do
+    step = bound_step(:reach_location, @cell, "Make it back with the prince.")
+    step.update!(companion: @prince)
+    @game.update!(current_location: @cell)
+
+    assert_not arc.reached?(step), "the prince is in the room and not following"
+  end
+
+  test "a beat that names a companion is reached once they are with the player" do
+    step = bound_step(:reach_location, @cell, "Make it back with the prince.")
+    step.update!(companion: @prince)
+    @game.update!(current_location: @cell)
+    create(:playthrough_npc_state, playthrough: @game, character: @prince, location: @cell, following: true)
+
+    assert arc.reached?(step)
+  end
+
+  test "a companion who is dead is not with the player" do
+    step = bound_step(:reach_location, @cell, "Make it back with the prince.")
+    step.update!(companion: @prince)
+    @game.update!(current_location: @cell)
+    create(:playthrough_npc_state, playthrough: @game, character: @prince, location: @cell, following: true)
+    create(:playthrough_vitals, :dead, playthrough: @game, character: @prince)
+
+    assert_not arc.reached?(step)
+  end
+
+  test "a companion with the player does not meet a trigger that is not met" do
+    step = bound_step(:reach_location, @cell, "Make it back with the prince.")
+    step.update!(companion: @prince)
+    create(:playthrough_npc_state, playthrough: @game, character: @prince, location: @gate, following: true)
+
+    assert_not arc.reached?(step), "the party is at the gate, not the cell"
+  end
+
   test "an unbound step is never reached, whatever the world happens to contain" do
     step = create(:quest_step, :reach_location, quest: @quest, position: 1, target_name: "the dry cell")
     @game.update!(current_location: @cell)

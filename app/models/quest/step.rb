@@ -69,6 +69,11 @@ class Quest::Step < ApplicationRecord
 
   belongs_to :quest
   belongs_to :target, polymorphic: true, optional: true
+  # WHO HAS TO BE WITH THE PLAYER FOR THIS BEAT TO COUNT, or nobody. The
+  # world's row, a character of the step's own story; whether they are with
+  # the player is asked of a game (`Playthrough::Arc#reached?`), and this only
+  # says who. `Story::Doctor` reports one from another story.
+  belongs_to :companion, class_name: "Character", optional: true
 
   validates :position, presence: true, numericality: { only_integer: true, greater_than: 0 },
                        uniqueness: { scope: :quest_id }

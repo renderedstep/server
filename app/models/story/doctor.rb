@@ -1869,7 +1869,7 @@ class Story::Doctor
     return [ no_arc ] if story.quests.none?
 
     [ *stories_without_a_conclusion, *quests_without_an_outcome, *quests_with_two_defaults,
-      *outcomes_nothing_can_reach, *unbound_quest_steps, *stories_that_cannot_progress,
+      *outcomes_nothing_can_reach, *unbound_quest_steps, *companions_from_elsewhere, *stories_that_cannot_progress,
       *missing_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal,
       *due_endings_out_of_place ]
   end
@@ -2066,6 +2066,22 @@ class Story::Doctor
                 "#{quest.title.inspect} step #{step.position} waits for #{step.target_name.inspect} " \
                 "(#{step.trigger_kind}) and this world has no such #{noun_for(step)}. " \
                 "#{unbound_remedy(quest)}",
+                :manual, subject: step)
+      end
+    end
+  end
+
+  # P1: A BEAT THAT WAITS FOR A COMPANION THIS STORY DOES NOT HAVE. Nobody who
+  # is not a character of the story can ever be with the player in it, so the
+  # beat can never be met and the arc never finished.
+  def companions_from_elsewhere
+    story.quests.order(:id).flat_map do |quest|
+      quest.steps.order(:position).where.not(companion_id: nil).filter_map do |step|
+        next if story.characters.exists?(id: step.companion_id)
+
+        finding(:quest_companion_elsewhere, :fatal,
+                "#{quest.title.inspect} step #{step.position} needs character #{step.companion_id} with the player, " \
+                "and that is not a character of this story, so the step can never be met",
                 :manual, subject: step)
       end
     end
