@@ -1349,6 +1349,9 @@ the inscription corpus digest while its requests stay byte-identical; and
 the ending corpus gained a sixth case, somebody dead in the room, for the
 ending's `Dead here:` line. Each set's README has its verdict and the credit
 readings; the line's pair is under *The ending's own corpus* below.
+`inscription-2026-10-27` then replaces `inscription-2026-10-02` the same way:
+The Unrecorded Hour's copy-room apron gained `wear: waist`, which moves the
+corpus digest and not one request.
 
 `prompt-2026-09-10`, `classifier-throw-after-20260926` and
 `prompt-ending-2026-09-10` were the before sides until then.

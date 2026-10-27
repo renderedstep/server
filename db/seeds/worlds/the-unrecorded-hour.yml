@@ -235,6 +235,7 @@ locations:
     description: |-
       A copy-room apron folded to the size of a book and pushed to the back of the lowest shelf, behind a stack of blank ward forms squared up too neatly to be accidental. It has been folded and refolded by somebody who did it in the dark.
     bulk: light
+    wear: waist
     properties: '{"registered": false}'
 - name: The Long Hallway
   detail_level: stub
