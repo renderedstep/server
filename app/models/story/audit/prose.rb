@@ -597,6 +597,81 @@ module Story::Audit::Prose
   end
 
   # ------------------------------------------------------------------------
+  # THE PROSE PUTS A THING ON, OR TAKES IT OFF, AND NO TURN DID.
+  #
+  # Wearing is a record (`items.worn`), changed only by a `wear` or a `remove`
+  # the engine played, so a passage that dresses or undresses the player on any
+  # other turn has the records and the paragraph disagree about what the
+  # player wears from then on.
+  #
+  # THE PLAYER IS THE SUBJECT AND THE NAME IS THE OBJECT, in one of three
+  # grammars per direction, and nothing else is read:
+  #
+  #   1. the player, a dress verb and its particle, the name:
+  #      "you pull on the oilskin coat", "you take off your cap"
+  #   2. the player, the verb, the name, then the particle within two words:
+  #      "you shrug the coat back on", "you slip the gloves off" (with no
+  #      noun phrase after it: "you put the coat on the counter" and "you take
+  #      the cap off the peg" put down and pick up)
+  #   3. the player and a verb that needs no particle: "you don the apron",
+  #      "you remove the scarf" (with no `from` after it: "you remove the scarf
+  #      from the peg" is a take)
+  #
+  # The house negation guard reads the match and the twenty characters before
+  # it, and quoted speech is not read: "Take off that coat," Abel says.
+  #
+  # WHAT IT KNOWINGLY MISSES: a dressing under a pronoun ("you shrug it on"),
+  # any verb not on the list ("you wrap the scarf about your throat"), and a
+  # turn that put on one thing while the prose put on another of the same last
+  # word.
+  DRESS_VERBS = {
+    on: %w[put puts putting pull pulls pulled pulling slip slips slipped slipping shrug shrugs shrugged
+           shrugging tug tugs tugged tugging draw draws drew drawing ease eases eased easing],
+    off: %w[take takes took taking pull pulls pulled pulling slip slips slipped slipping shrug shrugs
+            shrugged shrugging tug tugs tugged tugging peel peels peeled peeling strip strips stripped
+            stripping ease eases eased easing]
+  }.freeze
+
+  DRESS_WITHOUT_PARTICLE = {
+    on: %w[don dons donned donning],
+    off: %w[doff doffs doffed doffing remove removes removed removing]
+  }.freeze
+
+  # One sentence that dresses or undresses the player, and which way.
+  Dressing = Data.define(:name, :sentence, :direction)
+
+  def dress_claims(text, names)
+    found = []
+
+    sentences(text).each do |sentence|
+      plain = unquoted(sentence)
+
+      names.each do |name|
+        word = Regexp.escape(name)
+        %i[on off].each do |direction|
+          verbs = Regexp.union(DRESS_VERBS.fetch(direction))
+          bare = Regexp.union(DRESS_WITHOUT_PARTICLE.fetch(direction))
+          grammars = [
+            /\byou\b[^.!?;:,]{0,30}?\b#{verbs}\s+#{direction}\s+(?:the\s+|your\s+)?#{word}\b/i,
+            /\byou\b[^.!?;:,]{0,30}?\b#{verbs}\s+(?:the\s+|your\s+)?#{word}(?:\s+[\w'’-]+){0,2}?\s+#{direction}\b
+             (?!\s+#{DETERMINER})/xi,
+            /\byou\b[^.!?;:,]{0,30}?\b#{bare}\s+(?:the\s+|your\s+)?#{word}\b(?!\s+from\b)/i
+          ]
+          claimed = grammars.any? do |grammar|
+            match = plain.match(grammar)
+            next false if match.nil?
+
+            !plain[[ match.begin(0) - 20, 0 ].max...match.end(0)].match?(Story::Audit::NEGATIONS)
+          end
+          found << Dressing.new(name: name, sentence: sentence.strip, direction: direction) if claimed
+        end
+      end
+    end
+
+    found.uniq { |claim| [ claim.name, claim.direction ] }
+  end
+
+  # ------------------------------------------------------------------------
   # THE PROSE ARGUES WITH THE ENGINE'S RECEIPT.
   #
   # `Scene#engine_fact` is the exact set of facts the engine handed a scene's

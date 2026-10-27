@@ -65,7 +65,12 @@ class Scene < ApplicationRecord
   # `tear` AND `smash` are offered by the engine and kept out of every reader
   # request (its `turn/divide.rs`), so the classifier never names them; the
   # engine records them, and the narrator tells them as it tells a `take`.
-  ACTIONS = (Playthrough::IntentSchema::INTENTS + %w[attack hazard throw conclude ending tear smash]).uniq.freeze
+  #
+  # `wear` AND `remove` are the same: typed as `/wear` and `/remove` and never
+  # offered to a reader, recorded so `Story::Audit#check_dress` can read prose
+  # about dressing against the turn that did it.
+  ACTIONS = (Playthrough::IntentSchema::INTENTS +
+             %w[attack hazard throw conclude ending tear smash wear remove]).uniq.freeze
 
   # THE ENDING, ONCE THE NARRATOR HAS WRITTEN IT. `Playthrough::Arc` writes the
   # closing row as `conclude` with the reached outcome's own sentence on it, and

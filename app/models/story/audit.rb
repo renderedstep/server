@@ -225,10 +225,13 @@ class Story::Audit
   # `division_untold` is `break_untold` for a tear or a smash: the records say
   # the turn divided a thing and its receipt does not say so. See
   # `#check_division`.
+  #
+  # `dress_invented` is the prose putting a thing on the player or taking it
+  # off, on a turn that did not. See `#check_dress`.
   CONTRADICTIONS = %i[unreachable_transition item_not_held unrecorded_departure unrecorded_arrival
                       take_denied pickup_invented inscription_misquoted
                       dead_shown_alive carried_shown_lying handover_invented
-                      break_untold destruction_invented division_untold].freeze
+                      break_untold destruction_invented division_untold dress_invented].freeze
 
 
   # THE PROSE BROKE A RULE THE APP STATES, provable from the row itself and one
@@ -490,6 +493,7 @@ class Story::Audit
   SCHEMA_REQUIRED = {
     item_not_held: [ :items, %i[playthrough_id disposition] ],
     destruction_invented: [ :items, %i[playthrough_id disposition] ],
+    dress_invented: [ :items, %i[playthrough_id disposition wear] ],
     named_more_than_one: [ :playthrough_overreaches, [] ]
   }.freeze
 
@@ -554,6 +558,10 @@ class Story::Audit
       scenes.count { |scene| broke_on?(scene) }
     when :division_untold
       scenes.count { |scene| divided_on?(scene) }
+    when :dress_invented
+      # THE SCENES WITH PROSE AND SOMETHING WEARABLE IN REACH: with nothing to
+      # put on or take off, no passage can dress the player in a record.
+      scenes.count { |scene| scene.description.present? && wearable_in_reach(scene).any? }
     when :dead_shown_alive, :carried_shown_lying, :handover_invented
       # THE SCENES WHOSE RECEIPT STATES WHAT THIS CHECK READS, and nothing else:
       # a receipt with nobody dead on it cannot be contradicted by prose about
@@ -636,6 +644,7 @@ class Story::Audit
       check_break(scene)
       check_division(scene)
       check_destruction(scene) if available_checks.include?(:destruction_invented)
+      check_dress(scene) if available_checks.include?(:dress_invented)
     end
 
     check_stillness
@@ -1561,6 +1570,53 @@ class Story::Audit
            at: scene.story_timestamp)
     end
   end
+
+  # ------------------------------------------------------------------------
+  # THE PROSE PUTS A THING ON OR TAKES IT OFF, AND THE TURN DID NOT.
+  #
+  # The engine owns wearing: a thing is worn or taken off only by a `wear` or a
+  # `remove` it played, and the scene records which (`Scene#recorded_action`)
+  # and what (`Scene#acted_on`). The narrator is told what the player wears,
+  # from the records, on every turn. So a passage that dresses or undresses the
+  # player in a thing the records know, on a turn that was not that act on that
+  # thing, has the paragraph and the records disagree about what the player
+  # wears from then on.
+  #
+  # THE CANDIDATES ARE THE WEARABLE THINGS IN REACH, on `#check_destruction`'s
+  # rule: a playthrough's copy carried by its party or lying in the scene's
+  # room, intact, with a place on a body (`items.wear`). A thing nobody can wear
+  # is never put on by any turn, and prose that puts it on is not about a
+  # record this check reads.
+  #
+  # `Story::Audit::Prose.dress_claims` is the reading and its stated miss.
+  # ------------------------------------------------------------------------
+  DRESS_ACTIONS = { on: "wear", off: "remove" }.freeze
+
+  def check_dress(scene)
+    text = scene.description.to_s
+    return if text.blank?
+
+    wearable_in_reach(scene).each do |item|
+      Prose.dress_claims(text, Prose.item_names(item)).each do |claim|
+        act = DRESS_ACTIONS.fetch(claim.direction)
+        next if scene.recorded_action == act && scene.acted_on_record&.name == item.name
+
+        flag(:dress_invented, scene,
+             "the narration #{claim.direction == :on ? "puts on" : "takes off"} the #{item.name}, " \
+             "and this turn did not",
+             item: item.name,
+             "named as" => claim.name,
+             "the turn did" => [ scene.recorded_action, scene.acted_on_label ].compact.join(" ").presence,
+             claim: claim.sentence.truncate(220),
+             typed: scene.typed.presence,
+             where: scene.location&.name,
+             at: scene.story_timestamp)
+        break
+      end
+    end
+  end
+
+  def wearable_in_reach(scene) = intact_in_reach(scene).select { |item| item.wear.present? }
 
   def intact_in_reach(scene)
     copies = story_instances
