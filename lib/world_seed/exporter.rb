@@ -53,8 +53,15 @@ class WorldSeed::Exporter
 
   attr_reader :story
 
-  def initialize(story)
+  # `rolled_layouts: false` LEAVES OUT A LAYOUT THE RULE WROTE: the box of a
+  # room laid out alone and the spots the world rolled in it
+  # (`Location#laid_out_alone?`, `Location::Placement.rolled_in_the_world?`),
+  # which a seed loaded with `lay_out: true` writes again (`WorldSeed::Loader`).
+  # So a checked-in world reads back as its own file. A snapshot or a fork
+  # keeps them, since its new ids would roll different ones.
+  def initialize(story, rolled_layouts: true)
     @story = story
+    @rolled_layouts = rolled_layouts
     @warnings = []
   end
 
@@ -426,8 +433,10 @@ class WorldSeed::Exporter
       # holding half of one is exported as it stands and reported below, for
       # `stats`' reason -- an exporter that silently dropped half a
       # contradiction would hide the thing the file's reader needs to fix.
-      Location::Spot::COLUMNS.each do |column|
-        document[column] = character[column] unless character[column].nil?
+      unless rolled?(character)
+        Location::Spot::COLUMNS.each do |column|
+          document[column] = character[column] unless character[column].nil?
+        end
       end
       # WHETHER THIS PERSON ATTACKS THE PARTY, omitted rather than written
       # false, like every other flag here. It is exported beside `stats` and
@@ -555,8 +564,10 @@ class WorldSeed::Exporter
       # A row in neither shape is a partial box, which the loader refuses; it is
       # reported by `#warnings` rather than quietly repaired here.
       document["parent"] = location.parent_location.name if location.parent_location
-      Location::Box::COLUMNS.each do |column|
-        document[column] = location[column] unless location[column].nil?
+      unless !@rolled_layouts && location.laid_out_alone?
+        Location::Box::COLUMNS.each do |column|
+          document[column] = location[column] unless location[column].nil?
+        end
       end
       document["teaser"] = text(location.teaser)
       if location.realized?
@@ -625,8 +636,10 @@ class WorldSeed::Exporter
       # thing in a pair of hands is in no room to be placed in
       # (`Item#a_position_needs_a_floor`) -- so this writes nothing there rather
       # than needing to know which owner it was called for.
-      Location::Spot::COLUMNS.each do |column|
-        document[column] = item[column] unless item[column].nil?
+      unless rolled?(item)
+        Location::Spot::COLUMNS.each do |column|
+          document[column] = item[column] unless item[column].nil?
+        end
       end
       if item.readable?
         document["readable"] = true
@@ -823,6 +836,8 @@ class WorldSeed::Exporter
   def location_names
     @location_names ||= locations.index_by(&:id).transform_values(&:name)
   end
+
+  def rolled?(record) = !@rolled_layouts && Location::Placement.rolled_in_the_world?(record.location, record)
 
   def text(value)
     value.to_s.strip.presence

@@ -109,12 +109,22 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_equal "playable, 2 warnings", doctor.headline
   end
 
-  # A PLACE WITH NO LAYOUT IS COUNTED, AND THE COUNT STOPS NOTHING: each
-  # handmade world's places all lack a box, so each is warned once, and the
-  # story is as playable as it was.
+  # A HANDMADE WORLD IS LAID OUT WHEN IT IS SEEDED, as a generated one is, so
+  # none of its places is warned about.
+  test "a handmade world seeded has no place without a layout" do
+    WorldSeed.files.each do |path|
+      story = WorldSeed::Loader.load_file(path)
+
+      assert_not_includes Story::Doctor.new(story).findings.map(&:code), :room_without_a_layout, File.basename(path)
+    end
+  end
+
+  # A PLACE WITH NO LAYOUT IS COUNTED, AND THE COUNT STOPS NOTHING: a handmade
+  # world loaded without its layout -- a database from before it had one --
+  # has every place warned once, and the story is as playable as it was.
   test "every place without a layout is counted, and the warning stops nothing" do
     { "the-salt-assizes" => 3, "the-lunar-cartographer" => 7, "the-unrecorded-hour" => 3 }.each do |world, count|
-      story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("#{world}.yml"))
+      story = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed::DIRECTORY.join("#{world}.yml").read)).load!
       doctor = Story::Doctor.new(story)
       unlaid = doctor.findings.select { |finding| finding.code == :room_without_a_layout }
 
@@ -885,7 +895,8 @@ class Story::DoctorTest < ActiveSupport::TestCase
   #
   # MANUAL, because the records cannot say whether the file or the box is stale.
   test "reports a seeded corner the room in this database cannot hold" do
-    story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("the-salt-assizes.yml"))
+    # Seeded before it was laid out, so The Tide Post carries no box.
+    story = WorldSeed::Loader.new(WorldSeed.checked_in_document("The Salt Assizes")).load!
     post = story.locations.find_by(name: "The Tide Post")
     document = WorldSeed.checked_in_document(story.title)
     document["characters"].detect { |row| row["fullname"] == "Neb Halloran" }.merge!("x" => 2, "y" => 1)
@@ -1784,15 +1795,25 @@ class Story::DoctorTest < ActiveSupport::TestCase
 
   # A POSITION READ AGAINST NOTHING. There is no global space, so five numbers
   # on a row inside nothing are unreadable rather than wrong.
-  test "a placed room inside nothing is reported and cannot be repaired" do
+  test "a room placed off the origin inside nothing is reported and cannot be repaired" do
     story = healthy_story
     room = story.locations.realized.first
-    room.update!(parent_location: nil, x: 0, y: 0, z: 0, width: 4, depth: 4)
+    room.update!(parent_location: nil, x: 2, y: 0, z: 0, width: 4, depth: 4)
 
     assert_includes codes(story), :location_with_a_box_and_no_parent
     assert_equal :warning, finding(story, :location_with_a_box_and_no_parent).severity
     assert_equal :manual, finding(story, :location_with_a_box_and_no_parent).remedy
-    assert_match(/4x4 paces at 0,0 on storey 0/, finding(story, :location_with_a_box_and_no_parent).message)
+    assert_match(/4x4 paces at 2,0 on storey 0/, finding(story, :location_with_a_box_and_no_parent).message)
+  end
+
+  # A ROOM THAT STANDS ON ITS OWN is its own plane, and its box sits at the
+  # origin of it: laid out, not orphaned.
+  test "a room boxed at the origin inside nothing is its own plane and is not reported" do
+    story = healthy_story
+    room = story.locations.realized.first
+    room.update!(parent_location: nil, x: 0, y: 0, z: 0, width: 4, depth: 4)
+
+    assert_not_includes codes(story), :location_with_a_box_and_no_parent
   end
 
   # THE ONE THAT MUST NOT FIRE, and it is why there are two whole shapes: an

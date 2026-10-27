@@ -262,6 +262,34 @@ module Playthrough::RustEngine
     answer["findings"]
   end
 
+  # THE BOX OF A ROOM THAT STANDS ON ITS OWN (`layout::own_box`): at the
+  # origin of its own plane, on storey 0, sized from its sort's band, as a
+  # hash of the five `Location::Box::COLUMNS`. The size is the engine's rule,
+  # so the Ruby realization asks it (`Location::Generator#own_box!`). Pure.
+  def self.own_box(room)
+    raise unbuilt if extension.nil?
+
+    JSON.parse(extension.own_box(room.story_id, room.id, room.kind)).fetch("box")
+  end
+
+  # EVERY ROOM OF A STORY THAT STANDS ON ITS OWN AND HAS NO LAYOUT YET, laid
+  # out in one transaction on the engine's connection
+  # (`Engine::lay_out_rooms`): each a hash of its `location` id, `name`,
+  # `box` and the spots its `items` and `people` were given. With `dry_run`
+  # it is read off a snapshot and nothing is written. Asks no model; a second
+  # run answers nothing. `Update::Steps::LayOutRooms` is the caller.
+  def self.lay_out_rooms(story, dry_run: false)
+    raise unbuilt if extension.nil?
+
+    json = dry_run ? reading { |file| extension.lay_out_rooms(file, story.id, true) } : extension.lay_out_rooms(database, story.id, false)
+    answer = JSON.parse(json)
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["rooms"]
+  ensure
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 

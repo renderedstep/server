@@ -82,6 +82,8 @@ fn init(ruby: &Ruby) -> Result<(), RubyError> {
     module.define_module_function("material_findings", function!(material_findings, 2))?;
     module.define_module_function("wear_findings", function!(wear_findings, 2))?;
     module.define_module_function("layout_findings", function!(layout_findings, 2))?;
+    module.define_module_function("lay_out_rooms", function!(lay_out_rooms, 3))?;
+    module.define_module_function("own_box", function!(own_box, 3))?;
     module.define_module_function("start", function!(start, 3))?;
     module.define_module_function("put_off_ending", function!(put_off_ending, 2))?;
     Ok(())
@@ -364,6 +366,45 @@ fn layout_findings(database: String, story: i64) -> Result<String, RubyError> {
         }
     });
     Ok(answer.to_string())
+}
+
+/// `RenderedStep.lay_out_rooms(database, story_id, dry_run)`: every room of
+/// a story that stands on its own and has no layout yet, laid out in one
+/// transaction (`Engine::lay_out_rooms`), or with `dry_run` only said. Each
+/// room as its id, name, box and the spots its things and people were given.
+/// Asks no model.
+fn lay_out_rooms(database: String, story: i64, dry_run: bool) -> Result<String, RubyError> {
+    let answer = without_gvl(|| {
+        let mut engine = match Engine::open(Path::new(&database)) {
+            Ok(engine) => engine,
+            Err(error) => return failed(&error),
+        };
+        match engine.lay_out_rooms(story, dry_run) {
+            Ok(rooms) => json!({ "rooms": rooms.iter().map(|room| json!({
+                "location": room.location,
+                "name": room.name,
+                "box": box_json(&room.r#box),
+                "items": room.items.iter().map(|(id, spot)| json!({ "id": id, "x": spot.x, "y": spot.y })).collect::<Vec<_>>(),
+                "people": room.people.iter().map(|(id, spot)| json!({ "id": id, "x": spot.x, "y": spot.y })).collect::<Vec<_>>(),
+            })).collect::<Vec<_>>() }),
+            Err(error) => failed(&error),
+        }
+    });
+    Ok(answer.to_string())
+}
+
+/// `RenderedStep.own_box(story_id, room_id, kind)`: the box of a room that
+/// stands on its own, at the origin of its own plane and sized from its sort
+/// (`layout::own_box`). Pure; opens no database.
+fn own_box(story: i64, room: i64, kind: Option<String>) -> Result<String, RubyError> {
+    let answer = without_gvl(
+        || json!({ "box": box_json(&renderedstep_engine::layout::own_box(story, room, kind.as_deref())) }),
+    );
+    Ok(answer.to_string())
+}
+
+fn box_json(r#box: &renderedstep_engine::boxes::Box) -> Value {
+    json!({ "x": r#box.x, "y": r#box.y, "z": r#box.z, "width": r#box.width, "depth": r#box.depth })
 }
 
 /// Findings as `{"findings": [...]}`, each with its code, severity, message,

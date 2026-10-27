@@ -212,7 +212,7 @@ class EngineSweep::Expectation
 
     [
       check_location(state),
-      check_equals("storey", state.location&.z),
+      check_equals("storey", state.location&.storey),
       check_exits(state),
       check_items("here", state.items_here),
       check_items("carrying", state.carried),

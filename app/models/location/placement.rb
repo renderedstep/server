@@ -88,6 +88,14 @@ class Location::Placement
     spot(room, record)
   end
 
+  # WHETHER THIS ROW STANDS WHERE THE WORLD ROLLED IT, in a room laid out
+  # alone (`Location#laid_out_alone?`) -- a spot the rule wrote and nobody
+  # chose, so a world file need not carry it (`WorldSeed::Exporter`).
+  def self.rolled_in_the_world?(room, record)
+    room.present? && !record.x.nil? && !record.y.nil? && room.laid_out_alone? &&
+      in_the_world(room, record) == { x: record.x, y: record.y }
+  end
+
   # WHERE ONE GAME PUTS THIS ROW IN THIS ROOM, at the moment its own story clock
   # stands. `Playthrough#story_now` is the clock a turn reads everywhere else.
   def self.in_a_game(room, record, playthrough:)

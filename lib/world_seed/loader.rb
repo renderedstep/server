@@ -158,7 +158,7 @@ class WorldSeed::Loader
 
   def self.load_all(io: $stdout)
     WorldSeed.files.map do |path|
-      loader = new(WorldSeed.parse(File.read(path)), source: path)
+      loader = new(WorldSeed.parse(File.read(path)), source: path, lay_out: true)
       story = loader.load!
       io&.puts "Seeded world #{story.title.inspect} (story ##{story.id}, #{story.locations.count} locations, #{story.characters.count} characters)"
       loader.reconciled.each { |line| io&.puts "  reconciled: #{line}" }
@@ -168,12 +168,18 @@ class WorldSeed::Loader
   end
 
   def self.load_file(path)
-    new(WorldSeed.parse(File.read(path)), source: path).load!
+    new(WorldSeed.parse(File.read(path)), source: path, lay_out: true).load!
   end
 
-  def initialize(document, source: nil)
+  # `lay_out: true` IS A CHECKED-IN WORLD BEING SEEDED (`.load_all`,
+  # `.load_file`, a sweep walk of one): its rooms standing on their own are
+  # laid out as a generated world's are (`#lay_out_rooms!`). Everything else
+  # loads exactly the rows its document carries -- a fork or a snapshot is a
+  # copy, and the worlds a bench or a sweep script stands on pin a state.
+  def initialize(document, source: nil, lay_out: false)
     @document = document
     @source = source
+    @lay_out = lay_out
     @reconciled = []
     @warnings = []
   end
@@ -215,6 +221,9 @@ class WorldSeed::Loader
       locations = load_locations!(story)
       load_containment!(locations)
       load_characters!(story, universe)
+      # AFTER THE ROOMS, THEIR THINGS AND THEIR PEOPLE, because laying a room
+      # out gives each of them a spot.
+      lay_out_rooms!(story) if @lay_out
       # A keyed passage may name a floor item or someone's starting key.
       load_connections!(story, locations)
       load_mechanics!(story)
@@ -359,6 +368,28 @@ class WorldSeed::Loader
       load_items!(story, attributes["items"], character: nil, location: location)
 
       [ name, location ]
+    end
+  end
+
+  # A ROOM THE FILE LEAVES STANDING ON ITS OWN IS LAID OUT BY THE RULE A
+  # GENERATED ONE IS, so a fresh seed and a database brought up to date
+  # (`Update::Steps::LayOutRooms`) agree: a box at the origin of its own plane
+  # sized from its sort by the engine (`Playthrough::RustEngine.own_box`), and
+  # a spot as the world rolls one (`Location::Placement.in_the_world`) for each
+  # of its loose things and people the file did not place -- what the engine's
+  # `layout::lay_out` writes, done here in the load's own transaction because
+  # the engine's connection cannot see rows it has not committed. A file that
+  # lays a room out keeps its own numbers. Every roll is seeded on the story
+  # and the row, so a re-seed writes the same answer again.
+  def lay_out_rooms!(story)
+    story.locations.reload.each do |room|
+      next if room.parent_location_id.present? || room.interior? || room.box.present?
+
+      room.update!(Playthrough::RustEngine.own_box(room))
+      unplaced = ->(record) { record.x.nil? || record.y.nil? }
+      loose = Item.templates.where(location: room, character_id: nil, within_id: nil).select(&unplaced)
+      people = story.characters.where(location: room, is_protagonist: false).select(&unplaced)
+      (loose + people).each { |record| record.update!(Location::Placement.in_the_world(room, record)) }
     end
   end
 
@@ -1507,9 +1538,11 @@ class WorldSeed::Loader
   #   integers   whole numbers, with a positive width and depth. A room zero
   #              paces across is a room nothing can stand in.
   #   framed     a BOX needs a `parent`, because coordinates are local to a
-  #              parent and there is no global space. A footprint does not, and
-  #              must not be made to: something has to sit at the top of the
-  #              containment tree.
+  #              parent and there is no global space -- or, inside nothing,
+  #              sits at the origin of its own plane (`0, 0` on storey `0`),
+  #              which is how a room that stands on its own is laid out. A
+  #              footprint needs neither, and must not be made to: something
+  #              has to sit at the top of the containment tree.
   #   footprint  and that parent needs an extent of its own, or the plane the
   #              child's position is read in does not exist.
   #   declared   `parent` names one of this file's own locations, and not
@@ -1570,10 +1603,12 @@ class WorldSeed::Loader
 
     if parent.blank?
       return unless placed
+      return if Location::Box::POSITION.all? { |column| attributes[column].zero? }
 
-      raise InvalidWorld, "#{where}: location #{room.inspect} has a position and is inside nothing -- " \
-                          "#{Location::Box::POSITION.join(", ")} are read in the parent's own plane, so a placed " \
-                          "room needs a `parent`. A place at the top of an interior carries " \
+      raise InvalidWorld, "#{where}: location #{room.inspect} has a position off the origin and is inside " \
+                          "nothing -- #{Location::Box::POSITION.join(", ")} are read in the parent's own plane, so " \
+                          "a room placed anywhere else needs a `parent`. A room that stands on its own sits at " \
+                          "0, 0 on storey 0 of its own plane; a place at the top of an interior carries " \
                           "#{Location::Box::EXTENT.join(" and ")} alone."
     end
 
@@ -1622,7 +1657,8 @@ class WorldSeed::Loader
   # `Location::Box` -- so the file and the database cannot disagree about what
   # an overlap is.
   def validate_boxes_do_not_overlap!
-    placed = location_documents.select { |attributes| Location::Box.of(attributes) }
+    # A room inside nothing is its own plane, so it has no siblings.
+    placed = location_documents.select { |attributes| Location::Box.of(attributes) && attributes["parent"].present? }
 
     placed.group_by { |attributes| [ WorldSeed.natural_key(attributes.fetch("parent")), attributes.fetch("z") ] }
           .each_value do |siblings|

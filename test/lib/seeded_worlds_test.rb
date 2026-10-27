@@ -306,11 +306,12 @@ class SeededWorldsTest < ActiveSupport::TestCase
   end
 
   # The checked-in files are hand-edited, so they have to survive the tooling:
-  # loading one and exporting it again must produce the file on disk.
+  # loading one and exporting it again must produce the file on disk -- less
+  # the layout seeding rolled, which the next seed rolls again.
   test "every checked-in world round-trips through the exporter" do
     WorldSeed.files.each do |path|
       story = WorldSeed::Loader.load_file(path)
-      exported = WorldSeed.dump(WorldSeed::Exporter.new(story).document)
+      exported = WorldSeed.dump(WorldSeed::Exporter.new(story, rolled_layouts: false).document)
       on_disk = File.read(path)
 
       assert_equal WorldSeed.parse(on_disk), WorldSeed.parse(exported),

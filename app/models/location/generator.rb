@@ -321,6 +321,18 @@ class Location::Generator
     Item::Kit.new(location).furnish!
   end
 
+  # A ROOM THAT STANDS ON ITS OWN IS GIVEN ITS LAYOUT before anything is put
+  # in it, so its kit, things and people get spots: a box at the origin of its
+  # own plane, sized from its sort by the engine
+  # (`Playthrough::RustEngine.own_box`, `Location::Box`). Nothing for a room
+  # inside a place, which the place's interior laid out, nor for a place, whose
+  # footprint is the plane its rooms are read in; nothing a second time.
+  def own_box!
+    return if location.parent_location_id.present? || location.interior?
+
+    location.update!(Playthrough::RustEngine.own_box(location))
+  end
+
   # THE ITEMS RIDE ON THIS CALL rather than a third one of their own. A room
   # already costs two calls to realize; asking separately what is on the floor
   # would be a round trip per room to be told "nothing" most of the time, and
@@ -1020,6 +1032,7 @@ class Location::Generator
   # making it a durable retry receipt. An unusable answer must remain payable
   # again; a good one and the slots it described must not be rolled again.
   def checkpoint_detail!
+    own_box!
     furnish!
     schema = detail_schema
     prompt = detail_prompt

@@ -1,7 +1,7 @@
 {
   "script": "a-chamber-of-one-room",
   "doctor": {
-    "headline": "playable, 4 warnings",
+    "headline": "playable, 2 warnings",
     "findings": [
       [
         "no_arc",
@@ -13,18 +13,6 @@
         "room_without_a_layout",
         "warning",
         "\"Cargo Deck\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Maintenance Shaft\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Core Access Chamber\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ]
     ]

@@ -86,7 +86,10 @@ module Update
   #   one-room folds before         the fold removes a row and moves a doorway;
   #   repairs                       repairing first would report and act on
   #                                 the row that is about to go.
-  #   doctor last                   it reports and never writes, so it is the
+  #   layouts after the folds,      a place folded back into its room is laid
+  #   before repairs                out as the room it now is, and the repairs
+  #                                 and the doctor read the laid-out world.
+  #   doctor last                  it reports and never writes, so it is the
   #                                 summary of everything above it.
   REGISTRY = [
     Update::Steps::BackfillTransitions,
@@ -95,6 +98,7 @@ module Update
     Update::Steps::BackfillStatBlocks,
     Update::Steps::StampResolvedBy,
     Update::Steps::FoldOneRoomPlaces,
+    Update::Steps::LayOutRooms,
     Update::Steps::SafeRepairs,
     Update::Steps::PointerReader,
     Update::Steps::Doctor

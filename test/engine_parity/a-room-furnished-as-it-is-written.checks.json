@@ -1,7 +1,7 @@
 {
   "script": "a-room-furnished-as-it-is-written",
   "doctor": {
-    "headline": "playable, 5 warnings",
+    "headline": "playable, 4 warnings",
     "findings": [
       [
         "no_arc",
@@ -25,12 +25,6 @@
         "room_without_a_layout",
         "warning",
         "\"Cinder Lane Stall\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"The Reading Room\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ]
     ]

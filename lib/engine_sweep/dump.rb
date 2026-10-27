@@ -42,7 +42,7 @@ class EngineSweep::Dump
 
     case key
     when "location" then room(state.location)
-    when "storey" then state.location&.z
+    when "storey" then state.location&.storey
     when "exits" then state.exits.map { |exit| room(exit) }.sort_by { |row| [ row["name"], row["id"] ] }
     when "here" then things(state.items_here)
     when "carrying" then things(state.carried)

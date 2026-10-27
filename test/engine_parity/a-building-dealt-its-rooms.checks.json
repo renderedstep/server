@@ -1,7 +1,7 @@
 {
   "script": "a-building-dealt-its-rooms",
   "doctor": {
-    "headline": "playable, 4 warnings",
+    "headline": "playable, 3 warnings",
     "findings": [
       [
         "no_arc",
@@ -13,12 +13,6 @@
         "room_without_a_layout",
         "warning",
         "\"Market\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Workshop\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
         "manual"
       ],
       [

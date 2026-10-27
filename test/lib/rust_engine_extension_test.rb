@@ -246,7 +246,70 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
     end
   end
 
+  test "a room that stands on its own is boxed at its own origin, sized by the engine" do
+    room = Location.new(id: 7, story_id: 3, kind: "forest")
+    box = Playthrough::RustEngine.own_box(room)
+
+    assert_equal [ 0, 0, 0 ], box.values_at("x", "y", "z")
+    assert_operator box.fetch("width"), :positive?
+    assert_equal box, Playthrough::RustEngine.own_box(room), "the size is rolled on the room's own row"
+  end
+
+  # The post-pull step on a stored world: a dry run writes nothing, the run
+  # lays out every room that stands on its own, and a second run finds nothing.
+  test "the layout step lays out the stored rooms of every story, once" do
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "laid.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        world = Rails.root.join("lib/engine_sweep/worlds/the-ropewalk-at-saltmarsh.yml")
+        story = WorldSeed::Loader.new(WorldSeed.parse(world.read)).load!
+        alone = story.locations.where(parent_location_id: nil).reject(&:interior?)
+        assert_predicate alone, :any?
+
+        dry = Update::Steps::LayOutRooms.new(dry_run: true).call
+        assert_match(/\A#{story.title}: would lay out #{alone.size} room/, dry.lines.sole)
+        assert alone.none? { |room| room.reload.placed? }
+
+        assert_equal dry.lines.sole.sub("would lay out", "laid out"), Update::Steps::LayOutRooms.new.call.lines.sole
+        assert alone.all? { |room| room.reload.own_plane? }
+        assert_predicate Update::Steps::LayOutRooms.new.call, :nothing_to_do?
+        assert_not_includes Story::Doctor.new(story).findings.map(&:code), :room_without_a_layout
+      end
+    end
+  end
+
+  # A HANDMADE WORLD STORED BEFORE IT HAD A LAYOUT, BROUGHT UP TO DATE, IS THE
+  # WORLD A FRESH SEED WRITES: the step's engine call and the loader's own
+  # lay out give every room, thing and person the same numbers.
+  test "the layout step and a fresh seed lay a handmade world out alike" do
+    Dir.mktmpdir do |directory|
+      file = File.join(directory, "seeded.sqlite3")
+      EngineSweep::Parity.copy_database!(file)
+      EngineSweep::Parity::InProcess.new(:rust).on_file(file) do
+        WorldSeed.files.each do |path|
+          story = WorldSeed::Loader.new(WorldSeed.parse(File.read(path))).load!
+          assert_predicate Update::Steps::LayOutRooms.new.call, :changed?, File.basename(path)
+          stepped = layout_of(story)
+
+          WorldSeed::Loader.load_file(path)
+
+          assert_equal stepped, layout_of(story), File.basename(path)
+          assert stepped[:rooms].values.all?(&:present?), File.basename(path)
+        end
+      end
+    end
+  end
+
   private
+
+  def layout_of(story)
+    {
+      rooms: story.locations.reload.to_h { |room| [ room.name, room.box ] },
+      items: Item.templates.where(location: story.locations).order(:id).pluck(:name, :x, :y),
+      people: story.characters.reload.order(:id).pluck(:fullname, :x, :y)
+    }
+  end
 
   # A live models document, which the sweep's guard refuses: with no key in
   # the suite's environment it names no model, only the local reader.
