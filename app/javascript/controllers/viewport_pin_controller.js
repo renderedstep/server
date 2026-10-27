@@ -11,6 +11,14 @@ import { Controller } from "@hotwired/stimulus"
 // that much. On a desktop, and on any phone with the keyboard shut, it is 0 and
 // this changes nothing.
 //
+// Never further than the keyboard took it. Pulled past the bottom of the page,
+// iOS rubber-bands, and `offsetTop` grows by the pull as well -- with the
+// keyboard shut too -- so a header that followed it walked down the screen,
+// apart from the top. The visible top can only legitimately sit as far below
+// the layout top as the visual viewport is shorter than the layout one
+// (`innerHeight - height`: 0 with the keyboard shut); anything past that is
+// overscroll, and the header ignores it.
+//
 // Self-contained on purpose: it is meant to be replaced by pocket-kit's
 // viewport pin once that is released, by swapping the `data-controller` name in
 // the layout and deleting this file.
@@ -34,7 +42,8 @@ export default class extends Controller {
   }
 
   pin() {
-    const offset = Math.max(0, this.viewport.offsetTop)
+    const keyboard = Math.max(0, window.innerHeight - this.viewport.height)
+    const offset = Math.min(Math.max(0, this.viewport.offsetTop), keyboard)
     if (offset > 0) {
       this.element.style.transform = `translateY(${offset}px)`
     } else {
