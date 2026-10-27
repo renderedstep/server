@@ -89,6 +89,8 @@ module Eval
     db/eval/inscription-2026-09-26/README.md
     db/eval/inscription-2026-10-02/inscription.json
     db/eval/inscription-2026-10-02/README.md
+    db/eval/inscription-2026-10-27/inscription.json
+    db/eval/inscription-2026-10-27/README.md
     lib/eval/arrival.rb
     lib/eval/arrival/bench.rb
     lib/eval/arrival/budget.rb
