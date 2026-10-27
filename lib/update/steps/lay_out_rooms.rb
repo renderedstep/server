@@ -9,10 +9,10 @@
 # engine's, so the work is too: `Playthrough::RustEngine.lay_out_rooms`, one
 # transaction per story, no model call.
 #
-# NOT THE CHECKED-IN WORLDS. A story whose title names a file under
-# `db/seeds/worlds` is sized by hand in its own seed edit, and a box rolled
-# here would be one the next re-seed has to argue with; it is skipped, and
-# the doctor keeps counting its rooms (`room_without_a_layout`).
+# THE CHECKED-IN WORLDS TOO, by the same rule: a hand-made world stays in
+# step with how a world is generated. Loading one from its seed lays it out
+# the same way (`WorldSeed::Loader#lay_out_rooms!`), every roll seeded on the
+# story and the row, so a fresh seed and a database brought up here agree.
 #
 # AFTER THE ONE-ROOM FOLDS, so a place folded back into its room is laid out
 # as the room it now is; BEFORE THE SAFE REPAIRS AND THE DOCTOR, so they read
@@ -24,7 +24,7 @@ class Update::Steps::LayOutRooms < Update::Step
   def self.reason = "give every stored room that stands on its own a layout, sized from its sort"
 
   def call
-    lines = stories.reject { |story| seeded?(story) }.filter_map do |story|
+    lines = stories.filter_map do |story|
       rooms = Playthrough::RustEngine.lay_out_rooms(story, dry_run: dry_run?)
       next if rooms.empty?
 
@@ -34,8 +34,4 @@ class Update::Steps::LayOutRooms < Update::Step
 
     report(changed: lines.any?, lines: lines)
   end
-
-  private
-
-  def seeded?(story) = WorldSeed::DIRECTORY.join("#{WorldSeed.slug(story.title)}.yml").exist?
 end

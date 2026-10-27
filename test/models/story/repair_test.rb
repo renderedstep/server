@@ -304,7 +304,7 @@ class Story::RepairTest < ActiveSupport::TestCase
     BaseAgent.stub(:new, -> { flunk "a safe repair asked a model something" }) { Story::Repair.new(story).apply! }
 
     assert_equal "The Tide Post", neb.reload.location.name
-    assert_nil neb.position
+    assert_equal Location::Placement.in_the_world(neb.location, neb), { x: neb.x, y: neb.y }
   end
 
   # A ROOM THE ENGINE HAS SINCE NAMED IS STILL THE ROOM THE FILE MEANS.

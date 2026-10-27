@@ -1,27 +1,8 @@
 {
   "script": "the-unrecorded-hour-first-contact",
   "doctor": {
-    "headline": "playable, 3 warnings",
-    "findings": [
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"Ward Office 12\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"The Supply Closet\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ],
-      [
-        "room_without_a_layout",
-        "warning",
-        "\"The Long Hallway\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
-        "manual"
-      ]
-    ]
+    "headline": "healthy",
+    "findings": []
   },
   "audit": {
     "headline": "1 scenes, nothing to report",

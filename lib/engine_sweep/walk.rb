@@ -379,7 +379,7 @@ class EngineSweep::Walk
   # a doorway left where the world put it, a room recognized under a new name --
   # and not only the records it left behind.
   def reseed!(renames)
-    loader = WorldSeed::Loader.new(sweep_document(renames), source: script.seed_file)
+    loader = WorldSeed::Loader.new(sweep_document(renames), source: script.seed_file, lay_out: checked_in?)
     loader.load!
 
     [ "re-seeded from #{File.basename(script.seed_file)}",
@@ -402,8 +402,12 @@ class EngineSweep::Walk
   def pin_ids! = self.class.pin_ids!
 
   def load_world!
-    WorldSeed::Loader.new(sweep_document, source: script.seed_file).load!
+    WorldSeed::Loader.new(sweep_document, source: script.seed_file, lay_out: checked_in?).load!
   end
+
+  # A CHECKED-IN WORLD IS WALKED AS `bin/rails db:seed` WRITES IT, laid out;
+  # a sweep world stands for the state it was written to pin.
+  def checked_in? = script.seed_file.dirname == WorldSeed::DIRECTORY
 
   # The file's document with the title changed and whatever the step renames,
   # freshly duplicated on every call -- a loader assigns into what it is given,

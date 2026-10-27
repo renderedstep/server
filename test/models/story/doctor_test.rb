@@ -109,12 +109,22 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_equal "playable, 2 warnings", doctor.headline
   end
 
-  # A PLACE WITH NO LAYOUT IS COUNTED, AND THE COUNT STOPS NOTHING: each
-  # handmade world's places all lack a box, so each is warned once, and the
-  # story is as playable as it was.
+  # A HANDMADE WORLD IS LAID OUT WHEN IT IS SEEDED, as a generated one is, so
+  # none of its places is warned about.
+  test "a handmade world seeded has no place without a layout" do
+    WorldSeed.files.each do |path|
+      story = WorldSeed::Loader.load_file(path)
+
+      assert_not_includes Story::Doctor.new(story).findings.map(&:code), :room_without_a_layout, File.basename(path)
+    end
+  end
+
+  # A PLACE WITH NO LAYOUT IS COUNTED, AND THE COUNT STOPS NOTHING: a handmade
+  # world loaded without its layout -- a database from before it had one --
+  # has every place warned once, and the story is as playable as it was.
   test "every place without a layout is counted, and the warning stops nothing" do
     { "the-salt-assizes" => 3, "the-lunar-cartographer" => 7, "the-unrecorded-hour" => 3 }.each do |world, count|
-      story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("#{world}.yml"))
+      story = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed::DIRECTORY.join("#{world}.yml").read)).load!
       doctor = Story::Doctor.new(story)
       unlaid = doctor.findings.select { |finding| finding.code == :room_without_a_layout }
 
@@ -885,7 +895,8 @@ class Story::DoctorTest < ActiveSupport::TestCase
   #
   # MANUAL, because the records cannot say whether the file or the box is stale.
   test "reports a seeded corner the room in this database cannot hold" do
-    story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("the-salt-assizes.yml"))
+    # Seeded before it was laid out, so The Tide Post carries no box.
+    story = WorldSeed::Loader.new(WorldSeed.checked_in_document("The Salt Assizes")).load!
     post = story.locations.find_by(name: "The Tide Post")
     document = WorldSeed.checked_in_document(story.title)
     document["characters"].detect { |row| row["fullname"] == "Neb Halloran" }.merge!("x" => 2, "y" => 1)

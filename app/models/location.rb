@@ -327,6 +327,13 @@ class Location < ApplicationRecord
   # that plane's origin on storey 0, the one place such a box can be.
   def own_plane? = parent_location_id.nil? && placed? && [ x, y, z ] == [ 0, 0, 0 ]
 
+  # WHETHER THIS ROOM'S BOX IS THE ONE THE ENGINE SIZES FOR A ROOM STANDING ON
+  # ITS OWN (`Playthrough::RustEngine.own_box`) -- a layout the rule wrote and
+  # nobody chose, so a world file need not carry it (`WorldSeed::Exporter`).
+  def laid_out_alone?
+    own_plane? && Location::Box::COLUMNS.to_h { |column| [ column, self[column] ] } == Playthrough::RustEngine.own_box(self)
+  end
+
   # WHETHER THIS IS A PLACE TO BE LAID OUT INSIDE -- a row carrying a FOOTPRINT
   # and no position, which is what the outermost place of an interior carries
   # (`Location::Box`). It is the ONE question `Location::Generator` asks before

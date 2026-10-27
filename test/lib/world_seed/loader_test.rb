@@ -460,7 +460,10 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     # The player picks the index up and puts the daybook down, which is exactly
     # what `Playthrough::Turn#carry!` and `#put_down!` write.
     daybook.update!(character: nil, location: closet)
-    closet.items.find_by(name: "A Private Index").update!(character: story.protagonist, location: nil)
+    # The closet stands on its own, so it was laid out and the index had a spot
+    # on its floor; a thing picked up leaves it.
+    closet.items.find_by(name: "A Private Index").update!(character: story.protagonist, location: nil,
+                                                          **Location::Placement.unplaced)
 
     WorldSeed::Loader.new(document).load!
 

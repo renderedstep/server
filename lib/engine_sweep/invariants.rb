@@ -422,7 +422,8 @@ class EngineSweep::Invariants
       next if wanted.nil?
 
       room, seat, within = wanted
-      next if room == item.location&.name && seat == item.position && within == item.within&.name
+      next if room == item.location&.name && within == item.within&.name &&
+              (seat == item.position || (seat.nil? && placed_alone?(item)))
 
       "#{item.name} is #{item.whereabouts}#{" #{item.position}" if item.position}" \
         "#{" on #{item.within.name}" if item.within} and the file says " \
@@ -475,7 +476,7 @@ class EngineSweep::Invariants
   def cast_unmoved
     moved = story.characters.includes(:location).order(:id).filter_map do |character|
       room, seat = cast_in_file[character.fullname]
-      next if character.location&.name == room && character.position == seat
+      next if character.location&.name == room && (character.position == seat || (seat.nil? && placed_alone?(character)))
 
       "#{character.fullname} is #{character.whereabouts}#{" #{character.position}" if character.position} and the " \
         "file says #{room ? "in #{room}#{" #{seat}" if seat}" : "nowhere"}"
@@ -710,11 +711,14 @@ class EngineSweep::Invariants
   end
 
   # A ROOM THE FILE LEFT UNLAID AND INSIDE NOTHING, given its own plane when
-  # it was realized: the box the engine sizes for it and no other
-  # (`Playthrough::RustEngine.own_box`), so the engine is still the one writer.
-  def laid_out_alone?(room)
-    room.own_plane? && Location::Box::COLUMNS.to_h { |column| [ column, room[column] ] } == Playthrough::RustEngine.own_box(room)
-  end
+  # it was loaded or realized: the box the engine sizes for it and no other
+  # (`Location#laid_out_alone?`), so the engine is still the one writer.
+  def laid_out_alone?(room) = room.laid_out_alone?
+
+  # A THING OR A PERSON THE FILE LEAVES UNSEATED in a room laid out alone,
+  # given the spot the world rolls for it there and no other
+  # (`Location::Placement.rolled_in_the_world?`).
+  def placed_alone?(record) = Location::Placement.rolled_in_the_world?(record.location, record)
 
   # THE PARENT IS COMPARED THE WAY THE LOADER RESOLVED IT, on
   # `WorldSeed.natural_key`: `WorldSeed::Loader#load_containment!` matches a
