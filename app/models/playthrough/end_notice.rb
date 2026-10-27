@@ -204,6 +204,8 @@ class Playthrough::EndNotice
     when "while_alive"
       "You met goal #{outcome.step_position} while #{outcome.character&.fullname} was still alive, " \
         "which is what this ending is for."
+    when "with_you"
+      "You met it with #{outcome.character&.fullname} alive and with you, which is what this ending is for."
     end
   end
 

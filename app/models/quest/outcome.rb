@@ -96,7 +96,12 @@ class Quest::Outcome < ApplicationRecord
     # is not that: The Lunar Cartographer said it with `out_of_order` for its
     # first month, and a player who killed the Ringer, took the book and then
     # the tally was told the Ringer had been standing over them.
-    "while_alive" => "reached the beat at `step_position` while `character` was still alive"
+    "while_alive" => "reached the beat at `step_position` while `character` was still alive",
+    # COMPANY. This game reached the arc's last beat with `character` alive and
+    # with the player -- `Playthrough#followers`, read when the ending falls
+    # due, which is the turn that last beat is reached. A rescue that ends at
+    # the surface means the one rescued came up too.
+    "with_you" => "reached the last beat with `character` alive and with the player"
   }.freeze
 
   # THE ONE RULE THAT TAKES A NUMBER. Named here rather than tested against the
@@ -107,6 +112,10 @@ class Quest::Outcome < ApplicationRecord
   # AND THE ONE THAT TAKES A BEAT AND A PERSON, `NEEDS_MINUTES`' reason again:
   # both columns go with the rule that reads them and with no other.
   NEEDS_A_LIFE = %w[while_alive].freeze
+
+  # THE RULES THAT NAME A PERSON: `while_alive`'s, and `with_you`, which takes
+  # a person and no beat.
+  NEEDS_A_PERSON = %w[while_alive with_you].freeze
 
   belongs_to :quest
   # THE WORLD'S ROW, never one game's: whether they are alive is asked of a
@@ -125,8 +134,9 @@ class Quest::Outcome < ApplicationRecord
   validates :minutes, absence: true, unless: :needs_minutes?
   validates :step_position, presence: true, numericality: { only_integer: true, greater_than: 0 },
                             if: :needs_a_life?
-  validates :character, presence: true, if: :needs_a_life?
-  validates :step_position, :character_id, absence: true, unless: :needs_a_life?
+  validates :character, presence: true, if: :needs_a_person?
+  validates :step_position, absence: true, unless: :needs_a_life?
+  validates :character_id, absence: true, unless: :needs_a_person?
   validates :ramification_minutes, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :default_carries_no_condition
   validate :a_ramification_is_an_hour_and_a_sentence
@@ -145,6 +155,8 @@ class Quest::Outcome < ApplicationRecord
   def out_of_order? = condition == "out_of_order"
 
   def needs_a_life? = NEEDS_A_LIFE.include?(condition)
+
+  def needs_a_person? = NEEDS_A_PERSON.include?(condition)
 
   # THE STEP A `while_alive` ENDING IS ABOUT, or nil for every other rule.
   def step = (quest.steps.detect { |step| step.position == step_position } if needs_a_life?)

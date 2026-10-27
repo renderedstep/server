@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_120117) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -599,6 +599,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_230000) do
     t.datetime "bound_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "companion_id"
+    t.index ["companion_id"], name: "index_quest_steps_on_companion_id"
     t.index ["quest_id", "position"], name: "index_quest_steps_on_quest_id_and_position", unique: true
     t.index ["quest_id"], name: "index_quest_steps_on_quest_id"
     t.index ["target_type", "target_id"], name: "index_quest_steps_on_target"

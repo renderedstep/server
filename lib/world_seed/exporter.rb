@@ -765,7 +765,8 @@ class WorldSeed::Exporter
       "trigger" => step.trigger_kind,
       "target" => step.target_name,
       "teaser" => text(step.teaser),
-      "minutes" => step.minutes
+      "minutes" => step.minutes,
+      "companion" => step.companion&.fullname
     }.compact
   end
 

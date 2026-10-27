@@ -1,0 +1,57 @@
+story: A Friend at the Gate
+why: a beat that names a companion is not met by standing there alone, and is met once the companion has come along
+steps:
+- id: there-alone
+  type: go to Courtyard
+  why: the step's own place is reached and Maren stayed in the market, so the beat is not met
+  expect:
+    changed: true
+    location: Courtyard (realized)
+    present: []
+    quest:
+      1: bound
+      2: bound
+    ending: none
+- id: back-for-her
+  type: go to Market
+  expect:
+    changed: true
+    location: Market (realized)
+    present: [Maren]
+    quest:
+      1: bound
+- id: she-comes-along
+  type: talk to Maren
+  npc_action: follow
+  expect:
+    changed: true
+    present: [Maren]
+    quest:
+      1: bound
+- id: there-together
+  type: go to Courtyard
+  why: the same place, with Maren following, meets the beat
+  expect:
+    changed: true
+    location: Courtyard (realized)
+    present: [Maren]
+    quest:
+      1: reached
+      2: bound
+    ending: none
+- id: out-by-the-lane
+  type: go to Lane
+  why: the last beat with Maren still with the player, so `together` is the ending that falls due
+  expect:
+    changed: true
+    location: Lane (realized)
+    present: [Maren]
+    quest:
+      1: reached
+      2: reached
+    ending: none
+- id: and-the-story-ends
+  type: "/end"
+  expect:
+    changed: true
+    ending: together

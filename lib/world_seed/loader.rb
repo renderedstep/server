@@ -889,7 +889,12 @@ class WorldSeed::Loader
         trigger_kind: attributes.fetch("trigger"),
         target_name: attributes["target"],
         teaser: attributes["teaser"],
-        minutes: attributes["minutes"]
+        minutes: attributes["minutes"],
+        # `companion:` -- the person who has to be with the player when the
+        # step's own trigger is met, by `fullname`, in the story this file
+        # just loaded. `#validate_one_quest_step!` has refused a name with no
+        # such character.
+        companion: (quest.story.characters.find_by(fullname: attributes["companion"]) if attributes["companion"].present?)
       )
       # THE TARGET IS RE-RESOLVED ON EVERY LOAD, in both directions: a file that
       # renames a step's target unbinds the row it used to point at and binds
@@ -1196,6 +1201,11 @@ class WorldSeed::Loader
       raise InvalidWorld, "#{where}: #{where_it_is} is `#{trigger}` and needs a `target:` -- the name the arc waits for" if attributes["target"].blank?
       raise InvalidWorld, "#{where}: #{where_it_is} is `#{trigger}` and cannot carry `minutes:`" if attributes["minutes"].present?
     end
+
+    companion = attributes["companion"]
+    return if companion.blank? || character_documents.any? { |character| character["fullname"] == companion }
+
+    raise InvalidWorld, "#{where}: #{where_it_is} names `companion: #{companion.inspect}`, who is not a character of this file"
   end
 
   # AN ARC WITH NO ENDING IS AN ARC NOTHING CAN FINISH, which is the fourth of
@@ -1263,6 +1273,16 @@ class WorldSeed::Loader
   # `characters:`. A name that matched nobody would load as an ending no game
   # could reach, which is the misspelt `when:` again.
   def validate_one_life!(where_it_is, condition, attributes, steps:)
+    if condition == "with_you"
+      raise InvalidWorld, "#{where}: #{where_it_is} is `when: with_you` and takes no `beat:`; it is the last beat" if attributes.key?("beat")
+
+      alive = attributes["alive"]
+      return if character_documents.any? { |character| character["fullname"] == alive }
+
+      raise InvalidWorld, "#{where}: #{where_it_is} is `when: with_you` and needs `alive:` as the fullname of one of this " \
+                          "file's characters, got #{alive.inspect}"
+    end
+
     unless Quest::Outcome::NEEDS_A_LIFE.include?(condition)
       if attributes.key?("beat") || attributes.key?("alive")
         raise InvalidWorld, "#{where}: #{where_it_is} carries `beat:` or `alive:` and `when: #{condition.inspect}` takes neither"

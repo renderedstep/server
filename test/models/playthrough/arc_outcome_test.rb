@@ -193,6 +193,39 @@ class Playthrough::ArcOutcomeTest < ActiveSupport::TestCase
     assert_equal under_his_hands, arc.ending.quest_outcome
   end
 
+  # --- with_you --------------------------------------------------------------
+  #
+  # THE IRON GATE'S "rescued": the last beat reached with the prince alive and
+  # following, and "lost-below" -- the default here -- otherwise.
+
+  test "the last beat reached with them following reaches the ending that says so" do
+    prince = create(:character, story: @story, fullname: "Prince Aurel Durn")
+    with_him = create(:quest_outcome, :with_you, quest: @quest, name: "with-him", character: prince)
+    create(:playthrough_npc_state, playthrough: @game, character: prince, location: @cell, following: true)
+    reach_the_cell!
+
+    assert_equal with_him, arc.ending.quest_outcome
+  end
+
+  test "the last beat reached without them falls through to the default" do
+    prince = create(:character, story: @story, fullname: "Prince Aurel Durn")
+    create(:quest_outcome, :with_you, quest: @quest, name: "with-him", character: prince)
+    create(:playthrough_npc_state, playthrough: @game, character: prince, location: @gate, following: false)
+    reach_the_cell!
+
+    assert_equal @rescued, arc.ending.quest_outcome
+  end
+
+  test "the last beat reached with them following and dead falls through to the default" do
+    prince = create(:character, story: @story, fullname: "Prince Aurel Durn")
+    create(:quest_outcome, :with_you, quest: @quest, name: "with-him", character: prince)
+    create(:playthrough_npc_state, playthrough: @game, character: prince, location: @cell, following: true)
+    create(:playthrough_vitals, :dead, playthrough: @game, character: prince)
+    reach_the_cell!
+
+    assert_equal @rescued, arc.ending.quest_outcome
+  end
+
   # --- which of two that both hold ------------------------------------------
 
   test "the first rule the world wrote wins" do

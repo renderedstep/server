@@ -183,6 +183,24 @@ test/models/playthrough/arc_outcome_test.rb:
     pins: a killing blow before the beat makes while_alive fail
     by:
     - sweep an-ending-the-ringer-did-not-stand-for#the-tally-last
+  the last beat reached with them following reaches the ending that says so:
+    pins: 'with_you: the named character among the followers at the last beat selects
+      that outcome'
+    by:
+    - sweep a-beat-that-waits-for-company#and-the-story-ends
+    - rust tests/arc.rs::an_ending_with_you_wants_the_companion_following_at_the_last_beat
+  the last beat reached without them falls through to the default:
+    pins: with_you fails when the named character is not following at the last beat
+    by:
+    - sweep an-ending-reached-without-company#and-the-story-ends
+    - rust tests/arc.rs::an_ending_with_you_wants_the_companion_following_at_the_last_beat
+  the last beat reached with them following and dead falls through to the default:
+    pins: a dead follower is not with the player, so with_you fails
+    by:
+    - rust tests/arc.rs::an_ending_with_you_wants_the_companion_following_at_the_last_beat
+    partial: 'the engine reads the same followers list, which drops the dead, but no
+      engine check kills the companion before the last beat; port: Rust test with a
+      dead playthrough_vitals row on the following companion'
   a fight that opened on the minute the beat was reached came after it:
     pins: a killing blow stamped at the same minute as the beat counts as after it
       (died >= reached)
@@ -272,6 +290,29 @@ test/models/playthrough/arc_test.rb:
     by:
     - sweep an-ending-with-words#the-cell-and-the-last-beat
     - sweep an-ending-taken-under-his-hands#the-one-fixed-point
+  a beat that names a companion is not reached by standing there alone:
+    pins: a step with a companion who is not following is not reached in its target
+      room
+    by:
+    - sweep a-beat-that-waits-for-company#there-alone
+    - rust tests/arc.rs::a_beat_that_names_a_companion_waits_for_them_to_be_with_the_player
+  a beat that names a companion is reached once they are with the player:
+    pins: a step with a companion is reached in its target room once the companion
+      follows
+    by:
+    - sweep a-beat-that-waits-for-company#there-together
+    - rust tests/arc.rs::a_beat_that_names_a_companion_waits_for_them_to_be_with_the_player
+  a companion who is dead is not with the player:
+    pins: a dead following companion does not meet the step
+    by:
+    - rust tests/arc.rs::a_beat_that_names_a_companion_waits_for_them_to_be_with_the_player
+    partial: 'the engine reads the followers list, which drops the dead, but no engine
+      check kills the companion; port: Rust test with a dead playthrough_vitals row
+      on the following companion'
+  a companion with the player does not meet a trigger that is not met:
+    pins: a following companion does not meet a step whose own trigger is not met
+    by:
+    - sweep an-ending-reached-without-company#she-comes-along
   an unbound step is never reached, whatever the world happens to contain:
     pins: a step with no target row is never reached even when the party stands in
       a room carrying its target_name
