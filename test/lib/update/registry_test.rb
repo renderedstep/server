@@ -53,6 +53,11 @@ class Update::RegistryTest < ActiveSupport::TestCase
     assert_operator index_of(Update::Steps::LayOutRooms), :<, index_of(Update::Steps::SafeRepairs)
   end
 
+  # The doctor's wear checks read the marked things.
+  test "the wear marks run before the repairs" do
+    assert_operator index_of(Update::Steps::MarkWearable), :<, index_of(Update::Steps::SafeRepairs)
+  end
+
   test "the doctor is last, and reports rather than writes" do
     assert_equal Update::Steps::Doctor, Update::REGISTRY.last
     assert_predicate Update::Steps::Doctor, :reports_only?

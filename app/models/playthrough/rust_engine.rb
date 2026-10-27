@@ -290,6 +290,25 @@ module Playthrough::RustEngine
     ActiveRecord::Base.connection.clear_query_cache
   end
 
+  # EVERY THING OF A STORY THAT NAMES NO PLACE ON A BODY AND THAT THE KITS'
+  # WEAR TABLE READS AS A GARMENT BY ITS NAME, in the world and in each of its
+  # games, given that place in one transaction on the engine's connection
+  # (`Engine::mark_wearable`): each a hash of its item `id`, `name` and
+  # `wear`. With `dry_run` it is read off a snapshot and nothing is written.
+  # Asks no model; a second run answers nothing.
+  # `Update::Steps::MarkWearable` is the caller.
+  def self.mark_wearable(story, dry_run: false)
+    raise unbuilt if extension.nil?
+
+    json = dry_run ? reading { |file| extension.mark_wearable(file, story.id, true) } : extension.mark_wearable(database, story.id, false)
+    answer = JSON.parse(json)
+    raise exception_for(answer["error"]) if answer["error"]
+
+    answer["items"]
+  ensure
+    ActiveRecord::Base.connection.clear_query_cache
+  end
+
   # The models document of a turn that may ask no model.
   NO_MODELS = { route: "none", key: nil, model: nil, system_one: "off", typesafe_key: nil }.freeze
 
