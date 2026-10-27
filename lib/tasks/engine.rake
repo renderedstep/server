@@ -78,7 +78,10 @@ namespace :engine do
       abort "cargo built no library in #{crate}/target/release"
     FileUtils.mkdir_p(File.join(crate, "build"))
     built = File.join(crate, "build", "renderedstep_native.#{RbConfig::CONFIG.fetch("DLEXT")}")
-    FileUtils.cp(library, built)
+    # Renamed into place, never copied over: a running app has the old one
+    # mapped (`Update::EngineLibrary`).
+    require_relative "../update/engine_library" unless defined?(Update::EngineLibrary)
+    Update::EngineLibrary.install!(library, built)
     # What it was built from, so `bin/update` can tell a stale one whatever
     # the git range (`Update::EngineStamp`).
     require_relative "../update/engine_stamp" unless defined?(Update::EngineStamp)
