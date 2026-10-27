@@ -563,6 +563,11 @@ module Eval
     db/eval/realization-2026-10-02/requests.json
     db/eval/realization-2026-10-02/receipts.json
     db/eval/realization-2026-10-02/README.md
+    db/eval/realization-2026-10-27/realization.json
+    db/eval/realization-2026-10-27/readings.json.gz
+    db/eval/realization-2026-10-27/requests.json
+    db/eval/realization-2026-10-27/receipts.json
+    db/eval/realization-2026-10-27/README.md
     db/eval/desires-dialogue-20260919/README.md
     db/eval/desires-dialogue-20260919/after-board.json
     db/eval/desires-dialogue-20260919/before-board.json
