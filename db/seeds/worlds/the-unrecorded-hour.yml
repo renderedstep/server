@@ -98,7 +98,7 @@ characters:
   personality: |-
     Precise, dry, and unhurried in a way that reads as calm and is actually stubbornness. She does not raise her voice or her hopes. She will not sign something she has not read, which has cost her every promotion she was ever considered for, and she considers this a fair trade she would make again.
   appearance: |-
-    Narrow, upright, greying at the front, with ink worn permanently into the first two fingers of her right hand and spectacles she only puts on to check somebody else's arithmetic. Her office coat is eleven years old, brushed, and mended twice at the right elbow where it meets the desk.
+    Narrow, upright, greying at the front, with ink worn permanently into the first two fingers of her right hand.
   likes: A ledger that balances, the smell of a fresh cylinder of wax, rain on the window
   dislikes: Amendments in another hand, being told a query is still open
   fears: Signing her name to something that turns out to have closed a file
@@ -119,6 +119,19 @@ characters:
       5.00 —
       5.15 — Query 1188 (Marchmain acre 7) still open. Second application made. O.V.
     properties: '{"pages": 340, "sealed": false, "registered": true}'
+  - name: office coat
+    description: |-
+      An office coat eleven years old, brushed, and mended twice at the right elbow where it meets the desk.
+    bulk: light
+    wear: outer
+    worn: true
+    properties:
+  - name: spectacles
+    description: |-
+      A pair of wire spectacles, kept in a pocket for checking somebody else's arithmetic.
+    bulk: light
+    wear: face
+    properties:
 - fullname: Perrin Lasco
   race: Marginalia
   absent: true
@@ -167,7 +180,7 @@ characters:
   personality: |-
     Courteous, patient, genuinely likeable, and entirely unable to imagine that the institution which made him could be the thing doing harm. He listens well. He will hear you out, agree with you, and file the writ anyway, and he will be sorry about it in a way that costs him nothing.
   appearance: |-
-    Tall, unhurried, immaculate; the sharply consistent good looks of a family nobody has ever had to remember with effort. Grey coat, Inspectorate seal on a chain, and shoes you hear coming up the hallway a long time before he arrives.
+    Tall, unhurried, immaculate; the sharply consistent good looks of a family nobody has ever had to remember with effort.
   likes: A ward office that has nothing to hide, being met at the door, punctuality
   dislikes: An open query, a clerk who reads the file out loud to him
   fears: That the Sealed Room has a file on him, and that it is thicker than it should be
@@ -177,6 +190,28 @@ characters:
   unrecognized_need: Halkett Rowe needs to reach one supporting file and read it before he signs.
   desire_pursuit: keep
   need_pursuit: obtain
+  items:
+  - name: Inspectorate seal
+    description: |-
+      The Inspectorate seal, on a chain.
+    bulk: light
+    wear: neck
+    worn: true
+    properties:
+  - name: grey coat
+    description: |-
+      An Inspectorate coat in good grey, without a crease out of place.
+    bulk: light
+    wear: outer
+    worn: true
+    properties:
+  - name: shoes
+    description: |-
+      Hard-soled shoes you hear coming up the hallway a long time before he arrives.
+    bulk: light
+    wear: feet
+    worn: true
+    properties:
 locations:
 - name: Ward Office 12
   detail_level: realized

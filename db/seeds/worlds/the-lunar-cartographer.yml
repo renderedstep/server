@@ -120,7 +120,7 @@ characters:
   personality: |-
     Methodical to the point of rudeness. She would rather finish a bearing than finish a sentence, and she trusts a measurement she took herself over anything a Sovereign puts in writing. Dry, patient, slow to anger, and incapable of forgetting a debt in either direction.
   appearance: |-
-    Weathered dark skin, a nomad's squint, and charcoal on the side of every finger. She wears a surveyor's coat cut down from something heavier, its pockets restitched to hold dividers, a lamp-oil bottle and a roll of waxed twine. Her hair is cropped short and going grey at one temple only.
+    Weathered dark skin, a nomad's squint, and charcoal on the side of every finger. Her hair is cropped short and going grey at one temple only.
   likes: Fresh bearings, strong tea, the hour before the city moves
   dislikes: Sovereign paperwork, being told a street has always been there
   fears: The memory loss. She has started writing down what she did yesterday.
@@ -130,6 +130,14 @@ characters:
   unrecognized_need: Isbet Marrow needs to reach the memory of what she has begun to lose.
   desire_pursuit: reach
   need_pursuit: keep
+  items:
+  - name: surveyor's coat
+    description: |-
+      A surveyor's coat cut down from something heavier, its pockets restitched to hold dividers, a lamp-oil bottle and a roll of waxed twine.
+    bulk: light
+    wear: outer
+    worn: true
+    properties:
 - fullname: Grenn Ollivar
   race: Lunar Sovereigns
   location: Grenn's Boarding House, Room 3

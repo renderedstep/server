@@ -123,7 +123,7 @@ characters:
   personality: |-
     Exact, literal and slow to speak, with the Keeper's inability to give a figure she is not sure of. She does not argue; she states the water and lets people arrange themselves around it. Under pressure she gets quieter and more precise, which people mistake for calm and is closer to fury.
   appearance: |-
-    Tall, salt-weathered a decade early, with cropped grey hair and a permanent squint to seaward. Deaf in the left ear, which faces the bell. Oilskin over court black, and chalk worn into the creases of her right hand so deeply that it does not wash out.
+    Tall, salt-weathered a decade early, with cropped grey hair and a permanent squint to seaward. Deaf in the left ear, which faces the bell. Chalk is worn into the creases of her right hand so deeply that it does not wash out.
   likes: A slate that agrees with the water, the ten minutes before a turn, the sound of a court rising on time
   dislikes: A figure given without a source, being asked to round, anyone standing between her and the flats
   fears: Ringing a court up and finding afterwards that the water had not turned
@@ -142,6 +142,20 @@ characters:
     inscription: |-
       HIGH WATER, THIS DAY — three hours and forty minutes after noon. Court rises on the bell. Sworn: the Bell-Keeper of the Causeway.
     properties: '{"ruled": true, "erasable_by": "bell-keeper", "chalk": "altered"}'
+  - name: court black
+    description: |-
+      A clerk's suit of court black, plain and much brushed.
+    bulk: light
+    wear: body
+    worn: true
+    properties:
+  - name: oilskin
+    description: |-
+      An oilskin coat stiff with salt, cut long for standing on the flats in a wind.
+    bulk: light
+    wear: outer
+    worn: true
+    properties:
 - fullname: Ammon Brace
   race: Circuit Justicars
   location: The Causeway Court
@@ -161,7 +175,7 @@ characters:
   personality: |-
     Courteous, unhurried, genuinely fair-minded within the law and entirely unable to see outside it. He will hear anybody out. He wants the hearing to happen because a hearing not held is a man held without one, and he will not notice that the fastest way to have it is to trust a number nobody sourced.
   appearance: |-
-    Neat, dry and out of place: gown, bands, town shoes ruined by the causeway, and a face that has been polite in bad weather for thirty years. He keeps his hands folded because they are cold.
+    Neat, dry and out of place, with a face that has been polite in bad weather for thirty years. He keeps his hands folded because they are cold.
   likes: A court that sits when it says it will, a witness who answers the question, being given a figure
   dislikes: Adjournments, the smell of the flats, being asked to wait without a reason
   fears: Signing off on a delay that turns out to have been a sentence
@@ -171,6 +185,28 @@ characters:
   unrecognized_need: Ammon Brace needs to reach a judgment that accounts for the water beyond the law.
   desire_pursuit: reach
   need_pursuit: attend
+  items:
+  - name: bands
+    description: |-
+      Two white court bands at the throat, starched flat.
+    bulk: light
+    wear: neck
+    worn: true
+    properties:
+  - name: justicar's gown
+    description: |-
+      A black court gown, damp at the hem from the causeway.
+    bulk: light
+    wear: outer
+    worn: true
+    properties:
+  - name: town shoes
+    description: |-
+      Town shoes of good leather, ruined by the causeway.
+    bulk: light
+    wear: feet
+    worn: true
+    properties:
 - fullname: Neb Halloran
   race: Shorefolk
   location: The Tide Post
@@ -190,7 +226,7 @@ characters:
   personality: |-
     Loud, funny and shrewd, and getting quieter the higher the water gets. He bargains out of habit even when he has nothing, and he tells the truth in fragments, testing what each one buys before he parts with the next.
   appearance: |-
-    Broad, sunburnt over salt-burn, with a wrecker's hands and a rope-scar around the left wrist that predates the chain by ten years. Shirt, no coat; they took the coat.
+    Broad, sunburnt over salt-burn, with a wrecker's hands and a rope-scar around the left wrist that predates the chain by ten years. They took his coat.
   likes: A tide that comes in slow, being called by his name, an argument he can win
   dislikes: Being counted with the marsh, questions about his cousins, the sound of the bell
   fears: Drowning at the post while the court is still deciding whether to hear him
@@ -206,6 +242,13 @@ characters:
       A length of tarred line knotted along its whole length, wound round Neb's free fist: one knot for every wave that has reached the stain band since the ebb, the way the Shorefolk have counted water for two hundred years without writing any of it down. Read against the band, it is the tide's own figure for this morning, and it is not the one on the slate.
     bulk: light
     properties: '{"knots": 41, "written": false}'
+  - name: shirt
+    description: |-
+      A wrecker's shirt, salt-stiff, with nothing over it.
+    bulk: light
+    wear: body
+    worn: true
+    properties:
 locations:
 - name: The Causeway Court
   detail_level: realized
