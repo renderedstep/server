@@ -38,7 +38,7 @@ steps:
   why: beat 2, and still two thirds of an arc -- no ending yet
   expect:
     changed: true
-    carrying: [Ward Office 12 daybook, Perrin's private index]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, Perrin's private index]
     quest:
       1: reached
       2: reached

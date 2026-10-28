@@ -158,7 +158,7 @@ steps:
   why: beat 3 BEFORE beat 2, with the Ringer dead on the boards -- the order the owner took them in
   expect:
     changed: true
-    carrying: [climbers' bearing book]
+    carrying: [surveyor's coat,climbers' bearing book]
     quest:
       1: reached
       2: bound
@@ -170,7 +170,7 @@ steps:
   why: the last beat -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
-    carrying: [climbers' bearing book, bell-rope tally]
+    carrying: [surveyor's coat,climbers' bearing book, bell-rope tally]
     quest:
       1: reached
       2: reached

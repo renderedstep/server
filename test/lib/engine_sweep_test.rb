@@ -281,12 +281,12 @@ class EngineSweepTest < ActiveSupport::TestCase
       steps:
       - type: take the ward stamp
         expect:
-          carrying: [Ward Office 12 daybook, ward stamp]
+          carrying: [office coat, spectacles, Ward Office 12 daybook, ward stamp]
       - reseed: true
         expect:
           changed: false
           here: [filing press, blank closure writ]
-          carrying: [Ward Office 12 daybook, ward stamp]
+          carrying: [office coat, spectacles, Ward Office 12 daybook, ward stamp]
           exits: [The Supply Closet (realized), The Long Hallway (stub)]
     SCRIPT
 
@@ -302,7 +302,7 @@ class EngineSweepTest < ActiveSupport::TestCase
       steps:
       - type: take the ward stamp
         expect:
-          carrying: [Ward Office 12 daybook, ward stamp]
+          carrying: [office coat, spectacles, Ward Office 12 daybook, ward stamp]
       - reseed: true
         expect:
           here: [filing press, blank closure writ]
@@ -310,7 +310,7 @@ class EngineSweepTest < ActiveSupport::TestCase
         player: second
         expect:
           here: [ward stamp, filing press, blank closure writ]
-          carrying: [Ward Office 12 daybook]
+          carrying: [office coat, spectacles, Ward Office 12 daybook]
     SCRIPT
 
     assert_predicate result, :passed?, result.report
@@ -373,14 +373,14 @@ class EngineSweepTest < ActiveSupport::TestCase
       - type: take the ward stamp
         expect:
           changed: true
-          carrying: [Ward Office 12 daybook, ward stamp]
+          carrying: [office coat, spectacles, Ward Office 12 daybook, ward stamp]
       - type: inventory
         player: second
         expect:
-          carrying: [Ward Office 12 daybook]
+          carrying: [office coat, spectacles, Ward Office 12 daybook]
       - type: look
         expect:
-          carrying: [Ward Office 12 daybook, ward stamp]
+          carrying: [office coat, spectacles, Ward Office 12 daybook, ward stamp]
     SCRIPT
 
     assert_predicate result, :passed?, result.report

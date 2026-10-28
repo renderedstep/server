@@ -33,7 +33,7 @@ steps:
     refused: true
     changed: false
     offers: [/throw <thing> at <somebody here, or a way out>]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: the-command-is-played
   type: /throw ward stamp at Halkett Rowe
@@ -46,4 +46,4 @@ steps:
   expect:
     resolved_by: grammar
     refused: false
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]

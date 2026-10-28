@@ -59,7 +59,7 @@ steps:
     location: Ward Office 12 (realized)
     exits: [The Supply Closet (realized), The Long Hallway (stub)]
     here: [ward stamp, filing press, blank closure writ]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
     present: [Halkett Rowe]
     volitions: 0
     acts: 0
@@ -76,7 +76,7 @@ steps:
     # for the message. Asserted as it stands rather than pinned to a wording
     # nobody has decided to change.
     offers: [there is no person here called, Perrin Lasco, Halkett Rowe]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: unreadable-offline
   type: ponder the ward stamp
@@ -85,7 +85,7 @@ steps:
     refused: true
     changed: false
     note: 'take <item>      pick up something lying here'
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: into-the-room-with-two-things-in-it
   type: go to the Supply Closet
@@ -93,7 +93,7 @@ steps:
   expect:
     changed: true
     location: The Supply Closet (realized)
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: both-names-in-full
   type: take Perrin's private index and copy-room apron
@@ -103,7 +103,7 @@ steps:
     changed: false
     drifts: 0
     offers: [matches more than one thing lying here, Perrin's private index, copy-room apron]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: two-readable-names-in-full
   type: read Perrin's private index and Ward Office 12 daybook
@@ -117,7 +117,7 @@ steps:
     changed: false
     drifts: 0
     offers: [matches more than one thing here or in your hands, Perrin's private index, Ward Office 12 daybook]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: and-one-of-them-on-its-own-still-reads
   type: read the private index
@@ -134,7 +134,7 @@ steps:
   expect:
     changed: true
     understood: take -> Perrin's private index
-    carrying: [Perrin's private index, Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Perrin's private index, Ward Office 12 daybook]
 
 - id: a-name-that-lands-on-nothing
   type: take the tide-slate
@@ -144,7 +144,7 @@ steps:
     changed: false
     drifts: 0
     offers: ['there is no thing lying here called "the tide-slate"', copy-room apron]
-    carrying: [Perrin's private index, Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Perrin's private index, Ward Office 12 daybook]
 
 - id: back-to-the-office
   type: go to Ward Office 12
@@ -152,7 +152,7 @@ steps:
   expect:
     changed: true
     location: Ward Office 12 (realized)
-    carrying: [Perrin's private index, Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Perrin's private index, Ward Office 12 daybook]
 
 - id: two-acts-across-two-sets
   type: take the filing press and the daybook

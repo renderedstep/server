@@ -30,7 +30,7 @@ surnames: [Ashdown, Bellweather, Blackwood, Brackett, Bramley, Carrow, Cassidy, 
 # lower-case after "the", as a player would say it.
 roles: [clerk, porter, warden, ferryman, cook, smith, tanner, chandler, scribe, apothecary, lamplighter, gaoler,
   sexton, harbourmaster, cartographer, miller, weaver, brewer, glazier, bookbinder, quartermaster, sergeant,
-  captain, abbess, steward, innkeeper, fishwife, tinker, surveyor, magistrate, physician, mason, carter,
+  captain, abbess, steward, innkeeper, fishwife, tinker, magistrate, physician, mason, carter,
   rope-maker, night watchman, archivist, beekeeper, falconer, cooper, courier, pilot, engineer, medic, guard]
 
 titles: [Master, Mistress, Sister, Brother, Old, Young, Doctor, Captain, Sergeant, Father, Mother, Auntie, Uncle]
@@ -59,10 +59,10 @@ item_adjectives: [brass, iron, copper, tin, silver, wooden, oak, ash, bone, horn
 
 item_nouns: [ledger, logbook, almanac, map, chart, letter, envelope, parcel, satchel, purse, wallet,
   coin, token, badge, medal, ring, locket, brooch, comb, mirror, lantern, candle, candlestick, lamp,
-  whistle, compass, sextant, spyglass, telescope, pocket watch, clock, hourglass, quill, inkpot, seal,
+  whistle, compass, sextant, spyglass, telescope, pocket watch, clock, hourglass, quill, inkpot,
   ruler, scissors, needle, thimble, spool, chain, hook, nail, hammer, chisel, saw, trowel, spade,
   bucket, basket, crate, box, chest, jar, bottle, flask, cup, mug, bowl, plate, spoon, knife, fork, kettle,
-  pot, pan, ladle, tray, blanket, cloak, coat, scarf, glove, boot, hat, shawl, sack, net, oar, paddle,
+  pot, pan, ladle, tray, blanket, cloak, scarf, glove, boot, hat, shawl, sack, net, oar, paddle,
   rod, staff, cane, umbrella, fan, kite, drum, flute, fiddle, dice, deck of cards, chess piece, doll, puppet,
   ticket, pass, warrant, receipt, invoice, deed, will, petition, ballot, notice, poster, handbill, pamphlet,
   newspaper, photograph, portrait, sketch, ribbon, feather, shell, pebble, tooth, skull, horseshoe, bridle,
