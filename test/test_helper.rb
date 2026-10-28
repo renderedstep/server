@@ -40,6 +40,10 @@ ENV["RAILS_ENV"] ||= "test"
 #   RELAY_OPENROUTER_API_KEY   `Relay.configured?` is the whole of the model
 #                              relay's switch; the relay tests set a fake key
 #                              themselves and stub the upstream.
+#   ERRORS_COMMAND             pocket-kit's error reports: set, every test that
+#                              fails a job or a request on purpose runs the
+#                              owner's real command. PocketKitErrorsTest sets a
+#                              recording script itself.
 #
 # It takes TWO passes, and the second one is not belt-and-braces. `dotenv-rails`
 # is in the `:development, :test` group, so it loads `.env` while
@@ -57,7 +61,7 @@ declare_environment = lambda do
   %w[
     OPENROUTER_API_KEY OPENROUTER_MODEL TA_DEBUG_VIEW
     TA_CHAT_KEEP_TURNS TA_CHAT_HISTORY_EXCHANGES TYPESAFE_API_KEY RELAY_OPENROUTER_API_KEY
-    POINTER_CLASSIFIER_URL POINTER_CLASSIFIER_WEIGHTS POINTER_CLASSIFIER_PYTHON
+    POINTER_CLASSIFIER_URL POINTER_CLASSIFIER_WEIGHTS POINTER_CLASSIFIER_PYTHON ERRORS_COMMAND
   ].each { |key| ENV.delete(key) }
 end
 

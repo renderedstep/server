@@ -35,6 +35,9 @@
       .loading::after { content: "\2588"; animation: blink 1s steps(2) infinite; }
       @keyframes blink { 50% { opacity: 0; } }
     </style>
+    <%# Where the page posts its own uncaught errors; absent unless
+        `ERRORS_COMMAND` is set (config/initializers/pocket_kit.rb). %>
+    <%= pocket_kit_errors_tag %>
     <%= javascript_importmap_tags %>
   </head>
   <body>
