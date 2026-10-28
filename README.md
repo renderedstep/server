@@ -211,6 +211,14 @@ then a `Device:` block of what the browser reports. Exit status 0 or 3 (saved,
 not yet announced) counts as sent. Unset, the button is absent and
 `POST /pocket-kit/feedback` is a 404.
 
+`ERRORS_COMMAND` names a second local command, run the same way with
+`--request-id ta-errors-<uuid> --json -`, that is handed pocket-kit's JSON
+error report on stdin for a request that ends in a 500, an exception that
+escapes a job, and an uncaught error or unhandled rejection on any player's
+page. Repeats are grouped. A local request in development gets Rails' debug
+page instead, which is not reported. Unset, nothing is reported and
+`POST /pocket-kit/errors` is a 404.
+
 ### Use things and open passages
 
 Describe your attempt in ordinary text, or use a slash command to select it

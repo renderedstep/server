@@ -30,4 +30,23 @@ PocketKit.configure do |config|
 
     [ "Playthrough: #{playthrough.id}", *("Room: #{playthrough.current_location.name}" if playthrough.current_location) ]
   end
+
+  # AN ERROR REPORT, handed as pocket-kit's JSON report to the local command
+  # named by `ERRORS_COMMAND`: a request that ends in a 500, an exception that
+  # escapes a job (NarrationJob's included), and an uncaught error or unhandled
+  # rejection on the page, which app/javascript/application.js loads the
+  # catcher for. Repeats are grouped by pocket-kit and sent once a window.
+  #
+  # OFF UNLESS `ERRORS_COMMAND` IS SET: no meta tag, a 404 for the page's post,
+  # and nothing done for a request or a job. A report is run on pocket-kit's
+  # own background thread, so it never holds up or fails the request or job
+  # that raised, and nothing it does is read by the game or a model.
+  #
+  # Not gated on `Playthrough::Debug.enabled?` as the button is: a player's
+  # page error is the one the owner most needs to hear about, and the page
+  # posts only an error's class, message, stack and path -- no game text.
+  config.errors.command_env = "ERRORS_COMMAND"
+  config.errors.heading = "Text adventure"
+  config.errors.request_id_prefix = "ta-errors"
+  config.errors.sent_exit_codes = [ 0, 3 ]
 end
