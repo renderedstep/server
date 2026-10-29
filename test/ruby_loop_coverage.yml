@@ -4021,9 +4021,8 @@ test/models/playthrough/volition_test.rb:
       the absent half (volition::acts player_present)
   a thing they are wearing is never offered as a gift:
     pins: a held thing that is worn gets no give act; once it is not worn it does
-    open: the engine's volition still offers a worn thing as a gift (Halkett Rowe's
-      shoes in the dressed seeds); the same rule goes into the engine's volition.rs
-      and turn.rs with a counterpart, and this entry then names it
+    by:
+    - rust tests/volition_offers.rs::a_thing_they_are_wearing_is_never_offered_as_a_gift
   attack and speak are not on the list, whoever is in the room:
     pins: the act set holds no attack, speak, ceasefire or accept token, even for
       a foe
