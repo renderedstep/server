@@ -21,7 +21,8 @@ where the line's label earns a refusal (`Eval::Classifier::Bench::Reading
   main, which moved only `VISION.md`), engine
   `e4800774cf03c16f69678ab020c6152edbfc163b` (renderedstep/engine#89's head
   then). The pin then moved to `c75d9ae`, which changes only how one parity
-  script is stored and the engine's CI, so no reading moves.
+  script is stored and the engine's CI, and then to `10daa87`, the PR's
+  merge commit, which changes only the engine's CI, so no reading moves.
 - Every reading is kept. Free: no key, no model call, nothing spent.
 
 ## Figures
