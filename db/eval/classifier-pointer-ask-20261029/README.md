@@ -17,8 +17,11 @@ where the line's label earns a refusal (`Eval::Classifier::Bench::Reading
   thread. The weights are not in this repository.
 - **Run:** four repetitions of all 437 lines at corpus `5cdba44d04b495a5`,
   request identity `v2:1114445e276715d7`, eight calls in flight.
-- **Code:** server `d04e4c6` (`fm/ta-refuse-ask`), engine
-  `e4800774cf03c16f69678ab020c6152edbfc163b` (renderedstep/engine#89's head).
+- **Code:** server `d04e4c6` (`fm/ta-refuse-ask` before its rebase onto
+  main, which moved only `VISION.md`), engine
+  `e4800774cf03c16f69678ab020c6152edbfc163b` (renderedstep/engine#89's head
+  then). The pin then moved to `c75d9ae`, which changes only how one parity
+  script is stored and the engine's CI, so no reading moves.
 - Every reading is kept. Free: no key, no model call, nothing spent.
 
 ## Figures
