@@ -833,10 +833,9 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     assert_equal expected, JSON.parse(JSON.generate(actual))
   end
 
-  # THE CLASSIFIER OF RECORD: the local reader play reads every free-typed line
-  # through, read as play reads it. EVALUATION.md and the set's README quote
-  # these figures; every reading is kept, as a cascade set's are.
-  test "the local reader's set is the baseline of record, read as play reads it" do
+  # THE LOCAL READER'S SET BEFORE THE DRESSING AND THE ASK, history now: an
+  # unsure line was played on the reader's own reading.
+  test "the local reader's set on the 372-line corpus played what it was unsure of" do
     result = load_kept("classifier-pointer-m68-step1-20261023")
 
     assert_equal [ "pointer:local" ], result.arms
@@ -846,6 +845,59 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     assert_equal({ "typed_model" => 4 * 284, "typed_model_unsure" => 4 * 80, "typed_model_throw" => 4 * 8 },
                  result.resolved_by_counts("pointer:local"))
     assert_equal 4 * 323, result.rows.count { |row| row["right"] }, "323 of 372 right in every repetition"
+    assert_nil result.asks("pointer:local"), "taken before the ask rule, so it records no asks"
+  end
+
+  POINTER_DRESSED = "classifier-pointer-2026-10-29-dressed".freeze
+  POINTER_ASK = "classifier-pointer-ask-20261029".freeze
+
+  # THE CLASSIFIER OF RECORD AND THE SIDE IT IS JUDGED AGAINST: the local
+  # reader at today's corpus and request, before and after the refuse-and-ask
+  # ruling of 2026-10-29. EVALUATION.md and the README quote these figures.
+  test "the local reader's pair is one reader on today's corpus and request, either side of the ask" do
+    corpus = Eval::Classifier.corpus
+    before = load_kept(POINTER_DRESSED)
+    after = load_kept(POINTER_ASK)
+
+    [ before, after ].each do |result|
+      assert_equal [ "pointer:local" ], result.arms
+      assert_equal Eval::Noise::MIN_RUNS, result.reps
+      assert_equal Eval::Classifier.digest(corpus), result.corpus_digest
+      assert_equal Eval::Classifier::Version.offline, result.request_identity
+      assert_equal Eval::Noise::MIN_RUNS * corpus.size, result.rows.size
+    end
+    assert_equal({ "typed_model" => 4 * 328, "typed_model_unsure" => 4 * 78, "typed_model_dress" => 4 * 23,
+                   "typed_model_throw" => 4 * 8 }, before.resolved_by_counts("pointer:local"))
+    assert_equal({ "typed_model" => 4 * 383, "typed_model_unsure" => 4 * 23, "typed_model_dress" => 4 * 23,
+                   "typed_model_throw" => 4 * 8 }, after.resolved_by_counts("pointer:local"))
+    assert_equal 4 * 334, before.rows.count { |row| row["right"] }
+    assert_equal 4 * 335, after.rows.count { |row| row["right"] }
+    assert_nil before.asks("pointer:local")
+    assert_equal [ 4 * 23, 4 * 10 ], after.asks("pointer:local")
+  end
+
+  # The README's reading of the verdict: every line that moved is an ask, and
+  # every ask is scored by the ask rule alone.
+  test "every line the ask moved is an ask, right exactly where its label earns a refusal" do
+    before = load_kept(POINTER_DRESSED).passes.first.rows.index_by { |row| [ row["id"], row["position"] ] }
+    after = load_kept(POINTER_ASK).passes.first.rows
+
+    moved = after.reject { |row| row["right"] == before.fetch([ row["id"], row["position"] ])["right"] }
+    assert_equal 9 + 8, moved.size
+    assert(moved.all? { |row| row["asked"] }, moved.reject { |row| row["asked"] }.map { |row| row["id"] }.inspect)
+    after.select { |row| row["asked"] }.each do |row|
+      assert_equal "unsure", row["got_refusal"].to_s, row["id"]
+      assert_equal Array(row["expected_refusals"]).map(&:to_s).any? { |kind| kind != "none" }, row["right"], row["id"]
+    end
+  end
+
+  test "the ask's compare can be judged with no key and no calls" do
+    comparison = Eval::Classifier::Comparison.new(load_kept(POINTER_DRESSED), load_kept(POINTER_ASK), io: nil)
+    verdicts = comparison.verdicts("pointer:local").to_h { |row| [ row.metric, row.verdict ] }
+
+    assert_predicate verdicts.fetch(:strict_accuracy), :noise?
+    assert_predicate verdicts.fetch(:accuracy), :real?
+    assert_operator verdicts.fetch(:closed_set_misses).delta, :negative?
   end
 
   private
