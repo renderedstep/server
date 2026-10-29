@@ -51,7 +51,8 @@ class Eval::Classifier::StageTest < ActiveSupport::TestCase
       emptied = stages.fetch("office-empty-handed")
 
       assert_equal [ "Ward Office 12 daybook", "office coat", "spectacles" ], untouched.carried.map(&:name)
-      assert_empty emptied.carried, "its setup dropped the daybook"
+      assert_equal [ "office coat", "spectacles" ], emptied.carried.map(&:name), "its setup dropped the daybook"
+      assert_includes emptied.here.map(&:name), "Ward Office 12 daybook", "onto its own floor"
       assert_equal [ "blank closure writ", "filing press", "ward stamp" ], untouched.here.map(&:name).sort,
                    "and the drop must not have landed on the other position's floor"
       assert_not_equal untouched.playthrough.story_id, emptied.playthrough.story_id,
