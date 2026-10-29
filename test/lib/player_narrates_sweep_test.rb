@@ -77,10 +77,13 @@ class PlayerNarratesSweepTest < ActiveSupport::TestCase
   # THE KEYLESS INSTALL. The Lunar Cartographer opens in a room whose ways out
   # are all unwritten, and only a model writes a room: with none, the game has
   # nothing it may choose, and the act is refused in the engine's words rather
-  # than walked into a room somebody would have to pay to write.
+  # than walked into a room somebody would have to pay to write. Its surveyor
+  # opens in her coat, which she could always look at, so the coat is taken off
+  # the world first: the premise is a room with nothing in it to choose.
   test "a game with nothing it may choose is refused rather than handed to a model" do
     EngineSweep.without_a_model do
       story = WorldSeed::Loader.load_file(Rails.root.join("db/seeds/worlds/the-lunar-cartographer.yml"))
+      story.starting_inventory.destroy_all
       game = Playthrough::Session.begin!(story, mode: "player_narrates").playthrough
       session = Playthrough::Session.new(game)
 
