@@ -15,6 +15,8 @@ steps:
     refused: false
     understood: take -> ward stamp
     carrying:
+    - office coat
+    - spectacles
     - Ward Office 12 daybook
     - ward stamp
 - id: a-take-of-what-is-carried-says-so
@@ -35,6 +37,8 @@ steps:
     offers:
     - You are already carrying the Ward Office 12 daybook.
     carrying:
+    - office coat
+    - spectacles
     - Ward Office 12 daybook
     - ward stamp
 - id: a-name-that-matches-nothing-carried-lists-what-is
@@ -54,8 +58,10 @@ steps:
     refused: true
     offers:
     - 'That did not resolve to anything lying here. Lying here: '
-    - 'You are already carrying: Ward Office 12 daybook, ward stamp.'
+    - 'You are already carrying: Ward Office 12 daybook, office coat, spectacles, ward stamp.'
     carrying:
+    - office coat
+    - spectacles
     - Ward Office 12 daybook
     - ward stamp
 - id: a-take-with-something-else-to-tell-is-narrated
@@ -68,6 +74,8 @@ steps:
     changed: true
     refused: false
     carrying:
+    - office coat
+    - spectacles
     - Ward Office 12 daybook
     - ward stamp
     - blank closure writ

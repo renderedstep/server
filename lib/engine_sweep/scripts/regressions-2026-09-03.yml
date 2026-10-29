@@ -56,7 +56,7 @@ steps:
   why: three on the floor, so an empty set cannot be what a refusal is about
   expect:
     changed: true
-    carrying: []
+    carrying: [office coat, spectacles]
 
 - id: collective-words
   type: take everything
@@ -69,7 +69,7 @@ steps:
 
 - id: collective-words-against-the-hands
   type: drop everything
-  why: the same word read against the other closed set -- empty hands, and it says so
+  why: the same word read against the other closed set -- nothing in hand but what she wears, and it says so
   expect:
     refused: true
     changed: false
@@ -83,7 +83,7 @@ steps:
     refused: true
     changed: false
     offers: [Perrin's private index, copy-room apron]
-    carrying: []
+    carrying: [office coat, spectacles]
 
 - id: one-noun-at-a-time
   type: take the index
@@ -91,7 +91,7 @@ steps:
   expect:
     changed: true
     understood: take -> Perrin's private index
-    carrying: [Perrin's private index]
+    carrying: [office coat, spectacles, Perrin's private index]
 
 - id: look-at-the-closet
   type: look

@@ -42,7 +42,7 @@ steps:
   why: beat 2 -- he gives it, and a thing given is in the party's hands like a thing taken
   expect:
     changed: true
-    carrying: [Assize tide-slate, Neb's knotted cord]
+    carrying: [court black, oilskin, Assize tide-slate, Neb's knotted cord]
     quest:
       2: reached
     ending: none

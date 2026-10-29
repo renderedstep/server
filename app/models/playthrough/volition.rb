@@ -230,7 +230,13 @@ class Playthrough::Volition
     end
     return available unless player_present?
 
+    # AND NEVER A THING THEY ARE WEARING. A worn thing is still held (`Item`'s
+    # `worn`), so without this a die could have a man hand over the shoes on
+    # his feet. Talking somebody out of their coat is still the player's to
+    # try; only a person's own turn is ruled out, as for the arc's things.
     playthrough.items_held_by(character).each do |item|
+      next if item.worn?
+
       available["give:#{item.id}"] = "Give #{item.name} to #{playthrough.character.fullname}."
     end
     if following?

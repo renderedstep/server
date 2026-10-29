@@ -15,7 +15,7 @@
 # engine's own fact, and the narrator's request is the engine's, built from
 # the rows. Its own file, so neither `main` nor `branches` loses its kept set.
 module Eval::Prompt::Speech
-  BASELINE = "prompt-speech-2026-09-28".freeze
+  BASELINE = "prompt-speech-2026-10-29-dressed".freeze
 
   def self.capture(corpus = Eval::Prompt.corpus("speech"))
     corpus.cases.sort_by(&:id).group_by(&:shape).transform_values do |cases|

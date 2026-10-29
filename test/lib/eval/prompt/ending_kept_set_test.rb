@@ -48,14 +48,18 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
 
   CURRENT_AFTER = "prompt-ending-after-2026-10-02".freeze
 
-  # THE ENDING'S CURRENT BASELINE, and the pair that judged the change since: on
-  # the ending's pass alone, *What just happened* reads the concluding turn's
+  # THE PAIR THAT JUDGED THE FACT: on the ending's pass alone, *What just happened* reads the concluding turn's
   # engine fact instead of its paragraph, unless that turn was a move or has no
   # fact (renderedstep/engine#69). Same corpus, same instructions; the request
   # identity moved, and four of the six cases send a different request.
   H2_BEFORE = "prompt-ending-h2-before".freeze
 
   H2_AFTER = "prompt-ending-h2-after".freeze
+
+  # THE ENDING'S CURRENT BASELINE, judged against `H2_AFTER`: the same corpus
+  # and instructions once the hand-made worlds dressed their people, so the
+  # moment says what the player is wearing and the request identity moved.
+  DRESSED = "prompt-ending-dressed-after".freeze
 
   test "both sides load off disk with their provenance in the file" do
     [ BEFORE, AFTER ].each do |name|
@@ -353,8 +357,20 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
     assert_equal 0.0, kept(H2_AFTER).spread(:truncated_prose, arm: ARM).max
   end
 
+  test "the dressing moved no check" do
+    assert_equal kept(H2_AFTER).corpus_digest, kept(DRESSED).corpus_digest
+    assert_equal kept(H2_AFTER).instructions_digest, kept(DRESSED).instructions_digest
+    assert_not_equal kept(H2_AFTER).request_identity, kept(DRESSED).request_identity
+    verdicts = Eval::Prompt::Comparison.new(kept(H2_AFTER), kept(DRESSED), io: nil).verdicts(ARM)
+
+    assert_predicate verdicts, :any?
+    assert_empty verdicts.select { |row| row.verdict.real? }.map(&:metric)
+    assert_equal 0, kept(DRESSED).spread(:failures, arm: ARM).max
+    assert_equal 0.0, kept(DRESSED).spread(:truncated_prose, arm: ARM).max
+  end
+
   test "the current ending baseline certifies its scaffold and retains variable preludes" do
-    result = kept(H2_AFTER)
+    result = kept(DRESSED)
     corpus = Eval::Prompt.corpus("ending")
     current = Eval::Prompt::RequestVersion.offline(corpus)
     assert_equal Eval::Prompt.digest(corpus), result.corpus_digest
@@ -384,7 +400,7 @@ class Eval::Prompt::EndingKeptSetTest < ActiveSupport::TestCase
       assert_includes row.fetch("prompt"), row.fetch("prelude").fetch("description").split(/(?<=[.!?])\s/).first
       assert_equal %w[description summary], row.fetch("prelude").keys.sort
     end
-    [ H2_BEFORE, H2_AFTER, CURRENT_BEFORE, CURRENT_AFTER ].each do |name|
+    [ H2_BEFORE, H2_AFTER, DRESSED, CURRENT_BEFORE, CURRENT_AFTER ].each do |name|
       assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{name}/prompt.json"
     end
     assert_includes Eval::MEASUREMENT_FILES, "db/eval/prompt-ending-2026-09-10/prompt.json",

@@ -171,7 +171,7 @@ steps:
   type: drop the tide-slate
   why: the hands are untouched, because nothing below the gate ran
   expect:
-    carrying: [Assize tide-slate]
+    carrying: [court black, oilskin, Assize tide-slate]
     refused: true
     changed: false
     blows: 0

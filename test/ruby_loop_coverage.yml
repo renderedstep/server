@@ -4019,6 +4019,10 @@ test/models/playthrough/volition_test.rb:
       'Give ... to' with the player present; no case asks with the player elsewhere
       -- add one (e.g. somebody-walks-out after the player left Bell's room) to pin
       the absent half (volition::acts player_present)
+  a thing they are wearing is never offered as a gift:
+    pins: a held thing that is worn gets no give act; once it is not worn it does
+    by:
+    - rust tests/volition_offers.rs::a_thing_they_are_wearing_is_never_offered_as_a_gift
   attack and speak are not on the list, whoever is in the room:
     pins: the act set holds no attack, speak, ceasefire or accept token, even for
       a foe

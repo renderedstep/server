@@ -216,7 +216,7 @@ steps:
     # last hit point, and `world_items_unmoved` asserts after the walk that the
     # world's own bell-rope tally is still in his hands where the file put it.
     here: [climbers' bearing book, bell-rope tally]
-    carrying: []
+    carrying: [surveyor's coat]
     dead: false
     changed: false
     blows: 0
@@ -227,7 +227,7 @@ steps:
   expect:
     changed: true
     here: [climbers' bearing book]
-    carrying: [bell-rope tally]
+    carrying: [surveyor's coat, bell-rope tally]
     blows: 0
 
 - id: what-is-written-on-it-came-with-the-copy
@@ -265,7 +265,7 @@ steps:
   why: an arrival must use this game's cast and inventory even after somebody has died
   expect:
     location: Grenn's Boarding House hallway (stub)
-    carrying: [bell-rope tally]
+    carrying: [surveyor's coat, bell-rope tally]
     present: []
     changed: true
 
@@ -277,6 +277,6 @@ steps:
     present: []
     foes: []
     here: [climbers' bearing book]
-    carrying: [bell-rope tally]
+    carrying: [surveyor's coat, bell-rope tally]
     changed: true
     blows: 0

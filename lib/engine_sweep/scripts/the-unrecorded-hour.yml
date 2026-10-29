@@ -36,7 +36,7 @@ steps:
     location: Ward Office 12 (realized)
     exits: [The Supply Closet (realized), The Long Hallway (stub)]
     here: [ward stamp, filing press, blank closure writ]
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
     # Rowe is in this room because `characters[].location` says so, not because
     # a scene once recorded him -- an offline walk writes no scenes at all.
     # Perrin Lasco is nowhere on purpose (this world is about him having been
@@ -53,7 +53,7 @@ steps:
   expect:
     changed: true
     understood: take -> ward stamp
-    carrying: [Ward Office 12 daybook, ward stamp]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, ward stamp]
     drifts: 0
 
 - id: read-the-daybook-in-hand
@@ -71,7 +71,7 @@ steps:
     note: ["reads: Ward Office 12 daybook", "Query 1188 (Marchmain acre 7) still open"]
     inscription:
       Ward Office 12 daybook: "3.40 — Levee boundary, Marchmain acre 7."
-    carrying: [Ward Office 12 daybook, ward stamp]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, ward stamp]
 
 - id: nothing-is-written-on-a-stamp
   type: read the ward stamp
@@ -93,7 +93,7 @@ steps:
     changed: true
     location: The Supply Closet (realized)
     exits: [Ward Office 12 (realized)]
-    carrying: [Ward Office 12 daybook, ward stamp]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, ward stamp]
 
 - id: secure-the-apron
   type: take the apron
@@ -101,7 +101,7 @@ steps:
   expect:
     changed: true
     understood: take -> copy-room apron
-    carrying: [Ward Office 12 daybook, ward stamp, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, ward stamp, copy-room apron]
 
 - id: drop-it-somewhere-else
   type: drop the ward stamp
@@ -110,7 +110,7 @@ steps:
   expect:
     changed: true
     understood: drop -> ward stamp
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
 
 - id: take-something-by-a-fragment
   type: take the apron
@@ -119,7 +119,7 @@ steps:
     refused: true
     changed: false
     offers: [You are already carrying the copy-room apron.]
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
 
 - id: read-what-is-in-hand
   type: read the daybook
@@ -133,7 +133,7 @@ steps:
     note: ["reads: Ward Office 12 daybook"]
     inscription:
       Ward Office 12 daybook: "3.40 — Levee boundary, Marchmain acre 7."
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
 
 - id: read-it-again-and-it-says-the-same-thing
   type: x the daybook
@@ -153,7 +153,7 @@ steps:
   expect:
     changed: false
     refused: false
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
 
 - id: back-through-the-door-it-came-in-by
   type: go to Ward Office 12
@@ -161,7 +161,7 @@ steps:
   expect:
     changed: true
     location: Ward Office 12 (realized)
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
 
 - id: take-what-is-not-here
   type: take the ward stamp
@@ -170,7 +170,7 @@ steps:
     refused: true
     changed: false
     offers: [there is no thing lying here]
-    carrying: [Ward Office 12 daybook, copy-room apron]
+    carrying: [office coat, spectacles,Ward Office 12 daybook, copy-room apron]
     drifts: 0
 
 - id: drop-what-is-not-carried
@@ -196,7 +196,7 @@ steps:
   expect:
     changed: true
     understood: drop -> copy-room apron
-    carrying: [Ward Office 12 daybook]
+    carrying: [office coat, spectacles,Ward Office 12 daybook]
 
 - id: walk-into-the-unwritten-room
   type: go to the Long Hallway

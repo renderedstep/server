@@ -40,12 +40,15 @@ class Eval::PipelineTest < ActiveSupport::TestCase
   # takeable at all (taking something off a person is a different act with
   # somebody on the other side of it, and no record says how that goes), and
   # since `the-lunar-cartographer.yml` gave Marek Sollen his bell-rope tally
-  # there is one of those in the seeds.
+  # there is one of those in the seeds. NOR WHAT THE PROTAGONIST IS WEARING: a
+  # worn thing is carried, but it is the clothes they stand in and not a thing
+  # a script's `drop` is there to put down, and since the seeds dressed their
+  # people every world opens wearing something.
   test "the two worlds with a starting inventory put one down and pick it up again" do
     stories = WorldSeed::Loader.load_all(io: nil).index_by(&:title)
 
     Eval::STORIES.each do |title|
-      next if stories.fetch(title).starting_inventory.none?
+      next if stories.fetch(title).starting_inventory.where(worn: false).none?
 
       expectations = Eval::Script.for(title).turns.map(&:expect)
 

@@ -36,7 +36,7 @@ steps:
   why: beat 3, with the Ringer alive and standing by the rope -- and he answers the take with a blow
   expect:
     changed: true
-    carrying: [climbers' bearing book]
+    carrying: [surveyor's coat,climbers' bearing book]
     foes: [Marek Sollen]
     blows: 1
     quest:
@@ -155,7 +155,7 @@ steps:
   why: the last beat -- the ending falls due here and nothing is written until the player ends the story
   expect:
     changed: true
-    carrying: [climbers' bearing book, bell-rope tally]
+    carrying: [surveyor's coat,climbers' bearing book, bell-rope tally]
     quest:
       1: reached
       2: reached

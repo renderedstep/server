@@ -50,8 +50,9 @@ class Eval::Classifier::StageTest < ActiveSupport::TestCase
       untouched = stages.fetch("office")
       emptied = stages.fetch("office-empty-handed")
 
-      assert_equal [ "Ward Office 12 daybook" ], untouched.carried.map(&:name)
-      assert_empty emptied.carried, "its setup dropped the daybook"
+      assert_equal [ "Ward Office 12 daybook", "office coat", "spectacles" ], untouched.carried.map(&:name)
+      assert_equal [ "office coat", "spectacles" ], emptied.carried.map(&:name), "its setup dropped the daybook"
+      assert_includes emptied.here.map(&:name), "Ward Office 12 daybook", "onto its own floor"
       assert_equal [ "blank closure writ", "filing press", "ward stamp" ], untouched.here.map(&:name).sort,
                    "and the drop must not have landed on the other position's floor"
       assert_not_equal untouched.playthrough.story_id, emptied.playthrough.story_id,
@@ -72,7 +73,7 @@ class Eval::Classifier::StageTest < ActiveSupport::TestCase
         # the two the walk picked up land after it. What the corpus depends on
         # is the CONTENTS -- and, for an `examine`, that the floor comes before
         # the hands, which the closed-sets test below asserts.
-        assert_equal [ "Perrin's private index", "Ward Office 12 daybook", "copy-room apron" ].sort,
+        assert_equal [ "Perrin's private index", "Ward Office 12 daybook", "copy-room apron", "office coat", "spectacles" ].sort,
                      standing.carried.map(&:name).sort
       end
     end
@@ -100,7 +101,7 @@ class Eval::Classifier::StageTest < ActiveSupport::TestCase
 
       assert_equal [ "Ward Office 12" ], standing.offered_for(:move).map(&:name)
       assert_equal [ "Perrin's private index", "copy-room apron" ], standing.offered_for(:take).map(&:name)
-      assert_equal [ "Ward Office 12 daybook" ], standing.offered_for(:drop).map(&:name)
+      assert_equal [ "Ward Office 12 daybook", "office coat", "spectacles" ], standing.offered_for(:drop).map(&:name)
       assert_empty standing.offered_for(:talk)
       assert_empty standing.offered_for(:other), "`other` resolves no record and never will"
       assert_includes standing.offered, "Perrin's private index"

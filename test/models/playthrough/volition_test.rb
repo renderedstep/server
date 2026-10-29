@@ -80,6 +80,20 @@ class Playthrough::VolitionTest < ActiveSupport::TestCase
     assert_not_includes volition.choices.keys, "give:#{held.id}"
   end
 
+  # A WORN THING IS STILL HELD, so it is the volition's own rule and not the
+  # query's that keeps the shoes on a man's feet when the die comes up `give`.
+  test "a thing they are wearing is never offered as a gift" do
+    coat = create(:item, character: @clerk, location: nil, playthrough: @game, wear: "outer", worn: true)
+    daybook = create(:item, character: @clerk, location: nil, playthrough: @game)
+
+    assert_not_includes volition.choices.keys, "give:#{coat.id}"
+    assert_includes volition.choices.keys, "give:#{daybook.id}"
+
+    coat.update!(worn: false)
+
+    assert_includes volition.choices.keys, "give:#{coat.id}"
+  end
+
   test "attack and speak are not on the list, whoever is in the room" do
     foe = create(:character, :monster, story: @story, location: @room)
     tokens = volition(foe).choices.keys

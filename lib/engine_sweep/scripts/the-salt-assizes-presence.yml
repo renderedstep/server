@@ -41,7 +41,7 @@ steps:
   expect:
     location: The Causeway Court (realized)
     present: [Ammon Brace]
-    carrying: [Assize tide-slate]
+    carrying: [court black, oilskin, Assize tide-slate]
     volitions: 0
     acts: 0
 
