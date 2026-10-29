@@ -473,6 +473,10 @@ module Eval
     db/eval/classifier-about-after-20261022/offline.json
     db/eval/classifier-about-after-20261022/receipts.json
     db/eval/classifier-about-after-20261022/README.md
+    db/eval/classifier-2026-10-29-dressed/classifier.json
+    db/eval/classifier-2026-10-29-dressed/offline.json
+    db/eval/classifier-2026-10-29-dressed/receipts.json
+    db/eval/classifier-2026-10-29-dressed/README.md
     db/eval/classifier-throw-before-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/classifier.json
     db/eval/classifier-throw-after-20260926/offline.json

@@ -1296,15 +1296,16 @@ bin/rails runner 'Eval::Prompt::Result.load(Eval.root.join("my-set")) \
 
 ### Current kept sets and historical comparisons
 
-**The hand-made worlds dressed their people, and five sets were bought
+**The hand-made worlds dressed their people, and six sets were bought
 again.** The protagonists' clothes became worn item records, and the
 narrator is told what the player is wearing. The NPCs' appearance lines were
 left as they were, because no prompt is told what an NPC wears. No
-instruction moved. The main, ending, speech and realization request
-identities moved; the inscription corpus digest moved, but not its requests.
+instruction moved. The main, ending, speech, realization and classifier
+request identities moved; the inscription corpus digest moved, but not its
+requests.
 
 Each after side was judged against the set it replaces, and **every check
-reads NOISE**. The sets:
+reads NOISE or better**. The sets:
 
 | Corpus | Before side | Current baseline |
 |---|---|---|
@@ -1313,6 +1314,7 @@ reads NOISE**. The sets:
 | speech | `prompt-speech-2026-09-28` | `prompt-speech-2026-10-29-dressed` |
 | realization | `realization-2026-10-27` | `realization-2026-10-29-dressed` |
 | inscription | `inscription-2026-10-27` | `inscription-2026-10-29-dressed` |
+| classifier cascade | `classifier-about-after-20261022` | `classifier-2026-10-29-dressed` |
 
 The only REAL figures are reported ones:
 - main: latency and `commitments` (3.250 to 3.506);
@@ -1323,9 +1325,18 @@ No check counts clothing, so the prose was read by hand. No paragraph takes
 off, drops or puts on a worn thing that the line did not ask for. Each README
 has its readings and receipts.
 
-The classifier's request identity moved too. Its kept sets were bought on the
-System One cascade over TypeSafe direct, so buying it again waits on that
-credential.
+The classifier cascade was bought on the before side's arm, Jev over TypeSafe
+direct in front of `mistralai/mistral-medium-3.1`. It is judged on the 372
+lines both sides scored, because the wear, remove, put and walk-to lines
+were added to the corpus after the before side was bought:
+- every accuracy figure reads NOISE;
+- `intent_accuracy` reads BETTER, REAL.
+
+Across the whole corpus the compare reads WORSE, REAL, and says the corpora
+differ: the cascade reads few of those added lines right. The clothes made
+some corpus lines untrue, and the set's README names them; they are
+relabelled in a follow-up that buys its own set. The classifier of record is
+still the local reader, `classifier-pointer-m68-step1-20261023`.
 
 **`realization-2026-10-27` was the realization baseline before it.** A room
 somebody already stands in before it is written is told who, in an "Already

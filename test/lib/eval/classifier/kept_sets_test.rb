@@ -580,7 +580,7 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   test "the floor of the cascade at today's corpus can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(TODAY_CASCADE, "offline.json").read)
     assert_equal Eval::Classifier.digest(today_corpus), floor.fetch("corpus_digest")
-    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
+    assert_equal unsentenced(offline_floor(today_corpus)), unsentenced(floor.fetch("floor"))
   end
 
   # THE CASCADE THAT ESCALATES A THROW: today's request and corpus, read
@@ -628,7 +628,7 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   # so it shares the after side's request identity.
   USE_NARROWED = "classifier-use-narrowed-20261018".freeze
 
-  test "the use sets are one corpus and one arm either side of the request change, the after sides today's" do
+  test "the use sets are one corpus and one arm either side of the request change, the after sides the last before the dressing" do
     before = load_kept(USE_BEFORE)
     after = load_kept(USE_AFTER)
     narrowed = load_kept(USE_NARROWED)
@@ -649,37 +649,37 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
         assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{result.name}/#{file}"
       end
     end
-    assert_equal Eval::Classifier::Version.offline, after.request_identity
-    assert_equal Eval::Classifier::Version.offline, narrowed.request_identity
+    assert_equal REQUEST_BEFORE_DRESSING, after.request_identity
+    assert_equal REQUEST_BEFORE_DRESSING, narrowed.request_identity
     assert_not_equal before.request_identity, after.request_identity
   end
 
   test "the use sets' floor can be recomputed offline" do
-    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: use_corpus).summary.to_h.to_json)
+    floor = unsentenced(offline_floor(use_corpus))
     [ USE_BEFORE, USE_AFTER, USE_NARROWED ].each do |set|
       kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
       assert_equal Eval::Classifier.digest(use_corpus), kept.fetch("corpus_digest"), set
-      assert_equal floor, kept.fetch("floor"), set
+      assert_equal floor, unsentenced(kept.fetch("floor")), set
     end
   end
 
   # THE TALK-ABOUT-ANOTHER PAIR: the use pair's arm and transport on the corpus
   # before the destroy lines, either side of System One's talk wording counting only the people
   # spoken to. The model call's request did not move, and System One's is in no
-  # digest, so both sides share today's request identity. Their READMEs have
-  # the verdicts.
+  # digest, so both sides share one request identity, the last before the
+  # dressing. Their READMEs have the verdicts.
   ABOUT_BEFORE = "classifier-about-before-20261022".freeze
   ABOUT_AFTER = "classifier-about-after-20261022".freeze
   TWO_LISTENERS = %w[two-names-talk-two-people two-names-talk-both two-names-talk-court two-names-talk-court-full
                      two-names-talk-court-and talk-about-another-control].freeze
 
-  test "the talk-about-another sets are today's corpus and request either side of the talk wording" do
+  test "the talk-about-another sets are one corpus and request either side of the talk wording" do
     [ load_kept(ABOUT_BEFORE), load_kept(ABOUT_AFTER) ].each do |result|
       assert result.cascade, result.name
       assert_equal Eval::Classifier.digest(about_corpus), result.corpus_digest, result.name
       assert_equal Eval::Noise::MIN_RUNS * about_corpus.size, result.rows.size, result.name
       assert_equal [ BaseAgent::REMOTE_MODEL_IDS.first ], result.arms, result.name
-      assert_equal Eval::Classifier::Version.offline, result.request_identity, result.name
+      assert_equal REQUEST_BEFORE_DRESSING, result.request_identity, result.name
       assert_equal [ "typesafe_direct" ], result.rows.map { |row| row["system_one_transport"] }.uniq, result.name
       result.rows.each do |row|
         flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
@@ -704,11 +704,74 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   end
 
   test "the talk-about-another sets' floor can be recomputed offline" do
-    floor = JSON.parse(Eval::Classifier::Offline.new(corpus: about_corpus).summary.to_h.to_json)
+    floor = unsentenced(offline_floor(about_corpus))
     [ ABOUT_BEFORE, ABOUT_AFTER ].each do |set|
       kept = JSON.parse(Eval.kept_root.join(set, "offline.json").read)
       assert_equal Eval::Classifier.digest(about_corpus), kept.fetch("corpus_digest"), set
-      assert_equal floor, kept.fetch("floor"), set
+      assert_equal floor, unsentenced(kept.fetch("floor")), set
+    end
+  end
+
+  # THE DRESSED WORLDS. The three hand-made worlds' people now wear their
+  # clothes as items, and a worn thing is still carried. That moved the model
+  # call's request (the carried lists name the clothes) and, in a floor, the
+  # refusal sentences that list what is carried or here -- and nothing else
+  # the floor holds: every outcome, count and rate recomputes as it was. So
+  # the sets above were bought at `REQUEST_BEFORE_DRESSING`, and their floors
+  # are recomputed with each refusal's sentence set aside (`#unsentenced`);
+  # their files are what ran and are not rewritten. `DRESSED` is the use pair's
+  # arm and transport at today's request on today's corpus. Its README has the
+  # verdict against `ABOUT_AFTER` and the corpus lines the clothes made untrue.
+  REQUEST_BEFORE_DRESSING = { "version" => 2, "digest" => "189a5ddbb7f67a32",
+                              "scope" => "known_physical_token_bindings" }.freeze
+  DRESSED = "classifier-2026-10-29-dressed".freeze
+
+  test "the dressed set is one run of today's request on today's corpus, every reading kept" do
+    result = load_kept(DRESSED)
+    corpus = Eval::Classifier.corpus
+
+    assert result.cascade
+    assert_equal Eval::Classifier.digest(corpus), result.corpus_digest
+    assert_equal Eval::Classifier::Version.offline, result.request_identity
+    assert_equal [ "#{BaseAgent::REMOTE_MODEL_IDS.first}+typesafe-direct" ], result.arms
+    assert_equal Eval::Noise::MIN_RUNS, result.reps
+    assert_equal Eval::Noise::MIN_RUNS * corpus.size, result.rows.size
+    # A put-on or take-off is pointed at `/wear` and `/remove` unread
+    # (`typed_model_dress`), so it asks System One nothing; every other line does.
+    dressing, read = result.rows.partition { |row| row["resolved_by"] == "typed_model_dress" }
+    assert_equal [ nil ], dressing.map { |row| row["system_one_transport"] }.uniq
+    assert_equal [ "typesafe_direct" ], read.map { |row| row["system_one_transport"] }.uniq
+    read.each do |row|
+      flagged = row["target_present"] < PRESENCE_THRESHOLD || row["named_more_than_one"] >= TWO_NAME_THRESHOLD
+      assert_equal flagged || thrown?(row["typed"]), row["resolved_by"] == "typed_model_escalated", row["id"]
+    end
+    %w[classifier.json offline.json receipts.json README.md].each do |file|
+      assert_includes Eval::MEASUREMENT_FILES, "db/eval/#{DRESSED}/#{file}"
+    end
+  end
+
+  test "the dressed set's floor can be recomputed offline, refusal sentences and all" do
+    floor = JSON.parse(Eval.kept_root.join(DRESSED, "offline.json").read)
+    assert_equal Eval::Classifier.digest(Eval::Classifier.corpus), floor.fetch("corpus_digest")
+    assert_equal offline_floor(Eval::Classifier.corpus), floor.fetch("floor")
+  end
+
+  # The verdict its README quotes, on the lines both sides scored: the 65
+  # lines added since have no before side to be judged against.
+  test "on the lines the talk-about-another after side scored, the dressed set reads NOISE against it" do
+    before = load_kept(ABOUT_AFTER)
+    after = load_kept(DRESSED)
+    shared = before.rows.map { |row| row["id"] }.to_set
+    rate = lambda do |result, only|
+      result.passes.map do |pass|
+        rows = pass.rows.select { |row| shared.include?(row["id"]) && only.(row) }
+        rows.count { |row| row["right"] }.fdiv(rows.size)
+      end
+    end
+
+    assert_equal about_corpus.size, shared.size
+    { accuracy: ->(_row) { true }, strict_accuracy: ->(row) { !row["arguable"] } }.each do |metric, only|
+      assert_predicate Eval::Noise.compare(metric, rate.(before, only), rate.(after, only)), :noise?, metric
     end
   end
 
@@ -730,13 +793,13 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
   test "the floor of the throw cascade can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(THROW_CASCADE, "offline.json").read)
     assert_equal Eval::Classifier.digest(today_corpus), floor.fetch("corpus_digest")
-    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: today_corpus).summary.to_h.to_json), floor.fetch("floor")
+    assert_equal unsentenced(offline_floor(today_corpus)), unsentenced(floor.fetch("floor"))
   end
 
   test "the current classifier floor can be recomputed offline" do
     floor = JSON.parse(Eval.kept_root.join(CURRENT, "offline.json").read)
     assert_equal Eval::Classifier.digest(current_corpus), floor.fetch("corpus_digest")
-    assert_equal JSON.parse(Eval::Classifier::Offline.new(corpus: current_corpus).summary.to_h.to_json), floor.fetch("floor")
+    assert_equal unsentenced(offline_floor(current_corpus)), unsentenced(floor.fetch("floor"))
   end
 
   test "the initial physical candidate keeps every exact request and its single model receipt" do
@@ -791,6 +854,18 @@ class Eval::Classifier::KeptSetsTest < ActiveSupport::TestCase
     # read `tmp/eval` on the machine that just ran the bench and `db/eval` in
     # CI, and pass for two different reasons.
     def load_kept(name) = Eval::Classifier::Result.load(Eval.kept_root.join(name))
+
+    def offline_floor(corpus) = JSON.parse(Eval::Classifier::Offline.new(corpus: corpus).summary.to_h.to_json)
+
+    # A FLOOR WITH ITS REFUSAL SENTENCES SET ASIDE, for a set bought before the
+    # dressing (see `REQUEST_BEFORE_DRESSING`). A refused line's `got` is the
+    # sentence the player reads, which lists what is carried and here, so the
+    # clothes moved it; the outcome beside it, and every figure, did not.
+    def unsentenced(floor)
+      floor.merge("readings" => floor.fetch("readings").map do |reading|
+        %w[refused over_refused].include?(reading["outcome"]) ? reading.except("got") : reading
+      end)
+    end
 
     def thrown?(typed) = typed.to_s.downcase.split(/[^[:alnum:]]+/).intersect?(THROW_VERBS)
 end

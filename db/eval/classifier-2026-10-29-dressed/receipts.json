@@ -1,0 +1,31 @@
+{
+  "openrouter": {
+    "what": "the mistral-medium-3.1 calls the cascade escalated. The bench keeps no per-call OpenRouter receipt, so this is the key's own usage, read settled before and after the run. The key is shared, so this is an upper bound",
+    "key_usage_before_usd": 34.111498,
+    "key_usage_after_usd": 34.219706,
+    "spent_usd": 0.108208,
+    "cap_usd": 0.25,
+    "escalated_calls": 382,
+    "bench_registry_estimate": "$0.0895 over 474 calls -- the 382 escalations plus the 92 typed_model_dress readings, which made no call"
+  },
+  "system_one": {
+    "transport": "typesafe_direct",
+    "requests": 1657,
+    "spent_usd": 0.263987,
+    "bench_reported": "System One: 1657 requests, $0.263987 booked off their receipts (0 estimated), cap $0.3000.",
+    "cap_usd": 0.3,
+    "receipts_in_classifier_json": {
+      "readings": 1656,
+      "input_tokens": 6281296,
+      "output_tokens": 886786,
+      "spent_usd": 0.263814,
+      "cost_source": "reported"
+    },
+    "warmup": "the 1657th request is the warm-up, $0.000173; the result keeps no receipt for it"
+  },
+  "stopped_run": {
+    "what": "the first start under CAP=0.15 stopped at its System One cap after two of four repetitions and was discarded; none of it is in this set",
+    "openrouter_spent_usd": 0.095401,
+    "system_one_spent_usd": 0.149888
+  }
+}
