@@ -82,6 +82,12 @@
 # The `Playthrough::Drift` and `Playthrough::Overreach` rows `#classify` writes
 # are written and rolled back with everything else.
 class Eval::Classifier::Bench
+  # The path the engine records for an ask, and since the ruling of 2026-10-29
+  # for nothing else (`PointerClassifierAgent`). A set taken before that
+  # recorded the same word for a line played on the reader's own reading; such
+  # a set records no `asks`, which is how the two are told apart on disk.
+  ASKED = "typed_model_unsure".freeze
+
   # WHAT ONE LINE CAME BACK AS, next to what it should have been.
   #
   # `action`, `target` and `also_named` are the classifier's answer as NAMES --
@@ -130,18 +136,44 @@ class Eval::Classifier::Bench
     def arguable? = line.arguable?
     def failed? = !error.nil?
 
+    # AN ASK: the local reader was unsure of the act or of the thing for it,
+    # below the engine's confidence floor, so the engine refused the line as
+    # `unsure` and played nothing -- the owner's ruling of 2026-10-29, "always
+    # refuse and ask". `answer` still holds the reader's guess, which is what
+    # the player was offered to type, and is not what happened.
+    #
+    # THE ASK RULE: an ask is right exactly where the line's label earns a
+    # refusal of any kind. Asking about a line that should have been played
+    # is a miss, however good the guess; asking about a line that should have
+    # been refused stopped a wrong act, which is what the ruling is for. Asks
+    # are counted on their own (`Pass#asks`), so a run that asks more is seen
+    # to, and not only as a moved accuracy.
+    def asked? = !failed? && resolved_by == ASKED
+    def ask_right? = asked? && line.refusals.any? { |kind| kind != :none }
+
     def intent = answer&.intent
-    def refusal = answer&.refusal
+    def refusal = asked? ? :unsure : answer&.refusal
 
     # RIGHT INTENT, whatever it landed on. Kept apart from the target because
     # they are different failures with different consequences: a wrong intent
     # sends the turn down another branch, a wrong target sends the right branch
-    # at the wrong record.
-    def intent_right? = !failed? && line.answers.any? { |wanted| wanted.intent == answer.intent }
+    # at the wrong record. An ask sends the turn down no branch at all, so it
+    # is scored by the ask rule alone.
+    def intent_right?
+      return false if failed?
+      return ask_right? if asked?
+
+      line.answers.any? { |wanted| wanted.intent == answer.intent }
+    end
 
     # RIGHT INTENT AND RIGHT RECORD -- the whole answer. The pair is compared as
     # a set; see `Eval::Classifier::Corpus::Answer`.
-    def right? = !failed? && line.accepts?(answer)
+    def right?
+      return false if failed?
+      return ask_right? if asked?
+
+      line.accepts?(answer)
+    end
 
     # THE CLOSED-SET MISS: the branch was right and the record was not. This is
     # the failure the closed enum was built to make impossible and the one worth
@@ -159,7 +191,12 @@ class Eval::Classifier::Bench
     # than re-derived from the corpus label. See `Eval::Classifier::Bench#read`.
     def out_of_set? = !failed? && !!out_of_set
 
-    def refusal_right? = !failed? && line.refusals.include?(answer.refusal)
+    def refusal_right?
+      return false if failed?
+      return ask_right? if asked?
+
+      line.refusals.include?(answer.refusal)
+    end
 
     # THE GUARD, not a figure. With an arm of one there is nothing to rotate to,
     # so this is false on every reading of a healthy run -- and if it is ever
@@ -191,7 +228,7 @@ class Eval::Classifier::Bench
     # A POSITIVE is a line whose LABEL carries a second name; that is the corpus
     # saying this line asked for two acts. See `Eval::Classifier::Report`.
     def also_expected? = !line.also_named.nil?
-    def also_answered? = !failed? && !answer.also_named.nil?
+    def also_answered? = !failed? && !asked? && !answer.also_named.nil?
     def also_true_positive? = also_expected? && also_answered? && right?
     def also_false_positive? = !failed? && !also_expected? && also_answered?
     def also_false_negative? = also_expected? && !also_true_positive?
@@ -259,6 +296,13 @@ class Eval::Classifier::Bench
     def refusal_agreement = rate(unarguable.count(&:refusal_right?), unarguable.size)
     def closed_set_misses = scored.count(&:closed_set_miss?)
 
+    # THE ASKS, AS THEIR OWN COUNT, and how many of them the ask rule scores
+    # right (`Reading#ask_right?`). Reported and never judged: more asks is
+    # neither better nor worse in itself, and the accuracies already carry
+    # what each ask was worth.
+    def asks = scored.count(&:asked?)
+    def asks_right = scored.count(&:ask_right?)
+
     # `respond_to?` GUARDED, so `PhysicalClassifierStudy::Audit::HistoricalReading`
     # (a frozen replay's own reading shape, predating this counter) still
     # builds a `Pass` -- it simply has none of this population to count, rather
@@ -295,7 +339,7 @@ class Eval::Classifier::Bench
 
     def to_h = { arm:, rep:, accuracy: accuracy.round(4), intent_accuracy: intent_accuracy.round(4),
                  strict_accuracy: strict_accuracy.round(4), refusal_agreement: refusal_agreement.round(4),
-                 closed_set_misses:, out_of_set:, latency_median: latency_median.round(4),
+                 closed_set_misses:, out_of_set:, asks:, asks_right:, latency_median: latency_median.round(4),
                  latency_p95: latency_p95.round(4), failures:,
                  rotations:, failures_by_class: failures_by_class,
                  **also_counts, resolved_by_counts:, readings: rows }
@@ -308,7 +352,7 @@ class Eval::Classifier::Bench
         expected_refusals: line.refusals, got_refusal: reading.refusal,
         right: reading.right?, intent_right: reading.intent_right?,
         closed_set_miss: reading.closed_set_miss?, out_of_set: reading.out_of_set?,
-        refusal_right: reading.refusal_right?, arguable: reading.arguable?,
+        refusal_right: reading.refusal_right?, arguable: reading.arguable?, asked: reading.asked?,
         also_expected: reading.also_expected?, also_answered: reading.also_answered?,
         also_tp: reading.also_true_positive?, also_fp: reading.also_false_positive?,
         also_fn: reading.also_false_negative?, also_omitted: reading.also_named_omitted?,
@@ -640,7 +684,8 @@ class Eval::Classifier::Bench
     # A POINTER ARM'S LINE, read as play reads it: the engine asks the local
     # model its typed questions and composes the answer itself
     # (`classifier::read_locally`), so a line the model is unsure of is
-    # played on its own reading and a free throw is never asked. The engine
+    # asked about rather than played (`Reading#asked?`) and a free throw is
+    # never asked. The engine
     # never makes the classifier call for it; were it asked for one, that
     # would be a failure. No chat model is asked, so a run needs no key and
     # spends nothing. A model that cannot answer is the reader being down:

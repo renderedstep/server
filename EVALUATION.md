@@ -376,9 +376,17 @@ local composition (`Playthrough::Requests.read_line(local: true)`), so a
 reading on the bench is the reading a turn makes:
 
 * a line the model is sure of plays, `typed_model`;
-* a line it is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
-  0.15) plays on its own reading, `typed_model_unsure`; a target it reads as
-  absent is refused with what is here;
+* a line it is unsure of -- below 0.9 on the act it picked or on the thing for
+  that act, the engine's `cascade::CONFIDENCE_FLOOR` -- is asked about and not
+  played, `typed_model_unsure` (the owner's ruling of 2026-10-29); a target it
+  reads as absent is refused with what is here, as before;
+* **the ask rule:** an ask is scored right exactly where the line's label earns
+  a refusal of any kind, and wrong where the label wants the line played,
+  however good the guess. Asks are reported as their own count (`asks`, and
+  how many the rule scores right) on the report, the board and the compare,
+  and are never judged: more asks is neither better nor worse in itself. A set
+  taken before the ask rule records no asks, and its `typed_model_unsure` was
+  a line played on the reader's own reading;
 * a free throw is never asked and is refused with the pointer to `/throw`,
   `typed_model_throw`;
 * a free put-on or take-off is never asked and is refused with the pointer to

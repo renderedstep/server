@@ -121,8 +121,19 @@ class Eval::Classifier::Board
         "cost per 1,000 calls" => ->(column) { cost(column) },
         "failed calls" => ->(column) { band(column, :failures) },
         "rotations" => ->(column) { rotations(column) },
-        "escalation rate" => ->(column) { resolved_by(column) }
+        "escalation rate" => ->(column) { resolved_by(column) },
+        "asks" => ->(column) { asks(column) }
       )
+    end
+
+    # THE LINES THE LOCAL READER ASKED ABOUT, pooled over the repetitions, and
+    # how many of them the ask rule scores right. "--" for a set taken before
+    # the ask rule, which recorded none.
+    def asks(column)
+      asked, right = column.result.asks(column.arm)
+      return "--" if asked.nil?
+
+      format("%d (%d where the label earns a refusal)", asked, right)
     end
 
     def row(label, cells) = "| #{([ label ] + cells).join(" | ")} |"
@@ -225,10 +236,13 @@ class Eval::Classifier::Board
       total = counts.values.sum
       return "not recorded" if total.zero?
 
-      # The local reader escalates nothing: it plays what it is unsure of.
+      # The local reader escalates nothing. Since the ruling of 2026-10-29 it
+      # asks about what it is unsure of; a set taken before that played it on
+      # its own reading, and records no asks.
       if (counts.keys & Playthrough::Classifier::LOCAL_PATHS).any?
         unsure = counts["typed_model_unsure"].to_i
-        return format("%.3f unsure, played as read (%d of %d), %d throws pointed at /throw, " \
+        what = column.result.asks(column.arm) ? "asked about" : "played as read"
+        return format("%.3f unsure, #{what} (%d of %d), %d throws pointed at /throw, " \
                       "%d dress lines pointed at /wear and /remove",
                       unsure.fdiv(total), unsure, total, counts["typed_model_throw"].to_i,
                       counts["typed_model_dress"].to_i)

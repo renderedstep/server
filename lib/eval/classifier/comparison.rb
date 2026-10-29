@@ -190,6 +190,7 @@ class Eval::Classifier::Comparison
                    figure(row.metric, verdict.before.median), figure(row.metric, verdict.after.median),
                    row.direction, verdict.headline)
       end
+      asks(against, arm)
       cold(against, arm)
     end
 
@@ -207,6 +208,20 @@ class Eval::Classifier::Comparison
   # verdict on it would be the sample size talking. It is printed because a
   # model that answers in half a second and takes forty to load is a different
   # proposition from one that does neither.
+  # THE ASKS EACH SIDE MADE, pooled over its repetitions: a count to read
+  # beside the accuracies, never judged, since more asks is neither better nor
+  # worse in itself (`Eval::Classifier::Bench::Pass#asks`). "--" for a side
+  # taken before the ask rule.
+  def asks(before_arm, after_arm)
+    left = before.asks(before_arm)
+    right = after.asks(after_arm)
+    return if left.nil? && right.nil?
+
+    side = ->(asked) { asked ? format("%d (%d right)", *asked) : "--" }
+    say format("  %-20s %s -> %s  %-8s %s", "asks", side.(left), side.(right),
+               "", "lines asked about instead of played, all repetitions; reported, never judged")
+  end
+
   def cold(before_arm, after_arm)
     left = before.warmup(before_arm)
     right = after.warmup(after_arm)

@@ -3,12 +3,23 @@
 #
 # WHAT IT IS. The engine reads every free-typed line through this reader and
 # through nothing else (`renderedstep_engine::classifier::read_locally`): a
-# line it is sure of is played as `typed_model`, one it is unsure of is played
-# on its own reading as `typed_model_unsure`, a target it reads as absent is
+# line it is sure of is played as `typed_model`, a target it reads as absent is
 # refused with the list of what is here, and a free-typed throw is not asked
 # at all and is pointed at `/throw`. The model call (Mistral) is never made
 # for a free-typed line. A slashed line is read by the grammar first and asks
 # nothing.
+#
+# AN UNSURE LINE IS ASKED ABOUT, NOT PLAYED -- the owner's ruling of
+# 2026-10-29, "always refuse and ask". The reader answers every choice with how
+# sure it is of each option, and below 0.9 (the engine's
+# `cascade::CONFIDENCE_FLOOR`) on the act or on the thing for it, the line is
+# refused as `unsure` and the player is shown its best guess as a slash line to
+# type. That is what `typed_model_unsure` now means, and all it means: a
+# refused line writes no scene, so the value is in the turn's journal and in
+# the kept line (`RefusedLine`), never on a `Scene`. A reply with no
+# probability for its own pick counts as unsure; the sidecar always sends one.
+# The 0.9 is a round number, to be checked against the kept lines before it
+# changes.
 #
 # WHERE IT RUNS. The model is PyTorch, so it is a sidecar process
 # (`script/pointer_classifier/serve.py --http`, started by `bin/pointer-classifier`
@@ -30,8 +41,9 @@
 # THE WEIGHTS ARE NOT IN THE REPOSITORY. They live in a directory this
 # checkout names (`POINTER_CLASSIFIER_WEIGHTS`), fetched from a public
 # release by `bin/update`'s `pointer_reader` step, which also says what is
-# still missing and how to get it. Every request names them by digest (`.model`), which is
-# what a receipt keeps, so a reading can be tied to the weights that made it.
+# still missing and how to get it. Every request names them by digest
+# (`.model`), and a kept line (`RefusedLine#weights`) keeps it, so a refused
+# reading can be tied to the weights that made it. No receipt column holds it.
 class PointerClassifierAgent
   # The sidecar's whole URL. Read here and by `bin/pointer-classifier`, which
   # binds its port; `bin/dev` sets it when it is not set.

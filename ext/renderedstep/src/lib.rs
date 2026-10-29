@@ -615,7 +615,8 @@ fn live(config: &Value) -> Live {
     };
     let live = Live::new(route)
         .with_system_one(system_one)
-        .with_classifier(classifier);
+        .with_classifier(classifier)
+        .with_kept_refusals(config["keep_refusals"].as_bool() == Some(true));
     match config["model"].as_str() {
         Some(first) => live.with_model(first),
         None => live,

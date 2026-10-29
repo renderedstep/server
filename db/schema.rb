@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_120117) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_154235) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -630,6 +630,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_120117) do
     t.boolean "monstrous", default: false, null: false
     t.index ["universe_id", "name"], name: "index_races_on_universe_id_and_name", unique: true
     t.index ["universe_id"], name: "index_races_on_universe_id"
+  end
+
+  create_table "refused_lines", force: :cascade do |t|
+    t.text "typed", null: false
+    t.json "state", null: false
+    t.json "answers"
+    t.json "reading", null: false
+    t.float "act_confidence"
+    t.float "thing_confidence"
+    t.json "refusal", null: false
+    t.string "place"
+    t.string "weights"
+    t.integer "playthrough_id"
+    t.integer "location_id"
+    t.string "status", default: "new", null: false
+    t.json "label"
+    t.datetime "labelled_at"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_refused_lines_on_status"
   end
 
   create_table "relay_receipts", force: :cascade do |t|

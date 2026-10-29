@@ -28,12 +28,15 @@
 # READ AS PLAY READS IT. A pointer arm's line goes through the engine's own
 # local composition (`classifier::read_locally`, via `Playthrough::Requests
 # .read_line(local: true)`), so the bench is play byte for byte: a line the
-# model is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
-# 0.15) is played on its own reading and recorded `typed_model_unsure`, a
-# target read as absent is refused with what is here, and a free throw is
-# never asked and is recorded `typed_model_throw`, as a free put-on or
-# take-off is recorded `typed_model_dress`. No chat model is asked, so
-# a run needs no key and spends nothing.
+# model is unsure of (below 0.9 on the act it picked or on the thing for that
+# act, the engine's `cascade::CONFIDENCE_FLOOR`) is asked about rather than
+# played and recorded `typed_model_unsure`, and the bench scores it by its ask
+# rule (`Eval::Classifier::Bench::Reading#asked?`); a target read as absent is
+# refused with what is here, and a free throw is never asked and is recorded
+# `typed_model_throw`, as a free put-on or take-off is recorded
+# `typed_model_dress`. No chat model is asked, so a run needs no key and
+# spends nothing. The model sends a probability for every option, which is
+# what the engine reads its confidence off; an answer without one is unsure.
 #
 # `.escalated_reading` is the Ruby restatement of that composition the pointer
 # arm used before the engine exposed it; Jev alone, a historical arm, still

@@ -1,5 +1,5 @@
 {
-  "script": "an-unsure-reading-is-played-as-read",
+  "script": "an-unsure-reading-is-asked-about",
   "doctor": {
     "headline": "playable, 3 warnings",
     "findings": [
@@ -24,18 +24,18 @@
     ]
   },
   "audit": {
-    "headline": "2 scenes: 0 contradictions, 0 defects, 1 drift, 0 still turns",
+    "headline": "3 scenes: 0 contradictions, 0 defects, 1 drift, 0 still turns",
     "flags": [
       [
         "reached_for_nothing",
-        1000000002,
+        1000000003,
         "after this narration the player tried to talk \"ask the night porter where the watch went\", and the records had nothing of that name",
         {
           "action": "talk",
           "typed": "ask the night porter where the watch went",
           "was offered": "Tamsin Gale, Tamsin, Rowe Harker, Rowe",
           "where": "The Pawn Counter",
-          "at": "2026-09-24T19:15:00.000Z"
+          "at": "2026-09-24T19:25:00.000Z"
         }
       ]
     ],

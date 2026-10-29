@@ -19,9 +19,10 @@ require "active_support/testing/time_helpers"
 # (`.frozen`), so `created_at` and `updated_at` never carry the wall clock; a
 # row whose time matters to a builder sets it explicitly.
 module EngineVectors::Records
-  # Not records a builder reads: Rails' own bookkeeping, and RubyLLM's model
-  # registry, which the seed step fills and the test database may not.
-  SKIPPED = %w[schema_migrations ar_internal_metadata ruby_llm_models].freeze
+  # Not records a builder reads: Rails' own bookkeeping, RubyLLM's model
+  # registry, which the seed step fills and the test database may not, and
+  # the refusal corpus, which is never committed (`RefusedLine`).
+  SKIPPED = %w[schema_migrations ar_internal_metadata ruby_llm_models refused_lines].freeze
 
   # Columns filled at random when a row is born and read by no builder: a
   # stage that builds its own playthrough cannot be told what to write, so

@@ -242,6 +242,16 @@ class Eval::Classifier::Result
     end
   end
 
+  # THE ASKS ONE ARM MADE, `[asks, asks_right]` pooled over its repetitions,
+  # or nil where the set was taken before the ask rule and recorded none
+  # (`Eval::Classifier::Bench::Pass#asks`).
+  def asks(arm)
+    passes = for_arm(arm)
+    return nil if passes.empty? || passes.any? { |pass| pass.asks.nil? }
+
+    [ passes.sum(&:asks), passes.sum(&:asks_right) ]
+  end
+
   # A PASS READ BACK OFF DISK. It answers the same questions a live
   # `Eval::Classifier::Bench::Pass` does and holds no `Corpus::Line`, because
   # the corpus may legitimately have moved on since the run -- so a stored pass
@@ -261,6 +271,11 @@ class Eval::Classifier::Result
     def failures = row["failures"].to_i
     def failures_by_class = (row["failures_by_class"] || {}).to_h
     def resolved_by_counts = (row["resolved_by_counts"] || {}).to_h
+
+    # NIL ON A SET TAKEN BEFORE THE ASK RULE, never a false zero: such a set
+    # recorded `typed_model_unsure` for a line it played, not for an ask.
+    def asks = row["asks"]
+    def asks_right = row["asks_right"]
 
     Eval::Classifier::Result::METRICS.each_key do |metric|
       define_method(metric) { row[metric.to_s] }

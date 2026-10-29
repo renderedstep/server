@@ -75,9 +75,10 @@
 #                   nothing at all. A `browser:` step runs the real
 #                   `Playthrough::Turn` against declared provider replies, so
 #                   the values the MODEL readers write are reachable there
-#                   and nowhere else: the local reader's `typed_model` and
-#                   `typed_model_unsure` (a `local_classifier` reply; its
-#                   refusals write no scene), and, on the model call's path,
+#                   and nowhere else: the local reader's `typed_model` (a
+#                   `local_classifier` reply; `typed_model_unsure` is an ask,
+#                   and an ask, like every refusal, writes no scene to assert
+#                   it on), and, on the model call's path,
 #                   `model` (no System One key), `typed_model`,
 #                   `typed_model_escalated` and `typed_model_unavailable`.
 #                   See `two-readers-of-one-typed-line.yml`

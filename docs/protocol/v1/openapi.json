@@ -1092,6 +1092,7 @@
                       "immovable",
                       "cannot_carry",
                       "unreadable",
+                      "unsure",
                       "unplayable",
                       "dead",
                       "concluded",
