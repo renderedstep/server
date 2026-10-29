@@ -27,6 +27,7 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
                                         current_location: @opening, current_scene: opening_scene)
     create(:playthrough_command, playthrough: @playthrough, command: "/look",
                                  status: "completed", result_scene: opening_scene)
+    @refused = create(:refused_line, playthrough_id: @playthrough.id, location_id: @opening.id)
     create(:item, :lying, name: "brass key", location: @opening, playthrough: nil)
     create(:item, :carried, name: "brass key", playthrough: @playthrough, location: nil, character: nil)
     @models = RubyLLM::ActiveRecord::Model.pluck(:id)
@@ -42,6 +43,7 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
 
   teardown do
     FileUtils.rm_rf(@dir)
+    @refused&.delete
     connection = ActiveRecord::Base.connection
     connection.execute("PRAGMA foreign_keys = OFF")
     story_ids = [ @story&.id, Story.find_by(title: "Other World Not Packaged")&.id ].compact
@@ -131,8 +133,16 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
       assert_equal "gemma3:12b", usage.model
       assert_equal 120, usage.input_tokens
       assert_equal 40, usage.output_tokens
+      # The owner's kept words never travel with a package, though the row
+      # names this very playthrough.
+      assert_equal 0, RefusedLine.count
     ensure
       ActiveRecord::Base.establish_connection(original)
     end
+  end
+
+  test "a table that is never packaged is not one a playthrough's tables could pull in" do
+    assert_empty Playthrough::SqlitePackage::NEVER_PACKAGED & Playthrough::SqlitePackage::PLAYTHROUGH_TABLES
+    assert_includes Playthrough::SqlitePackage::NEVER_PACKAGED, RefusedLine.table_name
   end
 end

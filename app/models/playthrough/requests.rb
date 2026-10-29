@@ -25,9 +25,11 @@
 # NO EXTENSION, NO REQUEST. The engine is the only builder, so a process
 # without the extension cannot build one, and says so rather than guessing.
 module Playthrough::Requests
-  # Not rows a builder reads: Rails' own bookkeeping, and RubyLLM's model
-  # registry, which is large and read by nothing the engine builds.
-  SKIPPED = %w[schema_migrations ar_internal_metadata ruby_llm_models].freeze
+  # Not rows a builder reads: Rails' own bookkeeping, RubyLLM's model
+  # registry, which is large and read by nothing the engine builds, and the
+  # refusal corpus, which is the owner's own words and goes into no request
+  # (`RefusedLine`).
+  SKIPPED = %w[schema_migrations ar_internal_metadata ruby_llm_models refused_lines].freeze
 
   class Unbuilt < StandardError; end
 

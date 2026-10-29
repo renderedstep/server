@@ -132,6 +132,7 @@ class Eval::Classifier::Report
     end
 
     speed_and_flakiness(arm, passes)
+    asks(arm)
 
     say
     per_intent(rows)
@@ -239,6 +240,17 @@ class Eval::Classifier::Report
 
     say format("  %-20s %d   %s", "ROTATED", rotations,
                "THE PINNING FAILED -- another model answered and this arm must not be credited")
+  end
+
+  # THE ASKS, AS THEIR OWN COUNT: lines the local reader was unsure of and the
+  # engine asked about instead of playing (`Eval::Classifier::Bench::Reading
+  # #asked?`). Nothing printed for a set taken before the ask rule.
+  def asks(arm)
+    asked, right = result.asks(arm)
+    return if asked.nil?
+
+    say format("  %-20s %d   %d of them where the label earns a refusal (the ask rule's right)",
+               "asks", asked, right)
   end
 
   def per_intent(rows)

@@ -360,25 +360,41 @@ through nothing else** (`PointerClassifierAgent`; the engine's
 `classifier::read_locally`). The Mistral call and the Jev cascade below are no
 longer what a player gets; their sets are history, kept to judge a new reader
 against. The classifier's baseline of record is
-**`db/eval/classifier-pointer-m68-step1-20261023`**: the m68-step1 weights at
-fp32, read through the running sidecar, four repetitions of the whole corpus.
-Its README has the figures and which reader answered each line.
+**`db/eval/classifier-pointer-ask-20261029`**: the m68-step1 weights at fp32,
+read through the running sidecar, four repetitions of the whole corpus on the
+dressed worlds, with an unsure line asked about rather than played (the
+owner's ruling of 2026-10-29). Its README has the figures, every ask, and the
+verdict against `classifier-pointer-2026-10-29-dressed`, the same reader at
+the same corpus before the ruling. `classifier-pointer-m68-step1-20261023`
+held the place before them, on the 372-line corpus.
 
 ```bash
 bin/pointer-classifier &     # or bin/dev; needs POINTER_CLASSIFIER_URL and the weights
 MODELS=pointer:local REPS=4 SET=<name> bin/rails eval:classifier
 MODELS=pointer:<weights dir> REPS=4 SET=<name> bin/rails eval:classifier   # a model not yet serving
-rake eval:classifier_compare BEFORE=classifier-pointer-m68-step1-20261023 AFTER=<name>
+rake eval:classifier_compare BEFORE=classifier-pointer-ask-20261029 AFTER=<name>
 ```
+
+**Do not retune the 0.9 against this corpus.** It is a round number on the
+owner's ruling, to be checked against the lines play keeps (`RefusedLine`),
+which the corpus has never seen.
 
 **A pointer arm reads each line as play reads it**, through the engine's own
 local composition (`Playthrough::Requests.read_line(local: true)`), so a
 reading on the bench is the reading a turn makes:
 
 * a line the model is sure of plays, `typed_model`;
-* a line it is unsure of (`named_more_than_one` >= 0.5 or `target_present` <
-  0.15) plays on its own reading, `typed_model_unsure`; a target it reads as
-  absent is refused with what is here;
+* a line it is unsure of -- below 0.9 on the act it picked or on the thing for
+  that act, the engine's `cascade::CONFIDENCE_FLOOR` -- is asked about and not
+  played, `typed_model_unsure` (the owner's ruling of 2026-10-29); a target it
+  reads as absent is refused with what is here, as before;
+* **the ask rule:** an ask is scored right exactly where the line's label earns
+  a refusal of any kind, and wrong where the label wants the line played,
+  however good the guess. Asks are reported as their own count (`asks`, and
+  how many the rule scores right) on the report, the board and the compare,
+  and are never judged: more asks is neither better nor worse in itself. A set
+  taken before the ask rule records no asks, and its `typed_model_unsure` was
+  a line played on the reader's own reading;
 * a free throw is never asked and is refused with the pointer to `/throw`,
   `typed_model_throw`;
 * a free put-on or take-off is never asked and is refused with the pointer to
@@ -1336,7 +1352,7 @@ Across the whole corpus the compare reads WORSE, REAL, and says the corpora
 differ: the cascade reads few of those added lines right. The clothes made
 some corpus lines untrue, and the set's README names them; they are
 relabelled in a follow-up that buys its own set. The classifier of record is
-still the local reader, `classifier-pointer-m68-step1-20261023`.
+still the local reader, now `classifier-pointer-ask-20261029`.
 
 **`realization-2026-10-27` was the realization baseline before it.** A room
 somebody already stands in before it is written is told who, in an "Already

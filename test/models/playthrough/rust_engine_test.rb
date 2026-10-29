@@ -32,7 +32,7 @@ class Playthrough::RustEngineTest < ActiveSupport::TestCase
   end
 
   test "the model calls go where Ruby's go: the OpenRouter key as the Direct route" do
-    unread = { classifier_endpoint: nil, classifier_model: nil }
+    unread = { classifier_endpoint: nil, classifier_model: nil, keep_refusals: true }
     Dir.mktmpdir do |nothing|
       with_env("POINTER_CLASSIFIER_WEIGHTS" => nothing) do
         with_env("OPENROUTER_API_KEY" => "sk-or-test", "TYPESAFE_API_KEY" => nil, "OPENROUTER_MODEL" => "some/model") do
@@ -64,6 +64,14 @@ class Playthrough::RustEngineTest < ActiveSupport::TestCase
         assert_not_predicate PointerClassifierAgent, :configured?, "no address is no reader"
       end
     end
+  end
+
+  # A refused line is the player's own words, so it is kept only for the person
+  # building the game: the debug view's switch, local by default.
+  test "the engine is asked to keep refused lines exactly where the debug view is on" do
+    assert Playthrough::RustEngine.models[:keep_refusals], "local, so the builder's own"
+    with_env("TA_DEBUG_VIEW" => "0") { assert_equal false, Playthrough::RustEngine.models[:keep_refusals] }
+    with_env("TA_DEBUG_VIEW" => "1") { assert_equal true, Playthrough::RustEngine.models[:keep_refusals] }
   end
 
   test "a model is configured exactly when the models document takes the Direct route" do

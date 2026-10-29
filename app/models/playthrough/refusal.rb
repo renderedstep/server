@@ -50,7 +50,23 @@
 #                         still named a record. Nothing counts it, because it is
 #                         a defect on our side rather than a reach on the
 #                         player's; it goes to the log.
-#   :unplayable           THE GAME CANNOT PERFORM THE ACT AT ALL, whatever the
+#   :unsure               THE READER READ THE LINE AND WAS NOT SURE OF IT --
+#                         the owner's ruling of 2026-10-29, *"always refuse and
+#                         ask"*. The local reader says how sure it is of each
+#                         pick, and below `cascade::CONFIDENCE_FLOOR` on the
+#                         act or on the thing for it, nothing is played. The
+#                         player is shown the reader's best guess as a slash
+#                         line to type, which the grammar plays with no reader;
+#                         where the guess has no slash form, the words ask for
+#                         one plain action instead. Only the engine builds one
+#                         (renderedstep/engine `refusal.rs` owns its words,
+#                         approved verbatim); it is listed here so a served
+#                         refusal of that kind is a kind this reads. Unlike
+#                         `:unreadable` it is COUNTED, as a kept line in
+#                         `RefusedLine`, since an ask is exactly what the
+#                         reader is to be retrained on. Its words say that
+#                         nothing happened, so `UNCHANGED` is not added.
+#   :unplayable          THE GAME CANNOT PERFORM THE ACT AT ALL, whatever the
 #                         line said. It is `:dead`'s neighbour rather than
 #                         `:unresolved`'s -- a fact about the GAME and not about
 #                         the reading -- and the reading was perfect: the
@@ -130,7 +146,7 @@
 # (`fact`, `offer`, `UNCHANGED`) so that both orders read as English rather than
 # as one string with another bolted onto the end.
 class Playthrough::Refusal
-  KINDS = %i[named_more_than_one unresolved immovable cannot_carry unreadable unplayable dead concluded stopped].freeze
+  KINDS = %i[named_more_than_one unresolved immovable cannot_carry unreadable unsure unplayable dead concluded stopped].freeze
 
   # THE KINDS THAT ARE NOT A READING OF THE LINE BUT A STATE OF THE GAME.
   # All are terminal and none leaves the player anything to try again, which
@@ -453,13 +469,17 @@ class Playthrough::Refusal
   # there is nothing to try.
   def game_over? = GAME_OVER.include?(kind)
 
+  # WHETHER `UNCHANGED` FOLLOWS THE WORDS: not where the game is over, and not
+  # on `:unsure`, whose approved words already say that nothing happened.
+  def says_unchanged? = !game_over? && kind != :unsure
+
   # FOR THE CONSUMER THAT PRINTS THE RECORDS UNDERNEATH: the fact and nothing
   # else, so the lists are said once.
-  def reason = game_over? ? fact : "#{fact} #{UNCHANGED}"
+  def reason = says_unchanged? ? "#{fact} #{UNCHANGED}" : fact
 
   # AND FOR THE ONE THAT DOES NOT: what would have worked, in the middle, where
   # it reads as part of the answer rather than as an appendix to it.
-  def text = [ fact, offer, (UNCHANGED unless game_over?) ].compact_blank.join(" ")
+  def text = [ fact, offer, (UNCHANGED if says_unchanged?) ].compact_blank.join(" ")
 
   def to_s = text
 end

@@ -42,6 +42,14 @@ class Playthrough::SqlitePackage
     playthrough_volitions
   ].freeze
 
+  # TABLES THAT ARE NEVER PACKAGED, whatever they hold. `players` keeps a
+  # token digest (see `without_player`). `refused_lines` is the owner's own
+  # typed words, kept to retrain the reader on, and nothing leaves the machine
+  # without his yes (`RefusedLine`); its `playthrough_id` would otherwise make
+  # it look like one of `PLAYTHROUGH_TABLES`. A package has both tables, empty,
+  # because it is given the whole schema.
+  NEVER_PACKAGED = %w[players refused_lines].freeze
+
   attr_reader :playthrough, :warnings
 
   def initialize(playthrough)

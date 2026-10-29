@@ -1006,8 +1006,10 @@ class Story::DoctorTest < ActiveSupport::TestCase
     without_the_location_name_index
     create(:location, story: story, name: story.locations.first.name.downcase, detail_level: "stub", teaser: "x")
 
-    assert_equal :manual, finding(story, :duplicate_locations).remedy
-    assert_match(/no checked-in file declares any of them/, finding(story, :duplicate_locations).message)
+    without_the_engines_layouts do
+      assert_equal :manual, finding(story, :duplicate_locations).remedy
+      assert_match(/no checked-in file declares any of them/, finding(story, :duplicate_locations).message)
+    end
   end
 
   # AND TWO ROOMS OF ONE BUILDING ARE THE SAME FINDING, which is why naming
@@ -1024,8 +1026,22 @@ class Story::DoctorTest < ActiveSupport::TestCase
                         x: x, y: 0, z: 0, width: 7, depth: 10)
     end
 
-    assert_includes codes(story), :duplicate_locations
-    assert_match(/the counting room/, finding(story, :duplicate_locations).message)
+    without_the_engines_layouts do
+      assert_includes codes(story), :duplicate_locations
+      assert_match(/the counting room/, finding(story, :duplicate_locations).message)
+    end
+  end
+
+  # THE ENGINE'S LAYOUT CHECK, LEFT OUT where a test has dropped the location
+  # name index. Past the engine's own schema version (a migration it never
+  # reads, such as `refused_lines`), the engine opens a database only when
+  # every table it touches has the shape it was written for, and a `locations`
+  # with that index gone does not: it refuses, rightly. A real database at
+  # that version has the index, because its migration made it; these tests
+  # drop it to stand in for older rows, and what they test is the doctor's
+  # own `duplicate_locations`, not the layouts.
+  def without_the_engines_layouts(&)
+    Playthrough::RustEngine.stub(:layout_findings, [], &)
   end
 
   test "reports two items that are one item to a re-seed" do

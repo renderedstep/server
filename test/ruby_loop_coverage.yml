@@ -1456,8 +1456,8 @@ test/models/playthrough/mechanics_test.rb:
   a drop goes through the classifier to the same engine write, and asks for nothing more:
     pins: a classified drop writes the drop; one model call only
     by:
-    - sweep two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
-    partial: 'served path drop through the local reader (typed_model_unsure); the classifier-only
+    - sweep two-readers-of-one-typed-line#a-sure-reading-of-one-name-is-played-on-its-own
+    partial: 'served path drop through the local reader (typed_model); the classifier-only
       call count is Mechanics'' classifier mode (model: true, prose-free) is ruby-only;
       Rust has only the offline turn and the served turn'
   walking into a stub realizes it and writes the arrival, as the real game does:
@@ -3486,7 +3486,7 @@ test/models/playthrough/turn_test.rb:
     - rust src/prompt_version.rs::every_branch_of_every_fact_sentence_is_rendered
     partial: 'moment vector ''handled'' marks a floor row dropped; facts::dropped
       wording is rendered; no turn-level request is checked. Port: prompt_includes
-      on two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
+      on two-readers-of-one-typed-line#a-sure-reading-of-one-name-is-played-on-its-own
       narration reply (''put down just now, on this turn'', ''put the red coin down'',
       ''Do not write them picking it up'')'
   the narrator cannot grant an item the app did not resolve:
@@ -3542,7 +3542,7 @@ test/models/playthrough/turn_test.rb:
   a drop costs the story one beat in the room:
     pins: a drop advances story time by 5 minutes
     by:
-    - golden two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
+    - golden two-readers-of-one-typed-line#a-sure-reading-of-one-name-is-played-on-its-own
   the narrator cannot put down an item the app did not resolve:
     pins: drop->nothing moves nothing (now refused); the item stays carried
     by:
@@ -3613,7 +3613,7 @@ test/models/playthrough/turn_test.rb:
   a dropping turn records the drop and the item it moved:
     pins: a drop scene has resolved_action drop and acted_on the item
     by:
-    - golden two-readers-of-one-typed-line#an-unsure-reading-is-played-on-its-own
+    - golden two-readers-of-one-typed-line#a-sure-reading-of-one-name-is-played-on-its-own
   a narrated turn records the action it was read as and no record:
     pins: an examine->nothing scene has resolved_action examine and no acted_on
     by:

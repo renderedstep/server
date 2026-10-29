@@ -248,8 +248,9 @@ class Playthrough::RefusalTest < ActiveSupport::TestCase
   # would be a refusal with nothing in it. `:dead`, `:concluded`, `:stopped`
   # and `:unplayable` come off the other entry points rather than `.for`: all
   # four are facts about the GAME rather than readings of the line, which is
-  # exactly why each has a constructor of its own. `:cannot_carry` is the one
-  # this class never builds: only the engine's carrying gate refuses that way.
+  # exactly why each has a constructor of its own. `:cannot_carry` and `:unsure`
+  # are the ones this class never builds: only the engine's carrying gate and
+  # its local reader's confidence floor refuse those ways.
   test "every kind the class declares is one of the three entry points can produce" do
     produced = [
       refuse(intent(:take, item: @index, also_named: @apron)),
@@ -262,7 +263,7 @@ class Playthrough::RefusalTest < ActiveSupport::TestCase
       Playthrough::Refusal.over(playthrough: stopped, typed: "look")
     ].map(&:kind)
 
-    assert_equal (Playthrough::Refusal::KINDS - %i[cannot_carry]).sort, produced.sort
+    assert_equal (Playthrough::Refusal::KINDS - %i[cannot_carry unsure]).sort, produced.sort
   end
 
   # --- an act the game itself cannot perform ---------------------------------
@@ -339,6 +340,19 @@ class Playthrough::RefusalTest < ActiveSupport::TestCase
     assert_not_includes refusal.reason, Playthrough::Refusal::UNCHANGED
     assert refusal.game_over?
     assert_not refuse(intent(:take)).game_over?
+  end
+
+  # The engine builds an ask and the browser reads it back through this class.
+  # Its approved words already say nothing happened, so neither reading adds
+  # "Nothing has changed.", as the engine's own `Refusal::text` does not.
+  test "an unsure refusal is said in its own words, with the guess, and nothing added" do
+    fact = "The game is not sure what you meant by that, so nothing has happened."
+    offer = "Its best guess was `/attack Ammon Brace`. Type that to do it, or say what you meant another way."
+    refusal = Playthrough::Refusal.new(kind: :unsure, typed: "approach Brace", fact: fact, offer: offer)
+
+    assert_equal "#{fact} #{offer}", refusal.text
+    assert_equal fact, refusal.reason
+    assert_not refusal.game_over?
   end
 
   test "a dead refusal with no protagonist addresses the player instead of naming one" do

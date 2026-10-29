@@ -191,8 +191,12 @@ class Playthrough::Classifier
   # which is every turn the game plays. This class is the frozen Ruby
   # reference and produces none of them; no model call is made on any:
   #
-  #   typed_model_unsure        the local reader was unsure of the line, and it
-  #                             was played on its own reading all the same
+  #   typed_model_unsure        the local reader was unsure of the act or of the
+  #                             thing for it, below the engine's confidence
+  #                             floor, so the line was refused as `unsure` and
+  #                             its guess offered back as a slash line. A
+  #                             refused line writes no scene, so this is in the
+  #                             journal and in `RefusedLine#reading` only
   #   typed_model_throw         a free-typed throw, not read and pointed at
   #                             `/throw`
   #   typed_model_dress         a free-typed put-on or take-off, not read and

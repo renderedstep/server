@@ -135,14 +135,21 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
       why: no record at all
   YML
 
-  # What the stand-in model answers, by typed line, as record NAMES.
+  # What the stand-in model answers, by typed line, as record NAMES. `sure` is
+  # the probability it gives the act it picks; every other pick it is certain
+  # of, as the sidecar is on a line it reads plainly.
   ANSWERS = {
     "take the ward stamp" => { intent: "take", target: "ward stamp", two: 0.05 },
     "take the index and the apron" => { intent: "take", target: "Perrin's private index", also: "copy-room apron",
                                          two: 0.93 },
-    "wait" => { intent: "other", two: 0.02 }
+    "wait" => { intent: "other", two: 0.02 },
+    "approach the ward stamp" => { intent: "take", target: "ward stamp", two: 0.02, sure: 0.52 },
+    "approach the desk" => { intent: "take", target: "ward stamp", two: 0.02, sure: 0.52 }
   }.freeze
 
+  # Every choice with a probability for each option, as `serve.py` answers:
+  # the engine reads how sure the reader was off it, and a choice without one
+  # is unsure.
   class FakePointer
     def answer(state, questions)
       wanted = ANSWERS.fetch(state.fetch("player_action"))
@@ -158,7 +165,11 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
           when "target_#{wanted[:intent]}" then key.call(wanted[:target])
           else "nothing"
           end
-          [ id, { "type" => "choice", "choice" => choice } ]
+          sure = id == "intent" ? wanted.fetch(:sure, 1.0) : 1.0
+          probabilities = question.fetch("criteria").keys.to_h { |option| [ option, 0.0 ] }
+          others = probabilities.keys - [ choice ]
+          others.each { |option| probabilities[option] = (1.0 - sure) / others.size }
+          [ id, { "type" => "choice", "choice" => choice, "probabilities" => probabilities.merge(choice => sure) } ]
         end
       end
       { "answers" => answers }
@@ -183,10 +194,53 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
     assert_equal 0, pass.failures, pass.failures_by_class.inspect
     assert_in_delta 1.0, pass.accuracy
     assert_equal "typed_model", by_id["a-take"].resolved_by
-    assert_equal "typed_model_unsure", by_id["a-pair"].resolved_by,
-                 "an unsure line is played on the reader's own reading, and the board says which"
+    assert_equal "typed_model", by_id["a-pair"].resolved_by,
+                 "a sure reader that named two is refused in its own words, and not asked about"
+    assert_equal :named_more_than_one, by_id["a-pair"].refusal
+    assert_equal 0, pass.asks
     assert_equal "pointer", by_id["a-take"].system_one_transport
     assert_not by_id["a-take"].rotated?
+  end
+
+  # THE ASK RULE: an unsure line is refused and asked about, never played, and
+  # the bench scores the ask right exactly where the label earns a refusal.
+  test "an unsure line is asked about, and is right only where its label earns a refusal" do
+    corpus = Eval::Classifier::Corpus.load(written(<<~YML))
+      positions:
+      - id: office
+        story: The Unrecorded Hour
+        room: Ward Office 12
+      lines:
+      - id: an-ask-that-stopped-a-wrong-act
+        position: office
+        typed: approach the desk
+        intent: take
+        refusal: unresolved
+        shape: take
+        why: nothing called the desk lies here to take, so a refusal is right
+      - id: an-ask-about-a-line-to-play
+        position: office
+        typed: approach the ward stamp
+        intent: take
+        target: ward stamp
+        shape: take
+        why: the stamp is here to take, so asking lost a line
+    YML
+
+    result = Eval::Classifier::Pointer.stub(:new, ->(**_options) { FakePointer.new }) do
+      Eval::Classifier::Bench.new(corpus: corpus, arms: [ "pointer:/models/fake" ], reps: 1, io: nil).run
+    end
+
+    pass = result.passes.sole
+    by_id = pass.readings.index_by(&:id)
+    assert(pass.readings.all? { |reading| reading.resolved_by == "typed_model_unsure" })
+    assert(pass.readings.all? { |reading| reading.refusal == :unsure })
+    assert_predicate by_id["an-ask-that-stopped-a-wrong-act"], :right?
+    assert_not_predicate by_id["an-ask-about-a-line-to-play"], :right?,
+                         "the guess was the label's own answer, and nothing was played"
+    assert_not_predicate by_id["an-ask-about-a-line-to-play"], :closed_set_miss?
+    assert_equal [ 2, 1 ], [ pass.asks, pass.asks_right ]
+    assert_equal [ 2, 1 ], result.summary.asks("pointer:/models/fake"), "a kept summary keeps the count"
   end
 
   test "a throw is never asked, and a reader that cannot answer is a failure and not a reading" do

@@ -10,10 +10,10 @@
 #
 #   typed_model           the reader was sure, and the line was played on its
 #                         reading
-#   typed_model_unsure    the two-name flag read high, and the line was played
-#                         on the reader's own reading all the same: no second
-#                         reader is asked
-#   a throw               a free-typed throw is not read at all and is pointed
+#   typed_model, again    the two-name flag read high, and the reader was sure
+#                         of its act and its thing, so the line was played on
+#                         the one name it read: no second reader is asked
+#   a throw              a free-typed throw is not read at all and is pointed
 #                         at `/throw`; nothing is asked
 #   the reader down       the line is refused with a pointer to the slash
 #                         commands, never handed to a model call instead
@@ -48,11 +48,12 @@ steps:
     changed: true
     refused: false
 
-- id: an-unsure-reading-is-played-on-its-own
+- id: a-sure-reading-of-one-name-is-played-on-its-own
   why: >-
     The two-name flag reads high and `also_named` resolves to nothing. Where a
-    second reader once answered, the line is now played as the reader read it,
-    and the path says so.
+    second reader once answered, the line is now played as the reader read it:
+    the reader is sure of the drop and of the coin, so nothing is asked, and the
+    path is the plain one (`typed_model_unsure` now means an ask).
   type: put down the coin and the key
   browser:
     token: unsure
@@ -69,7 +70,7 @@ steps:
   expect:
     carrying: []
     here: [red coin]
-    resolved_by: typed_model_unsure
+    resolved_by: typed_model
     changed: true
     refused: false
 

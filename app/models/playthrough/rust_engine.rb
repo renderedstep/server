@@ -446,6 +446,11 @@ module Playthrough::RustEngine
   # (`PointerClassifierAgent`), and through nothing else: either blank, the
   # engine refuses free-typed lines rather than asking Mistral. Holds the
   # keys: never log it.
+  #
+  # `keep_refusals` asks the engine to keep each free-typed line the local
+  # reader's reading refuses in `refused_lines` (`RefusedLine`), and is asked
+  # only where `Playthrough::Debug.enabled?` says the person at the keyboard
+  # is the one building the game: an invited player's words are never kept.
   def self.models
     live_models_guard&.call
     key = ENV[SystemOneAgent::OPENROUTER_API_KEY_VARIABLE].presence
@@ -454,7 +459,8 @@ module Playthrough::RustEngine
       route: key ? "direct" : "none", key: key, model: ENV["OPENROUTER_MODEL"].presence,
       system_one: if typesafe then "typesafe" elsif key then "decisions" else "off" end,
       typesafe_key: typesafe,
-      classifier_endpoint: PointerClassifierAgent.endpoint, classifier_model: PointerClassifierAgent.model
+      classifier_endpoint: PointerClassifierAgent.endpoint, classifier_model: PointerClassifierAgent.model,
+      keep_refusals: Playthrough::Debug.enabled?
     }.tap { |models| warn_reader_down(models) }
   end
 

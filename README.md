@@ -726,13 +726,14 @@ flowchart TD
         CD -->|"no"| CS["MODEL CALL, typed questions, not a chat<br/>the LOCAL POINTER MODEL, a sidecar on this machine<br/>at POINTER_CLASSIFIER_URL, no key, no cost<br/>6-11 Choice/Noul questions built from<br/>THIS position's own sets"]
         CS --> CK{"did it answer, with answers the engine can compose?"}
         CK -->|"no: resolved_by = typed_model_down<br/>(not set up, loading, down, bad body)<br/>refused, pointed at the slash commands<br/>NO OTHER READER IS ASKED"| R
-        CK -->|"yes"| CG{"named_more_than_one &gt;= 0.5,<br/>or target_present &lt; 0.15?"}
-        CG -->|"no: resolved_by = typed_model"| C3
-        CG -->|"yes: resolved_by = typed_model_unsure<br/>played on its own reading all the same"| C3
+        CK -->|"yes"| C3
         C3["ENGINE COMPOSES the Intent and resolves it<br/>to a RECORD or closed choice; a target read<br/>as absent leaves it nil, which is refused<br/>with the list of what is here"]
+        C3 --> CG{"was the reader at least 0.9 sure of the act it picked,<br/>and of the thing it picked for that act?"}
     end
 
-    C3 --> R{"Will the engine play this line at all?<br/>two acts, a reach that found nothing, an unreadable answer,<br/>an immovable item, or a still-closed passage"}
+    CG -->|"yes: resolved_by = typed_model"| R
+    CG -->|"no: resolved_by = typed_model_unsure<br/>an ask: its guess is offered back<br/>as a slash line to type, and nothing is played"| R
+    R{"Will the engine play this line at all?<br/>two acts, a reach that found nothing, an unsure reading,<br/>an unreadable answer, an immovable item,<br/>or a still-closed passage"}
     R -->|"no"| X1
     R -->|"yes"| D{"Dispatch on the resolved RECORD or closed choice,<br/>never on the intent label alone"}
 
