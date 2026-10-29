@@ -1,0 +1,11 @@
+{
+  "calls": 232,
+  "warmup_realizations": 1,
+  "failures": 0,
+  "estimated_usd": 0.273,
+  "registry_priced_usd": 0.347,
+  "credits_before_usd": 33.624713,
+  "credits_after_usd": 33.984505,
+  "credits_delta_usd": 0.359792,
+  "cap_usd": 0.45
+}

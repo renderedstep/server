@@ -1204,7 +1204,8 @@ After, all sixteen stamp readings keep the ink wet, and all twelve apron
 readings tell that it was folded in the dark or by touch. One regression is
 known: three of four `examine-apron-carried` readings unfold the carried apron
 though the look moved nothing.
-`prompt-2026-10-13-examine-plain` is the main prompt baseline.
+`prompt-2026-10-13-examine-plain` was the main prompt baseline until the
+hand-made worlds were dressed (*Current kept sets* below).
 
 ### What it measures
 
@@ -1295,7 +1296,38 @@ bin/rails runner 'Eval::Prompt::Result.load(Eval.root.join("my-set")) \
 
 ### Current kept sets and historical comparisons
 
-**`realization-2026-10-27` is the current realization baseline.** A room
+**The hand-made worlds dressed their people, and five sets were bought
+again.** The protagonists' clothes became worn item records, and the
+narrator is told what the player is wearing. The NPCs' appearance lines were
+left as they were, because no prompt is told what an NPC wears. No
+instruction moved. The main, ending, speech and realization request
+identities moved; the inscription corpus digest moved, but not its requests.
+
+Each after side was judged against the set it replaces, and **every check
+reads NOISE**. The sets:
+
+| Corpus | Before side | Current baseline |
+|---|---|---|
+| main | `prompt-2026-10-13-examine-plain` | `prompt-2026-10-29-dressed` |
+| ending | `prompt-ending-h2-after` | `prompt-ending-dressed-after` |
+| speech | `prompt-speech-2026-09-28` | `prompt-speech-2026-10-29-dressed` |
+| realization | `realization-2026-10-27` | `realization-2026-10-29-dressed` |
+| inscription | `inscription-2026-10-27` | `inscription-2026-10-29-dressed` |
+
+The only REAL figures are reported ones:
+- main: latency and `commitments` (3.250 to 3.506);
+- speech: `latency_median`;
+- realization: the two hazard figures, which describe the staged rooms.
+
+No check counts clothing, so the prose was read by hand. No paragraph takes
+off, drops or puts on a worn thing that the line did not ask for. Each README
+has its readings and receipts.
+
+The classifier's request identity moved too. Its kept sets were bought on the
+System One cascade over TypeSafe direct, so buying it again waits on that
+credential.
+
+**`realization-2026-10-27` was the realization baseline before it.** A room
 somebody already stands in before it is written is told who, in an "Already
 Standing Here" block, and is asked for its new people besides them; a room
 nobody stands in is asked exactly what it was before. Against
@@ -1595,8 +1627,9 @@ rake eval:prompt_compare BEFORE=prompt-ending-h2-before AFTER=prompt-ending-h2-a
 ```
 
 **NOISE on every check; `commitments` fell REAL.** The endings name less of the
-room, and the take case re-narrates the pickup. `prompt-ending-h2-after` is the
-ending's current baseline; its README has the readings and the receipts.
+room, and the take case re-narrates the pickup. `prompt-ending-h2-after` was the
+ending's baseline until `prompt-ending-dressed-after`; its README has the
+readings and the receipts.
 
 ### Serial, for now
 

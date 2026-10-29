@@ -91,6 +91,8 @@ module Eval
     db/eval/inscription-2026-10-02/README.md
     db/eval/inscription-2026-10-27/inscription.json
     db/eval/inscription-2026-10-27/README.md
+    db/eval/inscription-2026-10-29-dressed/inscription.json
+    db/eval/inscription-2026-10-29-dressed/README.md
     lib/eval/arrival.rb
     lib/eval/arrival/bench.rb
     lib/eval/arrival/budget.rb
@@ -166,12 +168,18 @@ module Eval
     db/eval/prompt-2026-10-13-examine-plain/prompt.json
     db/eval/prompt-2026-10-13-examine-plain/receipts.json
     db/eval/prompt-2026-10-13-examine-plain/README.md
+    db/eval/prompt-2026-10-29-dressed/prompt.json
+    db/eval/prompt-2026-10-29-dressed/receipts.json
+    db/eval/prompt-2026-10-29-dressed/README.md
     lib/eval/prompt/speech.rb
     lib/eval/prompt/speech/stage.rb
     lib/eval/prompt/speech/bench.rb
     test/fixtures/files/prompt_speech_corpus.yml
     db/eval/prompt-speech-2026-09-28/prompt.json
     db/eval/prompt-speech-2026-09-28/receipts.json
+    db/eval/prompt-speech-2026-10-29-dressed/prompt.json
+    db/eval/prompt-speech-2026-10-29-dressed/receipts.json
+    db/eval/prompt-speech-2026-10-29-dressed/README.md
     db/eval/classifier-2026-09-10/classifier.json
     db/eval/classifier-2026-09-10/receipts.json
     db/eval/classifier-2026-09-10/offline.json
@@ -183,6 +191,8 @@ module Eval
     db/eval/prompt-ending-h2-before/prompt.json
     db/eval/prompt-ending-h2-after/prompt.json
     db/eval/prompt-ending-h2-after/README.md
+    db/eval/prompt-ending-dressed-after/prompt.json
+    db/eval/prompt-ending-dressed-after/README.md
     lib/eval/prompt/ending_version.rb
     lib/eval/prompt/request_version.rb
     lib/eval/realization/request_version.rb
@@ -570,6 +580,11 @@ module Eval
     db/eval/realization-2026-10-27/requests.json
     db/eval/realization-2026-10-27/receipts.json
     db/eval/realization-2026-10-27/README.md
+    db/eval/realization-2026-10-29-dressed/realization.json
+    db/eval/realization-2026-10-29-dressed/readings.json.gz
+    db/eval/realization-2026-10-29-dressed/requests.json
+    db/eval/realization-2026-10-29-dressed/receipts.json
+    db/eval/realization-2026-10-29-dressed/README.md
     db/eval/desires-dialogue-20260919/README.md
     db/eval/desires-dialogue-20260919/after-board.json
     db/eval/desires-dialogue-20260919/before-board.json
