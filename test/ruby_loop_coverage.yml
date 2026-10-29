@@ -4019,6 +4019,11 @@ test/models/playthrough/volition_test.rb:
       'Give ... to' with the player present; no case asks with the player elsewhere
       -- add one (e.g. somebody-walks-out after the player left Bell's room) to pin
       the absent half (volition::acts player_present)
+  a thing they are wearing is never offered as a gift:
+    pins: a held thing that is worn gets no give act; once it is not worn it does
+    open: the engine's volition still offers a worn thing as a gift (Halkett Rowe's
+      shoes in the dressed seeds); the same rule goes into the engine's volition.rs
+      and turn.rs with a counterpart, and this entry then names it
   attack and speak are not on the list, whoever is in the room:
     pins: the act set holds no attack, speak, ceasefire or accept token, even for
       a foe
