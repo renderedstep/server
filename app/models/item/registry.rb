@@ -83,7 +83,14 @@ class Item::Registry
   # twenty realized rooms' worth at the observed rate; a world that reaches it
   # has enough for anything the arc's `hold_item` trigger needs, and past it
   # a room simply generates without furniture rather than failing.
+  #
+  # IT IS THE ORDINARY LIMIT, NOT EVERY WORLD'S: a story may name its own
+  # (`stories.things_limit`, a world file's `story.limits.things`), and
+  # `.story_limit` is the one reader of which applies. The engine reads the same
+  # column the same way (renderedstep/engine `realization::things_limit`).
   MAX_PER_STORY = 60
+
+  def self.story_limit(story) = story.things_limit || MAX_PER_STORY
 
   attr_reader :location, :story
 
@@ -133,7 +140,7 @@ class Item::Registry
 
   # Whether this world has room for another thing at all.
   def world_for_items
-    [ MAX_PER_STORY - story_item_count, 0 ].max
+    [ self.class.story_limit(story) - story_item_count, 0 ].max
   end
 
   # EVERY ONE OF THE WORLD'S OWN THINGS IN THIS STORY, reached through whoever
@@ -280,7 +287,7 @@ class Item::Registry
     return "it has no name" if name.blank?
     return "it has no description" if description.blank?
     return "the room is already holding #{MAX_PER_ROOM}" if room_for_items.zero?
-    return "the world is already holding #{MAX_PER_STORY}" if world_for_items.zero?
+    return "the world is already holding #{self.class.story_limit(story)}" if world_for_items.zero?
     return "this call already named it" if created.any? { |item| SameName.same?(item.name, name) }
     return "the story already has one" if SameName.any?(named_things, name, :name)
     return "the room already has one" if SameName.any?(Item.lying_in(location).templates, name, :name)

@@ -586,6 +586,22 @@ class Character::RegistryTest < ActiveSupport::TestCase
     end
   end
 
+  # A STORY THAT NAMES ITS OWN LIMIT is bounded by that and not by the ordinary
+  # twelve: at twelve people it still has room, and at its own limit it has none.
+  test "a story's own people limit replaces the ordinary one" do
+    (Character::Registry::MAX_PER_STORY - @story.characters.count).times { create(:character, story: @story) }
+    @story.update!(people_limit: Character::Registry::MAX_PER_STORY + 2)
+
+    assert_equal 2, registry.world_for_people
+    assert_difference -> { Character.count }, 1 do
+      registry.admit!([ sheet(fullname: "Neb Halloran") ])
+    end
+
+    create(:character, story: @story)
+
+    assert_equal 0, Character::Registry.new(@here).world_for_people
+  end
+
   # THE DRAW, THEN THE TWO CAPS. The rolled count is what the room is LIKE and
   # the caps are what the game can hold, so the allowance is the smallest of the
   # three -- and the caps are read back from the records, which is what makes

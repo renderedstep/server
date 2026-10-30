@@ -197,7 +197,14 @@ class Character::Registry
   # character standing in a room goes into `Playthrough::IntentSchema`'s closed
   # enum by fullname AND nickname on every single turn, and a world past this
   # generates rooms with nobody in them rather than failing.
+  #
+  # IT IS THE ORDINARY LIMIT, NOT EVERY WORLD'S: a story may name its own
+  # (`stories.people_limit`, a world file's `story.limits.people`), and
+  # `.story_limit` is the one reader of which applies. The engine reads the same
+  # column the same way (renderedstep/engine `realization::people_limit`).
   MAX_PER_STORY = 12
+
+  def self.story_limit(story) = story.people_limit || MAX_PER_STORY
 
   attr_reader :location, :story
 
@@ -318,7 +325,7 @@ class Character::Registry
 
   # Whether this world has room for another person at all.
   def world_for_people
-    [ MAX_PER_STORY - story.characters.count, 0 ].max
+    [ self.class.story_limit(story) - story.characters.count, 0 ].max
   end
 
   private
@@ -570,7 +577,7 @@ class Character::Registry
     return "the sheet is missing #{missing.join(", ")}" if missing.any?
     return "there is nobody left to write: this universe has no races" if story.universe.races.none?
     return "the room already holds #{MAX_PER_ROOM}" if room_for_people.zero?
-    return "the world already holds #{MAX_PER_STORY} people" if world_for_people.zero?
+    return "the world already holds #{self.class.story_limit(story)} people" if world_for_people.zero?
     return "a person in this story is already called that" if person_named?(fullname)
     return "a place in this story is called that" if place_named?(fullname)
     return "something in this story is called that" if thing_named?(fullname)

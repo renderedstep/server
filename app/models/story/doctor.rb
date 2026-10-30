@@ -884,14 +884,19 @@ class Story::Doctor
   # a crowd. What it means is that `Character::Registry` will people no further
   # room in it -- rooms generate with nobody in them from here on -- and that
   # the ontology the cap was bounding is no longer bounded.
+  #
+  # AGAINST THE STORY'S OWN LIMIT where it names one (`stories.people_limit`),
+  # so a world file whose seeded cast is already past its own `limits: people`
+  # is named here -- every room the engine writes in it is born with nobody.
   def story_over_the_cast_cap
     count = story.characters.count
-    return [] if count <= Character::Registry::MAX_PER_STORY
+    limit = Character::Registry.story_limit(story)
+    return [] if count <= limit
 
     [ finding(:story_over_cast_cap, :warning,
-              "has #{count} characters, past the #{Character::Registry::MAX_PER_STORY} one world may hold " \
-              "(Character::Registry::MAX_PER_STORY); nothing breaks, but no further room in it will be " \
-              "generated with anybody in it",
+              "has #{count} characters, past the #{limit} this world may hold " \
+              "(#{story.people_limit ? "its own limits: people" : "Character::Registry::MAX_PER_STORY"}); " \
+              "nothing breaks, but no further room in it will be generated with anybody in it",
               :manual) ]
   end
 
@@ -1120,9 +1125,15 @@ class Story::Doctor
     findings.concat(pieces_searched_and_never_drawn(items))
     findings.concat(rooms_over_the_visible_cap(items))
 
-    if names > Item::Registry::MAX_PER_STORY
+    # Against the story's own limit where it names one (`stories.things_limit`).
+    limit = Item::Registry.story_limit(story)
+    if names > limit
       findings << finding(:story_over_item_cap, :warning,
-                          "the world itself holds #{names} distinctly named items, past the "                           "#{Item::Registry::MAX_PER_STORY} one world may have (Item::Registry::MAX_PER_STORY); nothing breaks, "                           "but the registry will furnish no further room in it and the ontology it was bounding is no "                           "longer bounded. Each playthrough's own copies are not counted -- they are the same things, "                           "once per player",
+                          "the world itself holds #{names} distinctly named items, past the #{limit} this world may have " \
+                          "(#{story.things_limit ? "its own limits: things" : "Item::Registry::MAX_PER_STORY"}); nothing breaks, " \
+                          "but the registry will furnish no further room in it and the ontology it was bounding is no " \
+                          "longer bounded. Each playthrough's own copies are not counted -- they are the same things, " \
+                          "once per player",
                           :manual)
     end
 

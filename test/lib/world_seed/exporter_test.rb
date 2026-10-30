@@ -311,6 +311,18 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
   end
 
   # WHAT A THING IS MADE OF, quiet about a thing of no known material.
+  test "exports the story's own limits, and a world with them round-trips" do
+    create(:character, :protagonist, story: @story, fullname: "Isbet Marrow")
+    assert_not WorldSeed::Exporter.new(@story).document["story"].key?("limits"), "a story with no limits of its own should not say so"
+
+    @story.update!(people_limit: 20)
+    assert_equal({ "people" => 20 }, WorldSeed::Exporter.new(@story).document.dig("story", "limits"))
+
+    @story.update!(things_limit: 200)
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(WorldSeed::Exporter.new(@story).document))).load!
+    assert_equal [ 20, 200 ], [ reloaded.people_limit, reloaded.things_limit ]
+  end
+
   test "exports a thing's material, and a world with one round-trips" do
     create(:character, :protagonist, story: @story, fullname: "Isbet Marrow")
     create(:item, character: nil, location: @opening, name: "A Clay Jar", material: "pottery", fragility: "brittle")

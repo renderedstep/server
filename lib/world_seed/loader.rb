@@ -283,9 +283,18 @@ class WorldSeed::Loader
     universe
   end
 
+  # HOW MANY PEOPLE AND THINGS THE STORY'S WORLD MAY HOLD, written in both
+  # directions on every load: a file with no `limits:`, or with one of its two
+  # keys absent, writes null, which is the ordinary limit
+  # (`Character::Registry::MAX_PER_STORY`, `Item::Registry::MAX_PER_STORY`).
+  # So deleting `limits:` and re-seeding restores the ordinary world rather
+  # than keeping a limit no file says any more. `#validate_limits!` has refused
+  # anything that is not a positive whole number.
   def load_story!(universe)
     story = existing_story || universe.stories.new
-    story.assign_attributes(story_document)
+    limits = story_document["limits"] || {}
+    story.assign_attributes(story_document.except("limits"))
+    story.assign_attributes(people_limit: limits["people"], things_limit: limits["things"])
     story.save!
     story
   end
@@ -1077,6 +1086,7 @@ class WorldSeed::Loader
                           "are matched on (room, name)"
     end
 
+    validate_limits!
     validate_inscriptions!
     validate_bulks!
     validate_fixtures!
@@ -1474,6 +1484,28 @@ class WorldSeed::Loader
   # A BLANK KEY IS NOT A TYPO and passes: it means the file does not say, which
   # is a real answer and the one every checked-in world gives. See
   # `#load_locations!` on why that is not the same as `nobody`.
+  # A STORY LIMIT THE ENGINE COULD NOT READ AS ONE. The engine reads
+  # `stories.people_limit` and `things_limit` as whole numbers, so a string,
+  # a fraction, a boolean, zero or a negative is a mistake in the file, named
+  # here; so is a key under `limits:` that is neither `people` nor `things`,
+  # which would otherwise be dropped without a word.
+  LIMIT_KEYS = %w[people things].freeze
+
+  def validate_limits!
+    limits = story_document["limits"]
+    return if limits.nil?
+    raise InvalidWorld, "#{where}: the story's `limits:` must be a map of #{LIMIT_KEYS.join(" and ")}, got #{limits.inspect}" unless limits.is_a?(Hash)
+
+    unknown = limits.keys - LIMIT_KEYS
+    raise InvalidWorld, "#{where}: the story's `limits:` has #{unknown.join(", ")}; there is: #{LIMIT_KEYS.join(", ")}" if unknown.any?
+
+    limits.each do |key, value|
+      next if value.nil? || (value.is_a?(Integer) && value.positive?)
+
+      raise InvalidWorld, "#{where}: the story's `limits: #{key}` is #{value.inspect}; a limit is a whole number of #{key} above zero"
+    end
+  end
+
   def validate_populations!
     location_documents.each do |attributes|
       population = attributes["population"]
