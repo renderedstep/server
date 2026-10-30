@@ -37,6 +37,7 @@ class Playthrough::SqlitePackage
     playthrough_overreaches
     playthrough_paragraphs
     playthrough_passages
+    playthrough_rests
     playthrough_tolls
     playthrough_visits
     playthrough_vitals

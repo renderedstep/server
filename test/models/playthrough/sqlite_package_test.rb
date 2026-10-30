@@ -36,6 +36,7 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
     create(:item, :lying, name: "brass key", location: @opening, playthrough: nil)
     @still_room = create(:location, :sanctuary, story: @story, name: "The Still Room")
     create(:item, :supply, location: @still_room)
+    create(:playthrough_rest, playthrough: @playthrough, location: @still_room, recovered: 8, hp_after: 14)
     create(:item, :carried, name: "brass key", playthrough: @playthrough, location: nil, character: nil)
     @models = RubyLLM::ActiveRecord::Model.pluck(:id)
     model = create(:model, :ollama)
@@ -143,6 +144,9 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
       # And the game's reaching it, with the level it raised and when it fell.
       assert_equal [ [ "The Cellars", 2, Time.zone.parse("2026-10-31T08:30:00Z") ] ],
                    Playthrough::FloorReached.includes(:location).map { |row| [ row.location.name, row.level, row.fell_at ] }
+      # And its rest in the safe room, with what it mended.
+      assert_equal [ [ "The Still Room", 8, 14 ] ],
+                   Playthrough::Rest.includes(:location).map { |row| [ row.location.name, row.recovered, row.hp_after ] }
       assert_equal 2, Item.where(playthrough_id: nil).count
       assert_equal 1, Item.where(playthrough_id: @playthrough.id).count
       assert_equal "/look", Playthrough::Command.sole.command

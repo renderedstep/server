@@ -100,6 +100,30 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
     assert_select "#playthrough_floor_reached_#{raised.id}", text: notice
   end
 
+  # A REST IN A SAFE ROOM: the turn's scene claims its row, and the log entry
+  # and the protocol's entry show the engine's notice after the floors -- this
+  # game's rows only.
+  test "a scene that claimed a rest shows its notice after the floors" do
+    scene = create(:scene, story: @game.story, location: @destination)
+    @game.update!(current_scene: scene)
+    @game.character.update!(fullname: "Odile", level: 3, hit_die: 8)
+    landing = create(:location, :sanctuary, story: @game.story, name: "The Landing")
+    floor = create(:location, :stub, story: @game.story, name: "The First Floor", width: 12, depth: 12)
+    create(:floor, location: floor, levels_up: true)
+    reached = create(:playthrough_floor_reached, playthrough: @game, location: floor, level: 4, scene: scene)
+    rest = create(:playthrough_rest, playthrough: @game, location: landing, recovered: 8, hp_after: 14, scene: scene)
+    other = create(:playthrough, story: @game.story, character: @game.character, current_location: @origin)
+    create(:playthrough_rest, playthrough: other, location: landing, scene: scene)
+    notice = "Odile rested for an hour in The Landing and recovered 8 hit points (14 of 23)."
+
+    assert_equal [ reached.to_s, notice ], Protocol::V1.entry(scene.reload, @game)[:notices]
+
+    Playthrough::Debug.stub(:enabled?, false) { get playthrough_path(@game) }
+    assert_select ".log .notice", count: 2
+    assert_select "#playthrough_rest_#{rest.id}", text: notice
+    assert_match(/healed to full\.<\/p>\s*<p class="notice" id="playthrough_rest_#{rest.id}">/, response.body)
+  end
+
   test "rendering a preloaded log reads no more body or doorway rows" do
     previous = nil
     3.times do

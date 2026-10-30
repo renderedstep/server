@@ -1,0 +1,96 @@
+# A wait in a safe room is a rest. The Landing and The Shrine are safe rooms
+# the world file names (`sanctuary: true`); The Resting Floor is a FLOOR of
+# three rooms whose `safe_rooms: 1` makes one of them, never the entry, a safe room
+# when it is laid out, and whose countdown (`minutes: 30`) runs from the
+# first step onto it. A rest is the `wait` every room offers: in a safe room
+# with no foe in it, it takes an hour, not five minutes, and mends one
+# healing thing's worth of hit points, up to the player's maximum. Brother
+# Amal keeps The Shrine and is nobody's foe until he is struck.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lanterns, iron keys and hand tools.
+  weapons: Short blades and cudgels.
+  geographies: A dungeon cut down into black stone under a lantern-lit landing.
+  civilizations: Delvers who sell what they bring up.
+  history: The dungeon was cut long ago by people nobody remembers.
+  economics: Coin for what comes up from below.
+  politics: Nobody governs the dungeon.
+  religion: Delvers leave a coin at the shrine for luck.
+  races:
+  - name: Delvers
+    description: People who go down into the dungeon for a living.
+story:
+  title: A Place To Rest
+  genre: dungeon crawl
+  start_time: '2026-10-31T08:00:00Z'
+  preface: Delvers rest where nothing hostile is born, and the floor below does not wait for them.
+  summary: Odile rests on the landing, in the shrine, and on the floor below.
+opening_scene:
+  location: The Landing
+  characters: [Odile]
+  description: You stand on the lantern-lit landing above the first floor.
+  summary: Odile reaches the landing.
+characters:
+- fullname: Odile
+  nickname: Odile
+  race: Delvers
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A delver who has never been below the first floor.
+  personality: Careful and stubborn.
+  appearance: A lantern on a pole and a short blade.
+  likes: A clear way back.
+  dislikes: Doors she cannot open.
+  fears: Resting too long below.
+  stats: {level: 3, hit_die: 8, strength: 14, dexterity: 12, will: 12}
+- fullname: Brother Amal
+  nickname: Amal
+  race: Delvers
+  age: 63
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: He has kept the shrine by the landing for thirty years and never been below.
+  personality: Quiet and patient.
+  appearance: A grey robe and a cudgel he leans on.
+  likes: Coins left at the shrine.
+  dislikes: Raised voices.
+  fears: The floor below.
+  location: The Shrine
+  stats: {level: 1, hit_die: 6, strength: 6, dexterity: 8, will: 14}
+locations:
+- name: The Landing
+  detail_level: realized
+  population: nobody
+  opening: true
+  sanctuary: true
+  description: A square landing of black stone lit by one lantern, a stair going down from it.
+  teaser: A lantern-lit landing.
+  lore: Delvers rest here before they go down.
+- name: The Shrine
+  detail_level: realized
+  population: nobody
+  sanctuary: true
+  description: A niche cut off the landing, its shelf crowded with coins and candle stubs.
+  teaser: A shrine off the landing.
+  lore: Nothing hostile has ever been born here.
+- name: The Resting Floor
+  detail_level: stub
+  kind: warren
+  teaser: The first level of the dungeon, with one room nothing is born in.
+  floor:
+    rooms: 3
+    danger: safe
+    hazard: none
+    safe_rooms: 1
+    minutes: 30
+connections:
+- between: [The Landing, The Shrine]
+  distance: adjacent
+  travel_method: walking
+- between: [The Landing, The Resting Floor]
+  distance: adjacent
+  travel_method: taking stairs

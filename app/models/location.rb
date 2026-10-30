@@ -70,6 +70,9 @@ class Location < ApplicationRecord
   # (`Playthrough::FloorReached`), for the same reason.
   has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :destroy,
                             inverse_of: :location
+  # And every game's rest taken here (`Playthrough::Rest`), for the same
+  # reason: `playthrough_rests.location_id` is NOT NULL.
+  has_many :rests, class_name: "Playthrough::Rest", dependent: :destroy, inverse_of: :location
   # WHETHER THIS PLACE IS A FLOOR, and what it is laid out to (`Floor`). Goes
   # with the place, which the foreign key's cascade says too.
   has_one :floor, dependent: :destroy, inverse_of: :location

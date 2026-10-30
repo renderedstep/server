@@ -99,6 +99,11 @@ class Playthrough < ApplicationRecord
   # `Playthrough::FloorReached`.
   has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :destroy,
                             inverse_of: :playthrough
+  # EVERY REST THIS GAME TOOK, and what each mended. Destroyed with the
+  # playthrough, on the floors' reasoning one line up: what a rest mended is
+  # this player's progress. Written by the engine only. See `Playthrough::Rest`.
+  has_many :rests, class_name: "Playthrough::Rest", dependent: :destroy,
+                   inverse_of: :playthrough
   # WHAT EVERYBODY ELSE IN THE ROOM DECIDED TO DO, one row per present
   # character per played line. Destroyed with the playthrough on the tolls' and
   # the vitals' reasoning: what somebody is AFTER is the world's
@@ -523,7 +528,8 @@ class Playthrough < ApplicationRecord
   # a crossed doorway. Preload them together so rendering a long history does
   # not query once per recorded consequence. A toll is said against the game's
   # maximum then, which reads the game's floors; a floor's notice reads the
-  # place and the game's player. So those come with them.
+  # place and the game's player, and a rest's reads all three. So those come
+  # with them.
   def turn_log
     scenes = scene_chain
 
@@ -532,7 +538,8 @@ class Playthrough < ApplicationRecord
         interactions: :character,
         tolls: [ { playthrough: :floors_reached }, :character, :location,
                  { location_connection: [ :location, :connected_location ] } ],
-        floors_reached: [ :location, { playthrough: :character } ]
+        floors_reached: [ :location, { playthrough: :character } ],
+        rests: [ :location, { playthrough: [ :character, :floors_reached ] } ]
       }
     ).call
 

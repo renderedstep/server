@@ -73,7 +73,8 @@ module Protocol::V1
       id: id(scene), typed: scene.typed, text: scene.description.to_s,
       talking_to: scene.interactions.map(&:character_name).uniq,
       notices: scene.tolls.select { |toll| toll.playthrough_id == playthrough.id }.sort_by(&:id).map(&:to_s) +
-               scene.floors_reached.select { |reached| reached.playthrough_id == playthrough.id }.sort_by(&:id).filter_map(&:to_s)
+               scene.floors_reached.select { |reached| reached.playthrough_id == playthrough.id }.sort_by(&:id).filter_map(&:to_s) +
+               scene.rests.select { |rest| rest.playthrough_id == playthrough.id }.sort_by(&:id).filter_map(&:to_s)
     }
   end
 

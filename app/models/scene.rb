@@ -197,6 +197,10 @@ class Scene < ApplicationRecord
   # only where its notice appears.
   has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :nullify,
                             inverse_of: :scene
+  # THE RESTS SHOWN WITH THIS SCENE'S LOG ENTRY, nullified on the floors'
+  # reasoning one line up: the row is what the game's rest mended and this
+  # Scene is only where its notice appears.
+  has_many :rests, class_name: "Playthrough::Rest", dependent: :nullify, inverse_of: :scene
   # Judgements the player recorded on this turn. DESTROYED rather than nullified,
   # which is the opposite of the drift above it and for a reason: a drift is the
   # measurement and the scene is only the suspect, whereas a verdict is a
