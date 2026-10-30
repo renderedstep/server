@@ -1,0 +1,2709 @@
+{
+  "script": "the-dungeon-down-to-the-first-stair",
+  "story": "The Dungeon",
+  "steps": [
+    {
+      "step": "step 1 the-landing",
+      "player": "first",
+      "typed": "look",
+      "dump": {
+        "location": {
+          "id": 1000000001,
+          "name": "The Landing",
+          "detail": "realized"
+        },
+        "storey": null,
+        "exits": [
+          {
+            "id": 1000000002,
+            "name": "The First Floor",
+            "detail": "stub"
+          }
+        ],
+        "here": [],
+        "carrying": [],
+        "present": [
+          {
+            "id": 1000000002,
+            "name": "Old Hesk"
+          }
+        ],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {
+          "Old Hesk": 13
+        },
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": false,
+        "change": null,
+        "refused": false,
+        "offers": null,
+        "understood": null,
+        "resolved_by": "grammar",
+        "note": null,
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 0.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 2 onto-the-first-floor",
+      "player": "first",
+      "typed": "/move The First Floor",
+      "dump": {
+        "location": {
+          "id": 1000000012,
+          "name": "The First Floor room 1",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000013,
+            "name": "The First Floor room 2",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000001,
+            "name": "The Landing",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000014,
+            "name": "pool"
+          },
+          {
+            "id": 1000000013,
+            "name": "rock shelf"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor",
+        "resolved_by": "grammar",
+        "note": "onto-the-first-floor: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.5,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 3",
+      "player": "first",
+      "typed": "/move The First Floor room 2",
+      "dump": {
+        "location": {
+          "id": 1000000013,
+          "name": "The First Floor room 2",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000012,
+            "name": "The First Floor room 1",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000014,
+            "name": "The First Floor room 3",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000026,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000029,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000027,
+            "name": "pebble"
+          },
+          {
+            "id": 1000000023,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000024,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000028,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000025,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 2",
+        "resolved_by": "grammar",
+        "note": "room-2: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 4",
+      "player": "first",
+      "typed": "/move The First Floor room 3",
+      "dump": {
+        "location": {
+          "id": 1000000014,
+          "name": "The First Floor room 3",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000013,
+            "name": "The First Floor room 2",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000015,
+            "name": "The First Floor room 4",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000044,
+            "name": "bone"
+          },
+          {
+            "id": 1000000045,
+            "name": "candle stub"
+          },
+          {
+            "id": 1000000047,
+            "name": "coin"
+          },
+          {
+            "id": 1000000043,
+            "name": "crack"
+          },
+          {
+            "id": 1000000040,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000041,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000046,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000042,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 3",
+        "resolved_by": "grammar",
+        "note": "room-3: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 5",
+      "player": "first",
+      "typed": "/move The First Floor room 4",
+      "dump": {
+        "location": {
+          "id": 1000000015,
+          "name": "The First Floor room 4",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000014,
+            "name": "The First Floor room 3",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000016,
+            "name": "The First Floor room 5",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000061,
+            "name": "bone"
+          },
+          {
+            "id": 1000000059,
+            "name": "pool"
+          },
+          {
+            "id": 1000000056,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000057,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000060,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000058,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 4",
+        "resolved_by": "grammar",
+        "note": "room-4: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 6",
+      "player": "first",
+      "typed": "/move The First Floor room 5",
+      "dump": {
+        "location": {
+          "id": 1000000016,
+          "name": "The First Floor room 5",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000033,
+            "name": "The First Floor room 22",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000015,
+            "name": "The First Floor room 4",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000017,
+            "name": "The First Floor room 6",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000075,
+            "name": "bone"
+          },
+          {
+            "id": 1000000074,
+            "name": "crack"
+          },
+          {
+            "id": 1000000073,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000070,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000071,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000076,
+            "name": "shard of pottery"
+          },
+          {
+            "id": 1000000072,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 5",
+        "resolved_by": "grammar",
+        "note": "room-5: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 7",
+      "player": "first",
+      "typed": "/move The First Floor room 22",
+      "dump": {
+        "location": {
+          "id": 1000000033,
+          "name": "The First Floor room 22",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000032,
+            "name": "The First Floor room 21",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000034,
+            "name": "The First Floor room 23",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000016,
+            "name": "The First Floor room 5",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000094,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000093,
+            "name": "bone"
+          },
+          {
+            "id": 1000000092,
+            "name": "crack"
+          },
+          {
+            "id": 1000000091,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000095,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000090,
+            "name": "pool"
+          },
+          {
+            "id": 1000000087,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000088,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000089,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 22",
+        "resolved_by": "grammar",
+        "note": "room-22: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 8",
+      "player": "first",
+      "typed": "/move The First Floor room 23",
+      "dump": {
+        "location": {
+          "id": 1000000034,
+          "name": "The First Floor room 23",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000033,
+            "name": "The First Floor room 22",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000035,
+            "name": "The First Floor room 24",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000041,
+            "name": "The First Floor room 30",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000105,
+            "name": "crack"
+          },
+          {
+            "id": 1000000104,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000103,
+            "name": "pool"
+          },
+          {
+            "id": 1000000102,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 23",
+        "resolved_by": "grammar",
+        "note": "room-23: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 9",
+      "player": "first",
+      "typed": "/move The First Floor room 30",
+      "dump": {
+        "location": {
+          "id": 1000000041,
+          "name": "The First Floor room 30",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000034,
+            "name": "The First Floor room 23",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000040,
+            "name": "The First Floor room 29",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000042,
+            "name": "The First Floor room 31",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000060,
+            "name": "The First Floor room 49",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000118,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000120,
+            "name": "bone"
+          },
+          {
+            "id": 1000000119,
+            "name": "coin"
+          },
+          {
+            "id": 1000000117,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000114,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000115,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000116,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 30",
+        "resolved_by": "grammar",
+        "note": "room-30: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 10",
+      "player": "first",
+      "typed": "/move The First Floor room 49",
+      "dump": {
+        "location": {
+          "id": 1000000060,
+          "name": "The First Floor room 49",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000041,
+            "name": "The First Floor room 30",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000059,
+            "name": "The First Floor room 48",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000061,
+            "name": "The First Floor room 50",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000127,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000125,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000126,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 49",
+        "resolved_by": "grammar",
+        "note": "room-49: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 11",
+      "player": "first",
+      "typed": "/move The First Floor room 48",
+      "dump": {
+        "location": {
+          "id": 1000000059,
+          "name": "The First Floor room 48",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000058,
+            "name": "The First Floor room 47",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000060,
+            "name": "The First Floor room 49",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000142,
+            "name": "bone"
+          },
+          {
+            "id": 1000000141,
+            "name": "coin"
+          },
+          {
+            "id": 1000000139,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000140,
+            "name": "pebble"
+          },
+          {
+            "id": 1000000136,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000137,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000138,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 48",
+        "resolved_by": "grammar",
+        "note": "room-48: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 12",
+      "player": "first",
+      "typed": "/move The First Floor room 47",
+      "dump": {
+        "location": {
+          "id": 1000000058,
+          "name": "The First Floor room 47",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000057,
+            "name": "The First Floor room 46",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000059,
+            "name": "The First Floor room 48",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000069,
+            "name": "The First Floor room 58",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000156,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000157,
+            "name": "bone"
+          },
+          {
+            "id": 1000000158,
+            "name": "coin"
+          },
+          {
+            "id": 1000000155,
+            "name": "crack"
+          },
+          {
+            "id": 1000000154,
+            "name": "pool"
+          },
+          {
+            "id": 1000000151,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000152,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000153,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 47",
+        "resolved_by": "grammar",
+        "note": "room-47: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 13",
+      "player": "first",
+      "typed": "/move The First Floor room 58",
+      "dump": {
+        "location": {
+          "id": 1000000069,
+          "name": "The First Floor room 58",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000058,
+            "name": "The First Floor room 47",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000068,
+            "name": "The First Floor room 57",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000070,
+            "name": "The First Floor room 59",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000084,
+            "name": "The First Floor room 73",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000169,
+            "name": "bone"
+          },
+          {
+            "id": 1000000167,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000170,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000166,
+            "name": "pool"
+          },
+          {
+            "id": 1000000165,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000168,
+            "name": "rusted hinge"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 58",
+        "resolved_by": "grammar",
+        "note": "room-58: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 14",
+      "player": "first",
+      "typed": "/move The First Floor room 73",
+      "dump": {
+        "location": {
+          "id": 1000000084,
+          "name": "The First Floor room 73",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000069,
+            "name": "The First Floor room 58",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000083,
+            "name": "The First Floor room 72",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000085,
+            "name": "The First Floor room 74",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000184,
+            "name": "bone"
+          },
+          {
+            "id": 1000000183,
+            "name": "candle stub"
+          },
+          {
+            "id": 1000000182,
+            "name": "pool"
+          },
+          {
+            "id": 1000000179,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000180,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000185,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000181,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 73",
+        "resolved_by": "grammar",
+        "note": "room-73: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 15",
+      "player": "first",
+      "typed": "/move The First Floor room 72",
+      "dump": {
+        "location": {
+          "id": 1000000083,
+          "name": "The First Floor room 72",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000082,
+            "name": "The First Floor room 71",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000084,
+            "name": "The First Floor room 73",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000198,
+            "name": "crack"
+          },
+          {
+            "id": 1000000197,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000199,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000194,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000195,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000196,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 72",
+        "resolved_by": "grammar",
+        "note": "room-72: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 16",
+      "player": "first",
+      "typed": "/move The First Floor room 71",
+      "dump": {
+        "location": {
+          "id": 1000000082,
+          "name": "The First Floor room 71",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000081,
+            "name": "The First Floor room 70",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000083,
+            "name": "The First Floor room 72",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000213,
+            "name": "coin"
+          },
+          {
+            "id": 1000000212,
+            "name": "crack"
+          },
+          {
+            "id": 1000000211,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000210,
+            "name": "pool"
+          },
+          {
+            "id": 1000000208,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000209,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000214,
+            "name": "shard of pottery"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 71",
+        "resolved_by": "grammar",
+        "note": "room-71: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 17",
+      "player": "first",
+      "typed": "/move The First Floor room 70",
+      "dump": {
+        "location": {
+          "id": 1000000081,
+          "name": "The First Floor room 70",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000080,
+            "name": "The First Floor room 69",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000082,
+            "name": "The First Floor room 71",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000098,
+            "name": "The First Floor room 87",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000226,
+            "name": "crack"
+          },
+          {
+            "id": 1000000228,
+            "name": "feather"
+          },
+          {
+            "id": 1000000225,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000224,
+            "name": "pool"
+          },
+          {
+            "id": 1000000222,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000227,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000223,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 70",
+        "resolved_by": "grammar",
+        "note": "room-70: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 18",
+      "player": "first",
+      "typed": "/move The First Floor room 87",
+      "dump": {
+        "location": {
+          "id": 1000000098,
+          "name": "The First Floor room 87",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000081,
+            "name": "The First Floor room 70",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000097,
+            "name": "The First Floor room 86",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000099,
+            "name": "The First Floor room 88",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000237,
+            "name": "crack"
+          },
+          {
+            "id": 1000000238,
+            "name": "pebble"
+          },
+          {
+            "id": 1000000234,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000235,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000236,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 87",
+        "resolved_by": "grammar",
+        "note": "room-87: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 19",
+      "player": "first",
+      "typed": "/move The First Floor room 86",
+      "dump": {
+        "location": {
+          "id": 1000000097,
+          "name": "The First Floor room 86",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000096,
+            "name": "The First Floor room 85",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000098,
+            "name": "The First Floor room 87",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000254,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000253,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000257,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000252,
+            "name": "pool"
+          },
+          {
+            "id": 1000000249,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000250,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000255,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000256,
+            "name": "shard of pottery"
+          },
+          {
+            "id": 1000000251,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 86",
+        "resolved_by": "grammar",
+        "note": "room-86: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 20",
+      "player": "first",
+      "typed": "/move The First Floor room 85",
+      "dump": {
+        "location": {
+          "id": 1000000096,
+          "name": "The First Floor room 85",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000095,
+            "name": "The First Floor room 84",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000097,
+            "name": "The First Floor room 86",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000267,
+            "name": "pebble"
+          },
+          {
+            "id": 1000000264,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000265,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000268,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000266,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 85",
+        "resolved_by": "grammar",
+        "note": "room-85: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 21",
+      "player": "first",
+      "typed": "/move The First Floor room 84",
+      "dump": {
+        "location": {
+          "id": 1000000095,
+          "name": "The First Floor room 84",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000094,
+            "name": "The First Floor room 83",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000096,
+            "name": "The First Floor room 85",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000110,
+            "name": "The First Floor room 99",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000277,
+            "name": "bone"
+          },
+          {
+            "id": 1000000276,
+            "name": "coin"
+          },
+          {
+            "id": 1000000274,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000275,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 84",
+        "resolved_by": "grammar",
+        "note": "room-84: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 22",
+      "player": "first",
+      "typed": "/move The First Floor room 99",
+      "dump": {
+        "location": {
+          "id": 1000000110,
+          "name": "The First Floor room 99",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000111,
+            "name": "The First Floor room 100",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000121,
+            "name": "The First Floor room 110",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000095,
+            "name": "The First Floor room 84",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000109,
+            "name": "The First Floor room 98",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000282,
+            "name": "pool"
+          },
+          {
+            "id": 1000000281,
+            "name": "rock shelf"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 99",
+        "resolved_by": "grammar",
+        "note": "room-99: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 23",
+      "player": "first",
+      "typed": "/move The First Floor room 110",
+      "dump": {
+        "location": {
+          "id": 1000000121,
+          "name": "The First Floor room 110",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000120,
+            "name": "The First Floor room 109",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000122,
+            "name": "The First Floor room 111",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000136,
+            "name": "The First Floor room 125",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000110,
+            "name": "The First Floor room 99",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000293,
+            "name": "crack"
+          },
+          {
+            "id": 1000000292,
+            "name": "pool"
+          },
+          {
+            "id": 1000000289,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000290,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000291,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 110",
+        "resolved_by": "grammar",
+        "note": "room-110: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 24",
+      "player": "first",
+      "typed": "/move The First Floor room 125",
+      "dump": {
+        "location": {
+          "id": 1000000136,
+          "name": "The First Floor room 125",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000121,
+            "name": "The First Floor room 110",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000135,
+            "name": "The First Floor room 124",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000137,
+            "name": "The First Floor room 126",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000305,
+            "name": "crack"
+          },
+          {
+            "id": 1000000304,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000303,
+            "name": "pool"
+          },
+          {
+            "id": 1000000301,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000302,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 125",
+        "resolved_by": "grammar",
+        "note": "room-125: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 25",
+      "player": "first",
+      "typed": "/move The First Floor room 124",
+      "dump": {
+        "location": {
+          "id": 1000000135,
+          "name": "The First Floor room 124",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000134,
+            "name": "The First Floor room 123",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000136,
+            "name": "The First Floor room 125",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000319,
+            "name": "bone"
+          },
+          {
+            "id": 1000000318,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000321,
+            "name": "old rope end"
+          },
+          {
+            "id": 1000000315,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000316,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000320,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000317,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 124",
+        "resolved_by": "grammar",
+        "note": "room-124: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 26",
+      "player": "first",
+      "typed": "/move The First Floor room 123",
+      "dump": {
+        "location": {
+          "id": 1000000134,
+          "name": "The First Floor room 123",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000133,
+            "name": "The First Floor room 122",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000135,
+            "name": "The First Floor room 124",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000149,
+            "name": "The First Floor room 138",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000335,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000337,
+            "name": "bone"
+          },
+          {
+            "id": 1000000334,
+            "name": "crack"
+          },
+          {
+            "id": 1000000333,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000336,
+            "name": "pebble"
+          },
+          {
+            "id": 1000000331,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000332,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 123",
+        "resolved_by": "grammar",
+        "note": "room-123: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 27",
+      "player": "first",
+      "typed": "/move The First Floor room 138",
+      "dump": {
+        "location": {
+          "id": 1000000149,
+          "name": "The First Floor room 138",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000134,
+            "name": "The First Floor room 123",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000148,
+            "name": "The First Floor room 137",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000150,
+            "name": "The First Floor room 139",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000350,
+            "name": "candle stub"
+          },
+          {
+            "id": 1000000349,
+            "name": "crack"
+          },
+          {
+            "id": 1000000348,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000347,
+            "name": "pool"
+          },
+          {
+            "id": 1000000345,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000346,
+            "name": "rubble"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 138",
+        "resolved_by": "grammar",
+        "note": "room-138: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 28",
+      "player": "first",
+      "typed": "/move The First Floor room 137",
+      "dump": {
+        "location": {
+          "id": 1000000148,
+          "name": "The First Floor room 137",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000147,
+            "name": "The First Floor room 136",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000149,
+            "name": "The First Floor room 138",
+            "detail": "realized"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000361,
+            "name": "bat skull"
+          },
+          {
+            "id": 1000000360,
+            "name": "candle stub"
+          },
+          {
+            "id": 1000000359,
+            "name": "crack"
+          },
+          {
+            "id": 1000000357,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000358,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [],
+        "foes": [],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {},
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 137",
+        "resolved_by": "grammar",
+        "note": "room-137: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 29 the-way-down",
+      "player": "first",
+      "typed": "/move The First Floor room 136",
+      "dump": {
+        "location": {
+          "id": 1000000147,
+          "name": "The First Floor room 136",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000146,
+            "name": "The First Floor room 135",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000148,
+            "name": "The First Floor room 137",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000003,
+            "name": "The Second Floor",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000378,
+            "name": "bone"
+          },
+          {
+            "id": 1000000376,
+            "name": "crack"
+          },
+          {
+            "id": 1000000379,
+            "name": "feather"
+          },
+          {
+            "id": 1000000375,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000372,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000373,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000377,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000374,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [
+          {
+            "id": 1000000003,
+            "name": "Brask the Stairwarden"
+          }
+        ],
+        "foes": [
+          {
+            "id": 1000000003,
+            "name": "Brask the Stairwarden"
+          }
+        ],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {
+          "Brask the Stairwarden": 22
+        },
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": true,
+        "change": "The browser turn completed.",
+        "refused": false,
+        "offers": null,
+        "understood": "move -> The First Floor room 136",
+        "resolved_by": "grammar",
+        "note": "room-136: completed",
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 1.0,
+        "shown": null
+      }
+    },
+    {
+      "step": "step 30 the-stair-down-is-locked",
+      "player": "first",
+      "typed": "/move The Second Floor",
+      "dump": {
+        "location": {
+          "id": 1000000147,
+          "name": "The First Floor room 136",
+          "detail": "realized"
+        },
+        "storey": 0,
+        "exits": [
+          {
+            "id": 1000000146,
+            "name": "The First Floor room 135",
+            "detail": "stub"
+          },
+          {
+            "id": 1000000148,
+            "name": "The First Floor room 137",
+            "detail": "realized"
+          },
+          {
+            "id": 1000000003,
+            "name": "The Second Floor",
+            "detail": "stub"
+          }
+        ],
+        "here": [
+          {
+            "id": 1000000378,
+            "name": "bone"
+          },
+          {
+            "id": 1000000376,
+            "name": "crack"
+          },
+          {
+            "id": 1000000379,
+            "name": "feather"
+          },
+          {
+            "id": 1000000375,
+            "name": "ledge"
+          },
+          {
+            "id": 1000000372,
+            "name": "rock shelf"
+          },
+          {
+            "id": 1000000373,
+            "name": "rubble"
+          },
+          {
+            "id": 1000000377,
+            "name": "rusted hinge"
+          },
+          {
+            "id": 1000000374,
+            "name": "stalagmite"
+          }
+        ],
+        "carrying": [],
+        "present": [
+          {
+            "id": 1000000003,
+            "name": "Brask the Stairwarden"
+          }
+        ],
+        "foes": [
+          {
+            "id": 1000000003,
+            "name": "Brask the Stairwarden"
+          }
+        ],
+        "inscription": [],
+        "hp": 18,
+        "hp_of": {
+          "Brask the Stairwarden": 22
+        },
+        "abilities": {
+          "strength": 12,
+          "dexterity": 14,
+          "will": 12
+        },
+        "dead": false,
+        "changed": false,
+        "change": null,
+        "refused": true,
+        "offers": "The way to The Second Floor is locked. Open it before crossing or throwing anything through it. Nothing has changed.",
+        "understood": "move -> The Second Floor",
+        "resolved_by": "grammar",
+        "note": null,
+        "drifts": 0,
+        "blows": 0,
+        "hazards": 0,
+        "quest": {
+          "1": "bound",
+          "2": "bound",
+          "3": "bound"
+        },
+        "volitions": 0,
+        "acts": 0,
+        "ending": "none",
+        "ending_words": null,
+        "scheduled": 0,
+        "fired": 0,
+        "elapsed_minutes": 0.0,
+        "shown": null
+      }
+    }
+  ]
+}

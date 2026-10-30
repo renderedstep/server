@@ -326,7 +326,10 @@ class RustEngineExtensionTest < ActiveSupport::TestCase
           WorldSeed::Loader.load_file(path)
 
           assert_equal stepped, layout_of(story), File.basename(path)
-          assert stepped[:rooms].values.all?(&:present?), File.basename(path)
+          # A floor is a place and not a room: its rooms are laid out on the
+          # turn somebody first walks in, by neither of these.
+          rooms = stepped[:rooms].except(*story.locations.joins(:floor).pluck(:name))
+          assert rooms.values.all?(&:present?), File.basename(path)
         end
       end
     end

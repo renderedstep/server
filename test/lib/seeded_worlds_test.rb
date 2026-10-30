@@ -197,6 +197,41 @@ class SeededWorldsTest < ActiveSupport::TestCase
     assert_equal [ "Neb Halloran" ], Scene::Generator.characters_present(post).map(&:fullname) - [ story.protagonist.fullname ]
   end
 
+  # THE DUNGEON IS TEN FLOORS DOWN TO A BOSS, and every one of them is still a
+  # stub: seeding writes each floor's parameters and nobody on it, and the
+  # engine lays a floor out the first time somebody walks in. Each floor but
+  # the last goes down to the next, smaller one through a stair locked with the
+  # key its posted guard carries; the last is one room, with the boss posted to
+  # it and no way down. The limits are the world's own, above the defaults.
+  test "the dungeon seeds as ten guarded floors, each smaller, down to its boss" do
+    story = WorldSeed::Loader.load_file(WorldSeed::DIRECTORY.join("the-dungeon.yml"))
+    floors = story.locations.joins(:floor).order(:id).to_a
+
+    assert_equal [ 400, 2000 ], [ story.people_limit, story.things_limit ]
+    assert_equal [ "The Landing" ], story.locations.realized.pluck(:name)
+    assert_equal 10, floors.size
+    assert floors.all?(&:stub?), "a floor is a stub until the engine lays it out"
+    assert_empty story.locations.where(parent_location: floors), "seeding draws no room of a floor"
+    assert_equal floors.map { |floor| floor.floor.rooms }.sort.reverse, floors.map { |floor| floor.floor.rooms },
+                 "each floor is smaller than the one above it"
+    assert_equal floors.drop(1), floors.map { |floor| floor.floor.down_location }.compact
+    assert_nil floors.last.floor.down_location, "the bottom floor has no way down"
+    assert_equal 1, floors.last.floor.rooms
+
+    floors.each_cons(2) do |floor, below|
+      guard = floor.posted_guards.sole
+      stair = LocationConnection.find_by!(location: floor, connected_location: below)
+
+      assert_predicate guard, :hostile?
+      assert_nil guard.location, "#{guard.fullname} stands nowhere until #{floor.name} is laid out"
+      assert_equal "keyed", stair.barrier
+      assert_includes guard.items.templates, stair.key_template, "#{guard.fullname} carries the key to #{below.name}"
+    end
+    boss = floors.last.posted_guards.sole
+    assert_equal "Gorrath the Undermost", boss.fullname
+    assert_equal boss, Quest.main_arc(story).steps.last.target.character, "the arc ends on the boss's crown"
+  end
+
   # The reason the opening arrival is world data rather than something a
   # playthrough invents: it is the prose a player reads first. Who is standing
   # in the opening room is now `characters[].location` rather than that cast, so

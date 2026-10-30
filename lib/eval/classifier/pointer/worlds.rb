@@ -6,10 +6,10 @@
 # here: one small world file per room, written from `vocabulary.yml` by a
 # seeded `Random`, so the same seed writes the same worlds byte for byte.
 #
-# NEVER THE THREE SEEDED WORLDS. The classifier corpus is staged in
+# NEVER THE CORPUS'S SEEDED WORLDS. The classifier corpus is staged in
 # `db/seeds/worlds`, and a model trained in those rooms would be measured on
-# rooms it had seen. The vocabulary holds none of their proper names, and
-# `Eval::Classifier::PointerTest` checks that.
+# rooms it had seen. The vocabulary holds none of the proper names of a seeded
+# world the corpus stands in, and `Eval::Classifier::PointerTest` checks that.
 #
 # WHAT A ROOM VARIES, because each is a closed set the cascade asks about:
 # how many ways out (and whether one is locked or jammed, which is what makes
