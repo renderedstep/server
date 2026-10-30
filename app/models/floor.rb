@@ -51,6 +51,15 @@ class Floor < ApplicationRecord
   # `floors_fall`). The collapse is the game's (`Playthrough::FloorReached#fell_at`),
   # never the world's. Nil is a floor that never falls.
   validates :minutes, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  # WHAT THE FLOOR IS STOCKED WITH WHEN IT IS LAID OUT, once, for the world
+  # (the engine's `floor.rs` draws, after every other one, and `realize.rs`
+  # `lay_out` and `leave_supply`): `safe_rooms` rooms laid out safe, with no
+  # hazard and nobody born in them (`Location#sanctuary`), and `healing_count`
+  # healing things named `healing_name` left lying one to a room
+  # (`Item#supply`). Never the entry; the engine clamps a count to the rooms
+  # there are. Zero is a floor stocked with nothing.
+  validates :safe_rooms, :healing_count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :healing_name, :healing_description, presence: true, if: -> { healing_count.to_i.positive? }
   validate :a_way_down_is_another_floor_of_this_story
 
   # HOW MANY ROOMS A FLOOR OF `rooms` IS DRAWN WITH: at least one, at least two

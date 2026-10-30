@@ -96,6 +96,20 @@ class FloorTest < ActiveSupport::TestCase
     end
   end
 
+  test "a floor is stocked with whole numbers of safe rooms and healing things, and a named thing" do
+    floor = create(:floor)
+    assert_equal [ 0, 0, nil, nil ], [ floor.safe_rooms, floor.healing_count, floor.healing_name, floor.healing_description ]
+    assert_predicate build(:floor, safe_rooms: 2, healing_count: 3, healing_name: "red draught",
+                                   healing_description: "A vial of red liquid."), :valid?
+    [ -1, 1.5, nil ].each do |count|
+      assert_not build(:floor, safe_rooms: count).valid?, "#{count.inspect} safe rooms"
+      assert_not build(:floor, healing_count: count, healing_name: "draught", healing_description: "A vial.").valid?,
+                 "#{count.inspect} healing things"
+    end
+    assert_not build(:floor, healing_count: 1, healing_description: "A vial.").valid?, "a healing thing needs a name"
+    assert_not build(:floor, healing_count: 1, healing_name: "draught").valid?, "and a description"
+  end
+
   test "a guard posted to a floor is let go with its place, and outlives it" do
     guard = create(:character, :posted)
     place = guard.posted_to

@@ -40,6 +40,18 @@ class Playthrough::GlanceTest < ActiveSupport::TestCase
     assert g.exits.all?(&:open)
   end
 
+  # A SAFE ROOM is the engine's line on the room panel, on a line of its own
+  # in the console, and nothing anywhere else.
+  test "the room panel says when the room is a safe room" do
+    assert_nil glance.room.safe
+    assert_not_includes glance.to_s, "  safe  "
+
+    @office.update!(sanctuary: true)
+    g = glance
+    assert_equal "A safe room: nothing hostile is born here, and resting here heals.", g.room.safe
+    assert_includes g.to_s, "  safe        A safe room: nothing hostile is born here, and resting here heals."
+  end
+
   test "the people, items and inventory panels are the records" do
     g = glance
     assert_equal [ "Halkett Rowe" ], g.people.map(&:name)

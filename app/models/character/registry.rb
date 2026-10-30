@@ -291,7 +291,12 @@ class Character::Registry
   # got a different cast and `rake game:doctor` could not re-derive one.
   # Seeding them changed the cast every future realization of a seeded world
   # draws; rows already written keep what they were given.
+  #
+  # A SAFE ROOM DRAWS NOBODY, whatever its population says, and throws no die
+  # (`Location#sanctuary`, the engine's `realize.rs` `slots`).
   def slots
+    return @slots = [] if location.sanctuary?
+
     @slots ||= begin
       rng = Location::Danger.generator_for(location)
       throws = Array.new(drawn) { Location::Danger.monstrous?(location, rng: rng) }

@@ -27,7 +27,10 @@
 # It reads records only: it writes nothing, calls no model and rolls no die.
 # `Playthrough::Session#glance` is how a front end asks for it.
 class Playthrough::Glance
-  Room = Data.define(:id, :name, :within)
+  # `safe` is the engine's line for a safe room (`glance::SAFE_ROOM`), which
+  # nothing hostile is born in (`Location#sanctuary`), and nil elsewhere. No
+  # model is told it.
+  Room = Data.define(:id, :name, :within, :safe)
   Exit = Data.define(:id, :name, :written, :open)
   Person = Data.define(:id, :name, :condition, :foe, :provoked)
   # `on` is the fixture a thing lies on or in, by name, or nil. `noticed_at` is
@@ -134,6 +137,7 @@ class Playthrough::Glance
   def to_s
     [
       "  room        #{room ? room.name : "nowhere"}#{" (in #{room.within})" if room&.within}",
+      *("  safe        #{room.safe}" if room&.safe),
       line("ways out", exits.map { |exit| "#{exit.name}#{" [unwritten]" unless exit.written}#{" [shut]" unless exit.open}" }, "none"),
       line("people", people.map { |person| [ person.name, person.condition, ("foe" if person.foe) ].compact.join(", ") }, "nobody else", "; "),
       line("things", things, "nothing fixed here", "; "),

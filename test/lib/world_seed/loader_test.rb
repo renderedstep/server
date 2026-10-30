@@ -439,7 +439,21 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       ->(floor, _) { floor["rooms"] = 1 } => /has a way down and `floor: rooms: 1`/,
       ->(floor, _) { floor["danger"] = "deadly" } => /`floor: danger: "deadly"`; there is: safe, uneasy, dangerous/,
       ->(floor, _) { floor["hazard"] = "lava" } => /`floor: hazard: "lava"`; there is: none, flooded/,
-      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards, levels_up, minutes/,
+      ->(floor, _) { floor["wardens"] = 2 } =>
+        /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards, levels_up, minutes, safe_rooms, healing/,
+      ->(floor, _) { floor["safe_rooms"] = "1" } => /`floor: safe_rooms: "1"`; a floor has a whole number of safe rooms from 0/,
+      ->(floor, _) { floor["safe_rooms"] = -1 } => /`floor: safe_rooms: -1`/,
+      ->(floor, _) { floor["safe_rooms"] = 3 } => /`floor: safe_rooms: 3` and `rooms: 4`; .* at most rooms - 2/,
+      ->(floor, _) { floor["healing"] = "draughts" } => /`floor: healing:` must be a map of count, name, description/,
+      ->(floor, _) { floor["healing"] = { "count" => 1, "name" => "draught", "description" => "A vial.", "cure" => 8 } } =>
+        /`floor: healing:` has cure; there is: count, name, description/,
+      ->(floor, _) { floor["healing"] = { "count" => -1 } } => /`floor: healing: count: -1`; a floor leaves a whole number/,
+      ->(floor, _) { floor["healing"] = { "count" => 1.5, "name" => "draught", "description" => "A vial." } } =>
+        /`floor: healing: count: 1.5`/,
+      ->(floor, _) { floor["healing"] = { "count" => 2, "name" => " ", "description" => "A vial." } } =>
+        /leaves 2 healing thing\(s\) with no name;/,
+      ->(floor, _) { floor["healing"] = { "count" => 2, "name" => "draught" } } => /with no description;/,
+      ->(_, row) { row["sanctuary"] = "yes" } => /`sanctuary: "yes"`; it is true or false/,
       ->(floor, _) { floor["levels_up"] = "yes" } => /`floor: levels_up: "yes"`; it is true or false/,
       ->(floor, _) { floor["minutes"] = 0 } => /`floor: minutes: 0`; a floor falls a positive whole number of story minutes/,
       ->(floor, _) { floor["minutes"] = "soon" } => /`floor: minutes: "soon"`/,
@@ -489,6 +503,60 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     world["locations"].find { |row| row["name"] == "The First Floor" }["floor"].delete("minutes")
     WorldSeed::Loader.new(world).load!
     assert_nil first.reload.floor.minutes
+  end
+
+  # WHAT A FLOOR IS STOCKED WITH (stage 7), in both directions on every load:
+  # taking the keys out writes 0, 0, nil, nil again. And a sanctuary on any
+  # place, likewise.
+  test "seeds a floor's supplies and a sanctuary, and absent keys write none" do
+    world = stocked_world
+    world["locations"].find { |row| row["name"] == "The Landing" }["sanctuary"] = true
+    story = WorldSeed::Loader.new(world).load!
+    floor = story.locations.find_by!(name: "The Stocked Floor").floor
+    landing = story.locations.find_by!(name: "The Landing")
+
+    assert_equal [ 1, 2, "red draught" ], [ floor.safe_rooms, floor.healing_count, floor.healing_name ]
+    assert_match(/Drinking it closes wounds/, floor.healing_description)
+    assert_predicate landing, :sanctuary?
+    assert_empty Item.in_story(story).where.not(supply: nil), "nothing is stocked until the floor is laid out"
+
+    floor_row = world["locations"].find { |row| row["name"] == "The Stocked Floor" }["floor"]
+    floor_row.delete("safe_rooms")
+    floor_row.delete("healing")
+    world["locations"].find { |row| row["name"] == "The Landing" }.delete("sanctuary")
+    WorldSeed::Loader.new(world).load!
+
+    assert_equal [ 0, 0, nil, nil ], floor.reload.then { |row| [ row.safe_rooms, row.healing_count, row.healing_name, row.healing_description ] }
+    assert_not_predicate landing.reload, :sanctuary?
+  end
+
+  # A floor is stocked once, for the world, when it is laid out (renderedstep/engine
+  # `realize.rs` `lay_out` and `leave_supply`), and never again: a re-seed
+  # never writes, moves or removes a supply row, nor unsets a safe room, even
+  # when the file now stocks the floor with nothing and names a thing of the
+  # supply's name elsewhere.
+  test "re-seeding a laid-out floor leaves its supplies and its safe room" do
+    story = WorldSeed::Loader.new(stocked_world).load!
+    place = story.locations.find_by!(name: "The Stocked Floor")
+    Location::Interior.lay_out!(place)
+    rooms = place.child_locations.order(:id).to_a
+    rooms.fourth.update!(sanctuary: true, population: "nobody")
+    draughts = [ rooms.second, rooms.fourth ].map { |room| create(:item, :supply, location: room) }
+
+    world = stocked_world
+    floor_row = world["locations"].find { |row| row["name"] == "The Stocked Floor" }["floor"]
+    floor_row.delete("safe_rooms")
+    floor_row.delete("healing")
+    landing = world["locations"].find { |row| row["name"] == "The Landing" }
+    landing["items"] = [ { "name" => "red draught", "description" => "A vial somebody left on the landing." } ]
+    WorldSeed::Loader.new(world).load!
+
+    assert_equal [ 0, 0 ], place.floor.reload.then { |row| [ row.safe_rooms, row.healing_count ] }
+    assert_predicate rooms.fourth.reload, :sanctuary?
+    assert_equal draughts.map { |item| [ item.id, item.location_id, "floor" ] },
+                 draughts.map { |item| item.reload.then { |row| [ row.id, row.location_id, row.supply ] } }
+    assert_equal [ nil ], story.locations.find_by!(name: "The Landing").items.pluck(:supply),
+                 "the landing's draught is the file's own thing, beside the floor's"
   end
 
   # WHO STANDS ON A FLOOR (stage 3): its monster level on the row, and its
@@ -2213,6 +2281,7 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
   def floors_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)
   def guarded_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-guarded-stair.yml").read)
   def deeper_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-deeper-floor.yml").read)
+  def stocked_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-stocked-floor.yml").read)
 
   # Built fresh on every call so a test can edit it without touching another's.
   def document

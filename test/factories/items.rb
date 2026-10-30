@@ -101,6 +101,18 @@ FactoryBot.define do
       playthrough { within&.playthrough }
     end
 
+    # A FLOOR'S HEALING THING, as the engine leaves one lying in a room when it
+    # lays the floor out (`Item#supply`): the world's row, handy, healing, the
+    # supply marker and no `kit_key`.
+    trait :supply do
+      character { nil }
+      association :location
+      name { "red draught" }
+      description { "A stoppered glass vial of thick red liquid. Drinking it closes wounds." }
+      use_kind { "healing" }
+      supply { "floor" }
+    end
+
     # Readable and nobody has read it yet -- a seeded note whose file did not
     # spell the words out, or a row older than the columns. `Item::Inscriber`
     # writes them on the first read, once.

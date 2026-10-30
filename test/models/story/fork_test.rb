@@ -143,6 +143,20 @@ class Story::ForkTest < ActiveSupport::TestCase
     assert_equal 4, Story::Fork.new(deeper).create!.locations.find_by!(name: "The Bottom Floor").floor.monster_level
   end
 
+  # AND WHAT IT IS STOCKED WITH, and a sanctuary the file marks: the fork's
+  # floor is laid out and stocked afresh from them.
+  test "the fork's floors are stocked as the original's, and its sanctuaries are kept" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-stocked-floor.yml").read)).load!
+    story.locations.find_by!(name: "The Landing").update!(sanctuary: true)
+    Story::Snapshot.capture!(story)
+
+    forked = Story::Fork.new(story).create!
+
+    floor = forked.locations.find_by!(name: "The Stocked Floor").floor
+    assert_equal [ 1, 2, "red draught" ], [ floor.safe_rooms, floor.healing_count, floor.healing_name ]
+    assert_predicate forked.locations.find_by!(name: "The Landing"), :sanctuary?
+  end
+
   test "a fork can be forked, because it is snapshotted as it is written" do
     story = seeded_world
     forked = Story::Fork.new(story).create!

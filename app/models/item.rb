@@ -142,6 +142,14 @@ class Item < ApplicationRecord
   HEALING_POINTS = 8
   CONSUMABLES = %w[food drink healing].freeze
 
+  # WHERE A SUPPLY CAME FROM: `floor` is a healing thing the engine left lying
+  # in a room of a floor when it laid the floor out (its `realize.rs`
+  # `leave_supply`, `realization::FLOOR_SUPPLY`), from the floor's own
+  # `healing_count`. A supply row is the world's, written once with the
+  # layout, and no cap counts it (`.bespoke`); nil is every other thing. A
+  # game's copy keeps the marker.
+  SUPPLIES = %w[floor].freeze
+
   # A spent copy stays linked to its template. Deleting it would let Snapshot
   # manufacture a fresh copy on the next visit. Only a playthrough instance may
   # leave the intact state; templates always describe the world's initial item.
@@ -295,6 +303,7 @@ class Item < ApplicationRecord
   validates :use_kind, inclusion: { in: USE_KINDS }
   validates :disposition, inclusion: { in: DISPOSITIONS }
   validates :tier, inclusion: { in: TIERS }
+  validates :supply, inclusion: { in: SUPPLIES }, allow_nil: true
   validates :how, inclusion: { in: HOWS.keys }, allow_nil: true
   validate :a_fixture_is_fixed
   validate :a_part_is_attached
@@ -370,10 +379,12 @@ class Item < ApplicationRecord
   scope :shut_in, -> { where(how: "in", within_id: Item.where(holds: "closed").select(:id)) }
 
   # WHAT THE CAPS COUNT: the room writer's own things and the world file's,
-  # never a fixture and never a row a kit wrote. `Item::Registry::MAX_PER_ROOM`
-  # and `MAX_PER_STORY` bound what a model may propose; a kit is a closed list
-  # whose names repeat by design, and it is bounded by `Item::Kit::VISIBLE`.
-  scope :bespoke, -> { portable.where(kit_key: nil) }
+  # never a fixture, never a row a kit wrote and never a floor's supply.
+  # `Item::Registry::MAX_PER_ROOM` and `MAX_PER_STORY` bound what a model may
+  # propose; a kit is a closed list whose names repeat by design, and it is
+  # bounded by `Item::Kit::VISIBLE`; a supply is the floor's own count
+  # (`Floor#healing_count`). The engine's `realization::bespoke`.
+  scope :bespoke, -> { portable.where(kit_key: nil, supply: nil) }
 
   # Carried by any of these parties, which is the union `Story::Audit` and
   # `Eval::Richness` want when they have a story and no playthrough to narrow to.
@@ -439,6 +450,8 @@ class Item < ApplicationRecord
   def fixture? = tier == FIXTURE
 
   def part? = tier == PART
+
+  def supply? = supply.present?
 
   # WHAT A WRITER LIFTING A THING OFF A FLOOR CLEARS: its position and the
   # fixture it lay on or in, in one statement -- `Location::Placement.unplaced`

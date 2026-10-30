@@ -81,7 +81,9 @@ class Item::TemplateRefresh
 
       copies.filter_map do |copy|
         template = templates[copy.template_id]
-        next if template.nil?
+        # A FLOOR'S SUPPLY is the layout's row, never a seed file's, so no file
+        # edit can have moved it ahead of a copy (`Item#supply`).
+        next if template.nil? || template.supply?
 
         columns = FROM_THE_TEMPLATE.select { |column| copy[column] != template[column] }
         columns -= %w[description] if broken_off?(copy, template)

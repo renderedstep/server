@@ -1099,8 +1099,11 @@ class Story::Doctor
     # A KIT'S ROWS ARE NOT THE CAPS' BUSINESS, and its names repeat from room
     # to room by design -- every study has a desk (`Item::Kit`). So the caps and
     # the story-wide duplicates read the other rows, and a kit row is held to
-    # one of a name in its own room and to the visible cap instead.
-    written = templates.reject(&:kit_key)
+    # one of a name in its own room and to the visible cap instead. A floor's
+    # supplies likewise: the layout leaves its healing thing under one name in
+    # several rooms by design, and a re-seed never matches one by name
+    # (`Item#supply`).
+    written = templates.reject { |item| item.kit_key || item.supply? }
     names = written.select { |item| item.tier == Item::PORTABLE }.map { |item| item.name.to_s.downcase }.uniq.size
 
     findings.concat(items_nowhere)
@@ -3129,12 +3132,61 @@ class Story::Doctor
   #                                    floor now
   #   floor_fallen_with_no_countdown   a floor fell in a game and has no
   #                                    `minutes` now
+  #   floor_stocked_to_another_count   a laid-out floor holds another number
+  #                                    of safe rooms or supplies than its row
+  #                                    says: a re-seed changed it after layout
+  #   sanctuary_with_a_hostile_resident
+  #                                    somebody hostile stands in a room
+  #                                    nothing hostile is born in
+  #   supply_with_a_kit_key            a floor's supply carries a kit's key,
+  #                                    so its room reads as furnished
   def floors
     Floor.where(location: story.locations).includes(:location, down_location: :floor).order(:id).flat_map do |floor|
       place = floor.location
       rooms = place.child_locations.order(:id).to_a
       [ *floor_going_down_to_no_floor(floor), *(rooms.any? ? laid_out_floor(floor, place, rooms) : []) ]
-    end + posted_guards + floors_reached_that_are_no_floor + floors_fallen_with_no_countdown
+    end + posted_guards + floors_reached_that_are_no_floor + floors_fallen_with_no_countdown +
+      sanctuaries_with_a_hostile_resident + supplies_with_a_kit_key
+  end
+
+  # A SAFE ROOM WITH SOMEBODY HOSTILE IN IT (`Location#sanctuary`). The engine
+  # births nobody in a sanctuary, but a world file can stand a hostile person
+  # there and a room writer can name one it knows (`admit_known`), and a game
+  # can provoke whoever stands there (`Playthrough#foes_in`). Reported and
+  # never repaired: who goes where is the world's, or the game's.
+  def sanctuaries_with_a_hostile_resident
+    rooms = story.locations.where(sanctuary: true).order(:id).to_a
+    return [] if rooms.empty?
+
+    playthroughs = story.playthroughs.order(:id).to_a
+    rooms.filter_map do |room|
+      world = Character.hostile.where(location: room).order(:id).map(&:fullname)
+      games = playthroughs.filter_map do |playthrough|
+        foes = playthrough.foes_in(room).map(&:fullname) - world
+        "#{foes.join(", ")} in playthrough ##{playthrough.id}" if foes.any?
+      end
+      next if world.empty? && games.empty?
+
+      finding(:sanctuary_with_a_hostile_resident, :warning,
+              "#{room.name} is a safe room, where nothing hostile is born, and #{[ *world, *games ].join("; ")} " \
+              "#{world.size + games.size == 1 ? "is" : "are"} hostile there -- the player is told nothing hostile " \
+              "is born there, which is still true, but somebody hostile stands in it",
+              :manual, subject: room)
+    end
+  end
+
+  # A FLOOR'S SUPPLY WITH A KIT'S KEY (`Item#supply`). The engine furnishes a
+  # room from its sort unless the room holds a kit row, so a supply carrying
+  # `kit_key` reads as the room's kit and the room is never furnished. The
+  # engine never writes one; raw SQL or a hand-edited row does.
+  def supplies_with_a_kit_key
+    Item.in_story(story).where.not(supply: nil).where.not(kit_key: nil).order(:id).map do |item|
+      finding(:supply_with_a_kit_key, :warning,
+              "#{item.name} (##{item.id}) #{item.whereabouts} is a floor's supply and carries the kit key " \
+              "#{item.kit_key.inspect} -- a room holding a kit row is read as furnished, so its room is never " \
+              "furnished from its sort",
+              :manual, subject: item)
+    end
   end
 
   # A FLOOR THAT FELL IN A GAME AND HAS NO COUNTDOWN NOW (`Playthrough::FloorReached#fell_at`).
@@ -3215,6 +3267,7 @@ class Story::Doctor
                           "a floor is laid out once and never again, so its count changed after it was laid out",
                           :manual, subject: place)
     end
+    findings.concat(floor_stocked(floor, place, rooms))
 
     drawn = rooms.reject { |room| room.placed? && room.z.zero? && place.interior? && room.box.inside_footprint?(place.width, place.depth) }
     if drawn.any?
@@ -3226,6 +3279,30 @@ class Story::Doctor
     end
 
     findings.concat(floor_way_down(floor, place, rooms))
+  end
+
+  # WHAT A LAID-OUT FLOOR WAS STOCKED WITH, against what its row says now. The
+  # engine stocks a floor once, when it lays it out (its `floor.rs`), and
+  # clamps each count to the rooms it may use: a safe room is never the entry,
+  # the way down or the guards' room, and a healing thing is left one to a
+  # room but the entry, and only when it has a name. A re-seed that changed a
+  # count, or the floor laid out before the counts were read, leaves another
+  # number on record than the row says.
+  def floor_stocked(floor, place, rooms)
+    kept_back = 1 + (floor.down_location_id || (place.posted_guards.exists? && rooms.size > 1) ? 1 : 0)
+    wanted = { "safe room" => floor.safe_rooms.clamp(0, [ rooms.size - kept_back, 0 ].max),
+               "healing thing" => floor.healing_name.blank? ? 0 : floor.healing_count.clamp(0, rooms.size - 1) }
+    held = { "safe room" => rooms.count(&:sanctuary?),
+             "healing thing" => Item.templates.where(location: rooms, supply: "floor").count }
+    differ = wanted.keys.reject { |what| wanted[what] == held[what] }
+    return [] if differ.empty?
+
+    [ finding(:floor_stocked_to_another_count, :warning,
+              "#{place.name} is a floor stocked with " \
+              "#{differ.map { |what| "#{wanted[what]} #{what}(s)" }.join(" and ")} and was laid out with " \
+              "#{differ.map { |what| "#{held[what]}" }.join(" and ")} -- a floor is stocked once, when it is " \
+              "laid out, so its row changed after it was laid out",
+              :manual, subject: place) ]
   end
 
   def floor_way_down(floor, place, rooms)

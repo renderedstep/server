@@ -357,6 +357,12 @@ class WorldSeed::Loader
       # room in every checked-in world is (the captain's fourth ruling of
       # 2026-09-06) and what the five nullable columns say.
       #
+      # AND WHETHER IT IS A SANCTUARY, where nobody is born whatever its
+      # population says (`Location#sanctuary`), written in both directions on
+      # every load for `danger`'s reason: an absent key is false. Except on a
+      # room a floor's layout made safe, which is the layout's and not the
+      # file's (`#laid_out_sanctuary?`).
+      #
       # `parent` IS EXCLUDED because it is a name and not a column: containment
       # is wired in `#load_containment!` after every room exists, since a file
       # may name a parent that is declared further down.
@@ -371,7 +377,8 @@ class WorldSeed::Loader
                          "population" => attributes["population"].presence,
                          "kind" => attributes["kind"].presence, "density" => attributes["density"].presence,
                          "hazard" => attributes["hazard"].presence, "hazard_die" => attributes["hazard_die"],
-                         "surface" => attributes["surface"].presence)
+                         "surface" => attributes["surface"].presence,
+                         "sanctuary" => attributes["sanctuary"] == true || laid_out_sanctuary?(location))
                   .merge(Location::Box::COLUMNS.to_h { |column| [ column, attributes[column] ] })
                   .merge(floor_footprint(location, attributes["floor"]))
       )
@@ -391,6 +398,14 @@ class WorldSeed::Loader
     end
   end
 
+  # A SAFE ROOM A FLOOR'S LAYOUT WROTE, which a re-seed never unsets: the
+  # engine marks it when it lays the floor out (its `realize.rs` `lay_out`),
+  # once, and the file names no room of a floor (`#validate_floors!`), so
+  # nothing in it can be the file's word on this one (VISION principle 7).
+  def laid_out_sanctuary?(location)
+    location.persisted? && location.sanctuary? && location.parent_location&.floor.present?
+  end
+
   # A FLOOR'S FOOTPRINT, derived from its count (`Floor.footprint`) so it is a
   # place (`Location#place?`) before anybody walks into it -- and only while it
   # has no rooms. A laid-out floor keeps the footprint its rooms were laid out
@@ -406,22 +421,29 @@ class WorldSeed::Loader
 
   # EVERY FLOOR'S ROW, every key in both directions on every load: an absent
   # `danger`, `hazard`, `down` or `monster_level` writes nil, and an absent
-  # `levels_up` writes false, and an absent `minutes` writes nil. Its `guards` are
+  # `levels_up` writes false, and an absent `minutes` writes nil, an absent
+  # `safe_rooms` writes 0 and an absent `healing:` writes 0, nil, nil. Its `guards` are
   # written on the characters (`#load_characters!`). AFTER every place exists, because
   # a way down names a floor the file may declare further down. A re-seed that
   # changes `rooms` after the floor is laid out changes this row only; the
-  # rooms are never laid out again (`Floor`).
+  # rooms are never laid out again (`Floor`), and so never stocked again: a
+  # supply row and a sanctuary the layout wrote are left as they are.
   def load_floors!(locations)
     by_key = locations.transform_keys { |name| WorldSeed.natural_key(name) }
 
     location_documents.each do |attributes|
       floor = attributes["floor"] or next
       down = floor["down"].presence&.then { |name| by_key.fetch(WorldSeed.natural_key(name)) }
+      healing = floor["healing"] || {}
       locations.fetch(attributes.fetch("name")).floor.update!(rooms: floor["rooms"], danger: floor["danger"],
                                                               hazard: floor["hazard"], down_location: down,
                                                               monster_level: floor["monster_level"],
                                                               levels_up: floor["levels_up"] == true,
-                                                              minutes: floor["minutes"])
+                                                              minutes: floor["minutes"],
+                                                              safe_rooms: floor["safe_rooms"] || 0,
+                                                              healing_count: healing["count"] || 0,
+                                                              healing_name: healing["name"].presence,
+                                                              healing_description: healing["description"].presence)
     end
   end
 
@@ -818,6 +840,7 @@ class WorldSeed::Loader
                          "combustible" => attributes["combustible"] == true,
                          "wear" => attributes["wear"].presence,
                          "worn" => attributes["worn"] == true,
+                         "supply" => nil,
                          "disposition" => "intact",
                          playthrough: nil, template: nil, **place)
                   .merge(Location::Spot::COLUMNS.to_h { |column| [ column, attributes[column] ] })
@@ -839,10 +862,14 @@ class WorldSeed::Loader
   #
   # `#find_renamed_item` is the last resort and it is the same statement one
   # step wider: a row the file has renamed is still that row.
+  #
+  # NEVER A FLOOR'S SUPPLY (`Item#supply`): the layout wrote it and no file
+  # names it, so a file thing that shares its name is another thing, and a
+  # re-seed never writes, moves or removes one.
   def find_item(story, name, attributes = {}, location = nil)
     return room_item(location, name) if location && (attributes["holds"].present? || attributes["kit_key"].present?)
 
-    by_name = Item.where(name: name).templates
+    by_name = Item.where(name: name, supply: nil).templates
 
     by_name.where(character_id: story.characters.select(:id))
            .or(by_name.where(location_id: story.locations.select(:id)))
@@ -873,7 +900,7 @@ class WorldSeed::Loader
   def find_renamed_item(story, name)
     key = WorldSeed.natural_key(name)
 
-    Item.in_story(story).templates.detect { |item| WorldSeed.natural_key(item.name) == key }
+    Item.in_story(story).templates.where(supply: nil).detect { |item| WorldSeed.natural_key(item.name) == key }
   end
 
   # ONE OF THE WORLD'S OWN ROWS LYING IN THIS ROOM, by the natural key: how a
@@ -882,7 +909,7 @@ class WorldSeed::Loader
     return nil if location.nil? || !location.persisted?
 
     key = WorldSeed.natural_key(name)
-    location.items.templates.order(:id).detect { |item| WorldSeed.natural_key(item.name) == key }
+    location.items.templates.where(supply: nil).order(:id).detect { |item| WorldSeed.natural_key(item.name) == key }
   end
 
   # A world's own laws: which fixed Ruby operation runs on which cadence, and the
@@ -1599,7 +1626,15 @@ class WorldSeed::Loader
   # WHETHER IT FALLS (stage 6): `minutes` is how many story minutes after a
   # game first stands on the floor it gives way in that game (`Floor#minutes`).
   # A positive whole number, nothing else.
-  FLOOR_KEYS = %w[rooms danger hazard down monster_level guards levels_up minutes].freeze
+  #
+  # WHAT IT IS STOCKED WITH (stage 7): `safe_rooms` rooms the engine lays out
+  # safe, with nobody born in them, never the entry nor the way down, so at
+  # most `rooms - 2`; and `healing:` (`count`, `name`, `description`), that
+  # many healing things left lying one to a room, never the entry
+  # (`Floor#safe_rooms`, `#healing_count`). Whole numbers from 0, and a
+  # healing thing that is left has a name and a description.
+  FLOOR_KEYS = %w[rooms danger hazard down monster_level guards levels_up minutes safe_rooms healing].freeze
+  HEALING_KEYS = %w[count name description].freeze
 
   def validate_floors!
     floors = location_documents.select { |attributes| attributes.key?("floor") }
@@ -1647,6 +1682,8 @@ class WorldSeed::Loader
                             "positive whole number of story minutes after a game first stands on it"
       end
 
+      validate_supplies!(floor, name)
+
       drawn = (Location::Box::COLUMNS & attributes.keys).reject { |column| attributes[column].nil? }
       if drawn.any?
         raise InvalidWorld, "#{where}: location #{name} is a floor and carries #{drawn.join(", ")}; a floor's footprint " \
@@ -1669,6 +1706,44 @@ class WorldSeed::Loader
       raise InvalidWorld, "#{where}: location #{attributes.fetch("name").inspect} has `parent: #{parent.inspect}`, which " \
                           "is a floor; the engine lays a floor's rooms out, and a file draws none of them"
     end
+  end
+
+  # A FLOOR STOCKED WITH WHAT IT HAS NO ROOM FOR, OR WITH A THING THAT IS NOT
+  # ONE. The engine clamps a count to the rooms it can stock and leaves nothing
+  # for a healing thing with no name; the file is told instead.
+  def validate_supplies!(floor, name)
+    safe = floor["safe_rooms"]
+    unless safe.nil? || (safe.is_a?(Integer) && !safe.negative?)
+      raise InvalidWorld, "#{where}: location #{name} has `floor: safe_rooms: #{safe.inspect}`; a floor has a whole " \
+                          "number of safe rooms from 0"
+    end
+    if safe.to_i.positive? && safe > floor["rooms"] - 2
+      raise InvalidWorld, "#{where}: location #{name} has `floor: safe_rooms: #{safe}` and `rooms: #{floor["rooms"]}`; " \
+                          "a safe room is never the entry nor the way down, so a floor has at most rooms - 2"
+    end
+
+    healing = floor["healing"]
+    return if healing.nil?
+    unless healing.is_a?(Hash)
+      raise InvalidWorld, "#{where}: location #{name}'s `floor: healing:` must be a map of #{HEALING_KEYS.join(", ")}, " \
+                          "got #{healing.inspect}"
+    end
+
+    unknown = healing.keys - HEALING_KEYS
+    raise InvalidWorld, "#{where}: location #{name}'s `floor: healing:` has #{unknown.join(", ")}; there is: #{HEALING_KEYS.join(", ")}" if unknown.any?
+
+    count = healing["count"]
+    unless count.nil? || (count.is_a?(Integer) && !count.negative?)
+      raise InvalidWorld, "#{where}: location #{name} has `floor: healing: count: #{count.inspect}`; a floor leaves a " \
+                          "whole number of healing things from 0"
+    end
+    return unless count.to_i.positive?
+
+    blank = %w[name description].select { |key| healing[key].to_s.strip.empty? }
+    return if blank.none?
+
+    raise InvalidWorld, "#{where}: location #{name} leaves #{count} healing thing(s) with no #{blank.join(" or ")}; " \
+                        "`floor: healing:` names the thing and says what it is"
   end
 
   # A GUARD THE ENGINE COULD NOT STAND WHERE THE FILE POSTS THEM. The engine
@@ -1752,6 +1827,11 @@ class WorldSeed::Loader
 
   def validate_populations!
     location_documents.each do |attributes|
+      unless [ nil, true, false ].include?(attributes["sanctuary"])
+        raise InvalidWorld, "#{where}: location #{attributes.fetch("name").inspect} has " \
+                            "`sanctuary: #{attributes["sanctuary"].inspect}`; it is true or false"
+      end
+
       population = attributes["population"]
       next if population.blank? || Location::Population::BANDS.key?(population)
 

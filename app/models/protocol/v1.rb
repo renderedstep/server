@@ -80,7 +80,7 @@ module Protocol::V1
   def glance(glance)
     room = glance.room
     {
-      room: room && { name: room.name, within: room.within },
+      room: room && { name: room.name, within: room.within, safe: room.safe },
       exits: glance.exits.map { |exit| { name: exit.name, written: exit.written, open: exit.open } },
       people: glance.people.map do |person|
         { name: person.name, condition: person.condition, foe: person.foe, provoked: person.provoked }

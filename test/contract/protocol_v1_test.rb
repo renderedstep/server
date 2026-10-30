@@ -145,6 +145,29 @@ class ProtocolV1Test < ActionDispatch::IntegrationTest
     assert_equal "The First Floor gave way at 8:30 am, and Odile fell with it.", glance["collapse"]
   end
 
+  # A SAFE ROOM (revision 1.8): the engine's line while the player stands in
+  # one, and null in any other room.
+  test "the glance's room says when it is a safe room, and only then" do
+    player, token = Player.invite!("Ada")
+    story = create(:story)
+    landing = create(:location, story: story, name: "The Landing")
+    pool = create(:location, :sanctuary, story: story, name: "The Still Pool")
+    create(:character, :protagonist, story: story, fullname: "Odile")
+    game = Playthrough::Session.begin!(story, player: player).playthrough
+    headers = { "Authorization" => "Bearer #{token}" }
+
+    get api_v1_game_path(game.token), headers: headers
+    glance = JSON.parse(response.body)["glance"]
+    assert_protocol "Glance", glance
+    assert_equal({ "name" => landing.name, "within" => nil, "safe" => nil }, glance["room"])
+
+    game.update!(current_location: pool)
+    get api_v1_game_path(game.token), headers: headers
+    glance = JSON.parse(response.body)["glance"]
+    assert_protocol "Glance", glance
+    assert_equal "A safe room: nothing hostile is born here, and resting here heals.", glance.dig("room", "safe")
+  end
+
   test "a story that concluded says which goal ended it and why, in the standing" do
     player, token = Player.invite!("Ada")
     story = create(:story)

@@ -218,6 +218,22 @@ class Item::RegistryTest < ActiveSupport::TestCase
     assert_equal (Item::Registry::MAX_PER_STORY * 2) - 2, Item::Registry.new(@room).world_for_items
   end
 
+  # A FLOOR'S SUPPLIES ARE NOT THE WRITER'S CAPS either: two draughts the
+  # layout left in a room leave it its three, and the world its whole limit
+  # (the engine's `realization::bespoke`), at the ordinary limit and at one.
+  test "a floor's supplies lying in a room cost neither cap anything" do
+    2.times { create(:item, :supply, location: @room) }
+
+    registry = Item::Registry.new(@room)
+    assert_equal Item::Registry::MAX_PER_ROOM, registry.room_for_items
+    assert_equal Item::Registry::MAX_PER_STORY, registry.world_for_items
+
+    @story.update!(things_limit: 1)
+    assert_equal 1, Item::Registry.new(@room).world_for_items
+    created = admit(candidate("tallow candle"), candidate("coil of twine"))
+    assert_equal [ "tallow candle" ], created.map(&:name)
+  end
+
   # BOTH CAPS BOUND THE WORLD AND NOT ANY GAME. A player's own copy of a thing
   # is not a second thing in the world -- since the captain's ruling of
   # 2026-09-04 a take moves that player's copy and the world's own row never

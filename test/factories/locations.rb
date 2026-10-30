@@ -68,6 +68,15 @@ FactoryBot.define do
       population { "nobody" }
     end
 
+    # A SAFE ROOM, as the engine lays one out on a stocked floor
+    # (`Location#sanctuary`): safe, no hazard, and nobody born in it.
+    trait :sanctuary do
+      danger { "safe" }
+      hazard { nil }
+      population { "nobody" }
+      sanctuary { true }
+    end
+
     # AND A ROOM NOBODY PICKED FOR AT ALL, which is what the opening room, every
     # room of a laid-out interior, every seeded room whose file leaves the key
     # out and every row older than the column are. The engine rolls the label
