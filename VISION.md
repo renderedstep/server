@@ -22,10 +22,11 @@ Covers the game (renderedstep/server), its Rust engine (renderedstep/engine) and
 4. One line, one act. When the game is unsure what a line means, it refuses and asks rather than guess: doing what the player did not intend is worse than not understanding them. Refusals are kept to improve the reader, and refusing is never a stopgap. A line with only one sensible reading in that place is read without a model.
 5. Danger is real. A risky choice the rules allow is not refused, and its consequence lands, even when it is fatal.
 6. Worlds stay varied and unexpected. The engine's dice decide what is placed, guarded or hidden as a world is built or played; none of it is preset in a file. Places feel lived in: people wear and carry things, rooms hold things, and things outnumber people.
-7. Hand-made worlds meet the same standard as generated ones. A problem or feature found while playing one updates that world in the same change, restarting its game if it must but keeping it if it can; the other worlds follow soon after.
-8. Measure before changing: one variable at a time, against a stored baseline.
-9. Build the intended design directly, in small measured stages. Nothing is built only to be thrown away.
-10. Small and local before large and hosted.
-11. Everything published is plain, licensed and free of private data.
+7. A place is generated once and then left alone. The engine generates a place from the state of the world and of the player at that moment, and after that never moves, removes, re-deals or rewrites what it generated, and never reshapes a place because a player died there. A place changes afterwards only through what the player does and what the people in it choose to do, by the engine's rules. The one thing the engine may add is a new person or enemy, brought into a place already generated and chosen for the world and the player as they are now. Surprise belongs in what is generated next: never more of the same, and once the player is comfortable, something new to unsettle them. What is hard can get harder, and what looks hard can turn out easy. An author revising their own world, and keeping a stored world readable under a new schema, are not the engine changing it, and neither is the engine acting according to the laws of the world.
+8. Hand-made worlds meet the same standard as generated ones. A problem or feature found while playing one updates that world in the same change, restarting its game if it must but keeping it if it can; the other worlds follow soon after.
+9. Measure before changing: one variable at a time, against a stored baseline.
+10. Build the intended design directly, in small measured stages. Nothing is built only to be thrown away.
+11. Small and local before large and hosted.
+12. Everything published is plain, licensed and free of private data.
 
 **Non-goals.** Graphics; a crunchy RPG ruleset (classes, spells, armour); multiplayer in one shared room; a model trusted to keep state; an app store or package-manager presence for now.
