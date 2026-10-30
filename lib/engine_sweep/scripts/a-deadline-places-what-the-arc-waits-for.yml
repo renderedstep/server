@@ -1,11 +1,13 @@
 # The yard's world has written three rooms and its arc still waits for all
 # three of the things it names. Each room written from here on is past the
 # grace the arc is given, so finishing it places the arc's first waiting
-# step. Warden Hesk first: no place the party can reach has rooms to keep
-# her in, so a place is built for her off the deepest room they can reach,
-# laid out two levels down, and she is admitted to its deepest room. Then
-# the Salt Stair, and then the iron seal. The walk then climbs to the loft,
-# where the door to the warden's place now is.
+# step, and always in ground nobody has written yet. Warden Hesk first: no
+# place the party can reach has rooms to keep her in, so a place is built
+# for her off the deepest room the party can reach that is still unwritten
+# (the wash house, a stub off the yard), laid out two levels down, and she
+# is admitted to its deepest room. Then the Salt Stair, and then the iron
+# seal. The walk then goes back into the wash house, written after the door
+# to the warden's place was laid on it, and through that door.
 story: A Yard Before the Winter
 steps:
 - id: into-the-cold-store
@@ -80,14 +82,10 @@ steps:
   type: go to Yard
   expect:
     location: Yard (realized)
-- id: through-the-kitchen
-  type: go to Kitchen
+- id: into-the-wash-house-again
+  type: go to Wash House
   expect:
-    location: Kitchen (realized)
-- id: up-to-the-loft
-  type: go to Loft
-  expect:
-    location: Loft (realized)
+    location: Wash House (realized)
 - id: to-where-the-warden-is
   type: go to where Warden Hesk is
   expect:

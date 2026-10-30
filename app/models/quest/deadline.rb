@@ -33,12 +33,24 @@
 # signed storey index (`Location::Box`), so -2 is not 0 and there is nothing to
 # tie.
 #
-# SO THE ANCHOR IS THE DEEPEST ROOM THE PARTY CAN ALREADY REACH -- lowest `z`,
-# then furthest from where the game opens, then lowest id, and only among rooms
-# with a doorway to spare. INTO THE REACHABLE SET and never beside it: a target
-# hung off a room nothing leads to would satisfy every check here and fail
-# `Story::Doctor`'s `quest_target_unreachable`, which is the instrument that
-# would catch it.
+# SO THE WAY ON IS THE DEEPEST ROOM THE PARTY CAN ALREADY REACH THAT NOBODY HAS
+# WRITTEN YET -- lowest `z`, then furthest from where the game opens, then
+# lowest id, and only among rooms that are not places and have a doorway to
+# spare. INTO THE REACHABLE SET and never beside it: a target hung off a room
+# nothing leads to would satisfy every check here and fail `Story::Doctor`'s
+# `quest_target_unreachable`, which is the instrument that would catch it.
+#
+# NEVER OFF A ROOM ALREADY WRITTEN, which is VISION principle 7: the engine
+# does not change the world after it has generated it, it only takes the world
+# into account as it generates more. So a doorway the world already has, into
+# ground nobody has written, is where what the step needs is grown. With no
+# such room it is the room whose writing is finishing -- the one passed to
+# `.after_realizing!` -- because its writing ends in this same commit and
+# nobody has stood in it written yet, so what grows off it is part of that
+# writing. With neither, nothing is placed, and the step waits for the next
+# room written: the self-healing a room at its cap already relies on, and a
+# world that will never write another room is `Story::Doctor`'s
+# `story_cannot_progress`.
 #
 # --- what it places, and the prince ruling ---------------------------------
 #
@@ -56,8 +68,10 @@
 # deepest room of one -- AND IT LOOKS FOR ONE THAT ALREADY EXISTS FIRST, which
 # is the rung that makes the common case free: a generated arc usually names a
 # place and a person both, so by the time the person is due the place is usually
-# already on the graph. A `hold_item` target is a thing lying in the deepest room
-# the party can reach. A `time_passed` step is never placed at all -- the clock
+# already on the graph -- and that room may already be written, because bringing
+# a person into a written room is the one addition principle 7 allows. A
+# `hold_item` target is a thing lying in the way on. A `time_passed` step is
+# never placed at all -- the clock
 # already exists, so there is nothing for the world to grow.
 #
 # --- what it is not --------------------------------------------------------
@@ -66,8 +80,8 @@
 # off the arc, the geometry off a seeded `Roll`, and the placement off the
 # records. That is what makes it assertable offline and re-derivable.
 #
-# NOT A ROUTE. One door, off a room the party can already stand in. Nothing
-# gates, nothing forces, the player may walk the other way, and the step is
+# NOT A ROUTE. One door, off unwritten ground the party can already reach or
+# off the room being written, never off a written room. Nothing gates, nothing forces, the player may walk the other way, and the step is
 # reached only when they actually get there. The stub rolls its own `danger`
 # like every other and is indistinguishable from one a model named, which is the
 # principle `ta-shuffle-grows` states for its own new stubs.
@@ -97,10 +111,10 @@ class Quest::Deadline
   # THE RELAXATION PHASES, NAMED, and counted in rooms opened. Two today, and
   # the table is the shape rather than the count: a rung between them -- *place
   # it, but only where the model has already dug downward* -- is a row here and
-  # a branch in `#anchor`, not a rewrite.
+  # a branch in `#way_on`, not a rewrite.
   PHASES = {
     "asking" => "the story block names what the arc needs and the engine waits for a model to build it",
-    "placing" => "the engine places it itself, off the deepest room the party can already reach"
+    "placing" => "the engine places it itself, in ground the party can already reach and nobody has written yet"
   }.freeze
 
   # WHAT THE ENGINE ASKS FOR WHEN IT BUILDS THE PLACE ITSELF, as picks out of
@@ -124,8 +138,9 @@ class Quest::Deadline
 
   # WHERE IN THE PROMPT LIFE THIS RUNS: after a room has been described and its
   # ways out written, which is the moment `Location::Generator#realize!` calls
-  # it. The room that was just realized is the anchor's first candidate, because
-  # it is the newest thing the player can stand in.
+  # it, inside the commit that finishes that writing. The room being written is
+  # the way on's fallback (`#way_on`): the one written room nothing it grows is
+  # a change to.
   def self.after_realizing!(location)
     new(location.story, anchor: location).run!
   end
@@ -161,13 +176,12 @@ class Quest::Deadline
     step = due_step
     return nil if step.nil?
 
-    room = anchor
-    return nil if room.nil?
+    room = way_on(anchor_hint)
 
     case step.trigger_kind
-    when "reach_location" then place_a_place!(step, room)
+    when "reach_location" then room && place_a_place!(step, room)
     when "speak_to" then place_a_person!(step, room)
-    when "hold_item" then place_a_thing!(step, room)
+    when "hold_item" then room && place_a_thing!(step, room)
     end
   end
 
@@ -183,7 +197,30 @@ class Quest::Deadline
     arc.steps.detect { |step| step.unbound? && step.wants_a_row? && step.target_name.present? }
   end
 
-  # THE DEEPEST ROOM THE PARTY CAN ALREADY REACH, WITH A DOORWAY TO SPARE.
+  # WHERE WHAT THE STEP NEEDS IS GROWN, as `written` finishes its writing: the
+  # deepest room the party can reach that nobody has written yet (see the
+  # header), or, with none, `written` itself. Never a place, which nobody
+  # stands in and whose doorways its layout moves onto its rooms (the engine's
+  # `deadline::way_on`). Nil when neither will take it: the step waits for the
+  # next room written.
+  def way_on(written)
+    return @way_on if defined?(@way_on)
+
+    @way_on = deepest { |room| !room.realized? && !room.place? } ||
+              deepest { |room| room == written && !room.place? }
+  end
+
+  # THE ROOM THE OLD RULE HUNG THE STEP OFF, which may be one already written.
+  # Nothing places from it any more; it stays because `EngineVectors::Deadline`
+  # exports it as the engine's `deadline::anchor` vector, and goes with it.
+  def anchor
+    return @anchor if defined?(@anchor)
+
+    @anchor = deepest { |room| !room.laid_out? }
+  end
+
+  # THE DEEPEST ROOM THE PARTY CAN ALREADY REACH, WITH A DOORWAY TO SPARE, among
+  # those the block admits.
   #
   # `z` FIRST, which is the captain's Q5 (see the header) -- a cellar is not the
   # street just because both are two hops out. Then furthest from where the game
@@ -197,16 +234,10 @@ class Quest::Deadline
   # with an inside is never one -- a laid-out place is not somewhere anybody
   # stands (`Location#laid_out?`), and hanging the way in off a container is the
   # one shape `Location::Generator#open_the_way_in!` exists to make impossible.
-  def anchor
-    return @anchor if defined?(@anchor)
-
-    @anchor = candidates.min_by { |room| [ room.z.to_i, -hops.fetch(room.id, 0), room.id ] }
-  end
-
-  def candidates
-    story.locations.where(id: hops.keys).order(:id).reject do |room|
-      room.laid_out? || LocationConnection.from_location(room).count >= Location::ExitsSchema::MAX_EXITS
-    end
+  def deepest(&fits)
+    story.locations.where(id: hops.keys).order(:id)
+         .select { |room| fits.call(room) && LocationConnection.from_location(room).count < Location::ExitsSchema::MAX_EXITS }
+         .min_by { |room| [ room.z.to_i, -hops.fetch(room.id, 0), room.id ] }
   end
 
   # HOW FAR EVERY REACHABLE ROOM IS FROM WHERE THE GAME OPENS, breadth first
@@ -285,12 +316,17 @@ class Quest::Deadline
   # every other binding happens. This class hands it a name and a sheet and
   # decides nothing else about who they are.
   #
+  # THAT ROOM MAY ALREADY BE WRITTEN, and that is the one addition VISION
+  # principle 7 allows: a new person brought into a place already generated.
+  # The building raised when there is none goes off the way on, like any other
+  # door this class opens, and needs one; with no way on there is none.
+  #
   # A ROOM AT ITS CAP PLACES NOBODY and this answers nil, which is not a failure
   # state: the deadline runs again at the next realization, against a world one
   # room bigger. Self-healing beats raising inside somebody's turn.
   def place_a_person!(step, room)
     Location.transaction do
-      cell = deepest_room_of_a_place_we_can_reach || build_somewhere_to_keep_them!(step, room)
+      cell = deepest_room_of_a_place_we_can_reach || (room && build_somewhere_to_keep_them!(step, room))
       next nil if cell.nil?
 
       Character::Registry.new(cell).admit!([ sheet_for(step) ]).detect { |person| person.fullname == step.target_name }
@@ -336,13 +372,16 @@ class Quest::Deadline
     cell
   end
 
-  # A THING, LYING IN THE DEEPEST ROOM THE PARTY CAN REACH. No building: a thing
-  # is not somebody, so there is nothing for a floor plan to be written around,
-  # and the room the player is standing in when the deadline fires is exactly as
-  # good a place for it as one two doors on.
+  # A THING, LYING IN THE WAY ON. No building: a thing is not somebody, so there
+  # is nothing for a floor plan to be written around.
+  #
+  # A ROOM NOBODY HAS WRITTEN THAT STANDS ON ITS OWN IS FIRST GIVEN THE BOX ITS
+  # WRITING WOULD GIVE IT (`Location::Generator#own_box!`, the engine's
+  # `lay_out_alone`), so the thing gets a spot; that writing then keeps both.
   #
   # THROUGH `Item::Registry#admit!`, on the same terms as the person above.
   def place_a_thing!(step, room)
+    Location::Generator.new(room).own_box!
     Item::Registry.new(room).admit!([ { "name" => step.target_name, "description" => thing_description(step) } ]).first
   end
 
@@ -362,8 +401,8 @@ class Quest::Deadline
   # A DOOR, WRITTEN BOTH WAYS, with the labels the engine has rather than ones a
   # model picked. There is no geometry between two outermost places to derive a
   # distance from (`Location::Interior`'s two travel-time rules), so the
-  # quietest true answer is the nearest one: this is a way on from the room the
-  # player is standing in.
+  # quietest true answer is the nearest one: the new place is next door to the
+  # room it opens off.
   def open_the_door!(room, place)
     [ [ room, place ], [ place, room ] ].each do |from, to|
       next if LocationConnection.exists?(location: from, connected_location: to)
