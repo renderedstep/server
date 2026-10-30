@@ -75,6 +75,31 @@ class PlaythroughTollNoticesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "&lt;script&gt;bad()&lt;/script&gt;"
   end
 
+  # A FLOOR THAT RAISED THE GAME'S LEVEL: the turn's scene claims its row, and
+  # the log entry and the protocol's entry show the engine's notice after the
+  # tolls -- this game's rows only, and none for a floor that raised nothing.
+  test "a scene that claimed a levelling floor shows its notice after the tolls" do
+    scene = create(:scene, story: @game.story, location: @destination)
+    @game.update!(current_scene: scene)
+    @game.character.update!(fullname: "Odile", level: 3, hit_die: 8)
+    floors = %w[First Second Third].map do |name|
+      create(:location, :stub, story: @game.story, name: "The #{name} Floor", width: 12, depth: 12)
+        .tap { |place| create(:floor, location: place, levels_up: true) }
+    end
+    toll = create(:playthrough_toll, playthrough: @game, scene: scene)
+    raised = create(:playthrough_floor_reached, playthrough: @game, location: floors.first, level: 4, scene: scene)
+    create(:playthrough_floor_reached, playthrough: @game, location: floors.second, scene: scene)
+    other = create(:playthrough, story: @game.story, character: @game.character, current_location: @origin)
+    create(:playthrough_floor_reached, playthrough: other, location: floors.third, level: 4, scene: scene)
+    notice = "Reaching The First Floor raised Odile to level 4: 23 hit points, and healed to full."
+
+    assert_equal [ toll.to_s, notice ], Protocol::V1.entry(scene.reload, @game)[:notices]
+
+    Playthrough::Debug.stub(:enabled?, false) { get playthrough_path(@game) }
+    assert_select ".log .notice", count: 2
+    assert_select "#playthrough_floor_reached_#{raised.id}", text: notice
+  end
+
   test "rendering a preloaded log reads no more body or doorway rows" do
     previous = nil
     3.times do

@@ -458,14 +458,16 @@ class Story::Repair
     rolled
   end
 
-  # A CONDITION CLAMPED BACK TO WHAT THE TEMPLATE ALLOWS. On record, on the
-  # character: `Character#max_hp` is derived from the stat block, so this writes
-  # a value the world already holds. It happens when a re-seed lowers a hit die
-  # under a game in progress, which is a legitimate file edit.
+  # A CONDITION CLAMPED BACK TO WHAT THE TEMPLATE ALLOWS AT THIS GAME'S LEVEL.
+  # On record, on the character and the game's floors: `Playthrough#max_hp_for`
+  # is derived from the stat block and the level a floor raised this game to, so
+  # this writes a value the records already hold -- and never clamps a levelled
+  # player down to the world's maximum. It happens when a re-seed lowers a hit
+  # die under a game in progress, which is a legitimate file edit.
   def repair_hp_above_maximum(finding)
     row = finding.subject
     was = row.hp_current
-    row.update!(hp_current: row.character.max_hp)
+    row.update!(hp_current: row.playthrough.max_hp_for(row.character))
 
     "brought #{row.character.fullname} in playthrough ##{row.playthrough_id} from #{was} down to " \
       "#{row.hp_current}, the most that body can hold"

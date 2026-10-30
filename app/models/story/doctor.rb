@@ -3125,12 +3125,32 @@ class Story::Doctor
   #                                    a guard still nowhere after their
   #                                    floor was laid out: the engine stands
   #                                    a guard once, so nothing ever will
+  #   floor_reached_that_is_no_floor   a game reached a place that is no
+  #                                    floor now
   def floors
     Floor.where(location: story.locations).includes(:location, down_location: :floor).order(:id).flat_map do |floor|
       place = floor.location
       rooms = place.child_locations.order(:id).to_a
       [ *floor_going_down_to_no_floor(floor), *(rooms.any? ? laid_out_floor(floor, place, rooms) : []) ]
-    end + posted_guards
+    end + posted_guards + floors_reached_that_are_no_floor
+  end
+
+  # A FLOOR A GAME REACHED THAT IS NO FLOOR NOW (`Playthrough::FloorReached`).
+  # The engine writes a game's row only for a place with a `floors` row, so a
+  # re-seed that took `floor:` off the place leaves exactly this. Reported and
+  # never repaired: the game keeps the level that floor raised it to, which is
+  # the game's own record of what happened, and nothing in the world says it
+  # should not have.
+  def floors_reached_that_are_no_floor
+    Playthrough::FloorReached.joins(:playthrough).where(playthroughs: { story_id: story.id })
+                             .where.not(location_id: Floor.select(:location_id))
+                             .includes(:location).order(:id).map do |row|
+      finding(:floor_reached_that_is_no_floor, :warning,
+              "playthrough ##{row.playthrough_id} reached #{row.location.name} as a floor" \
+              "#{" and was raised to level #{row.level} there" if row.level}, and #{row.location.name} is no " \
+              "floor now -- a re-seed that removed its `floor:` leaves this. The game keeps its level",
+              :manual, subject: row)
+    end
   end
 
   # A GUARD THE ENGINE WILL NEVER STAND (`Character#posted_to`). The engine
@@ -3385,16 +3405,23 @@ class Story::Doctor
   # hit die under a game already in progress -- which is a legitimate file edit,
   # and this is the row it leaves behind.
   #
-  # `safe`: the answer is on record, on the template. `rake game:repair` clamps
-  # to `Character#max_hp` and nothing else about the game changes.
+  # `safe`: the answer is on record, on the template and the game's floors.
+  # `rake game:repair` clamps to `Playthrough#max_hp_for` and nothing else about
+  # the game changes. THE CEILING IS THE GAME'S, never the world's: a floor
+  # that raised the player's level raised it in this game only
+  # (`Playthrough::FloorReached`), and reading `Character#max_hp` here would
+  # report every levelled player and let a routine repair clamp them back down.
   def hp_above_maximum(rows)
     rows.filter_map do |row|
-      ceiling = row.character&.max_hp
+      next if row.character.nil?
+
+      ceiling = row.playthrough.max_hp_for(row.character)
       next if ceiling.nil? || row.hp_current <= ceiling
 
       finding(:hp_above_maximum, :warning,
               "playthrough ##{row.playthrough_id} records #{row.character.fullname} at #{row.hp_current} hit points, " \
-              "past the #{ceiling} their stat block allows (level #{row.character.level}, d#{row.character.hit_die}); " \
+              "past the #{ceiling} their stat block allows at this game's level " \
+              "(level #{row.playthrough.level_for(row.character)}, d#{row.character.hit_die}); " \
               "a re-seed that lowers a hit die under a game in progress leaves exactly this",
               :safe, subject: row)
     end

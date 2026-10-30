@@ -439,7 +439,8 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       ->(floor, _) { floor["rooms"] = 1 } => /has a way down and `floor: rooms: 1`/,
       ->(floor, _) { floor["danger"] = "deadly" } => /`floor: danger: "deadly"`; there is: safe, uneasy, dangerous/,
       ->(floor, _) { floor["hazard"] = "lava" } => /`floor: hazard: "lava"`; there is: none, flooded/,
-      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards/,
+      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards, levels_up/,
+      ->(floor, _) { floor["levels_up"] = "yes" } => /`floor: levels_up: "yes"`; it is true or false/,
       ->(floor, _) { floor["down"] = "The Old Cellar" } => /goes down to "The Old Cellar", which is not a `floor:` location/,
       ->(floor, _) { floor["down"] = "The Upper Floor" } => /"The Upper Floor" goes down to itself/,
       ->(_, row) { row["width"] = 12 } => /is a floor and carries width; a floor's footprint is derived/,
@@ -456,6 +457,22 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       assert_match message, error.message
     end
     assert_nil Story.find_by(title: "Two Floors and a Key")
+  end
+
+  # WHETHER A FLOOR RAISES A LEVEL (stage 5), in both directions on every load:
+  # taking the key out writes false again.
+  test "seeds whether a floor raises a level, and an absent key writes false" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/three-floors-that-raise-you.yml").read)
+    story = WorldSeed::Loader.new(world).load!
+    first = story.locations.find_by!(name: "The First Floor")
+
+    assert_equal [ true, true, true ], story.locations.joins(:floor).order(:id).map { |place| place.floor.levels_up }
+
+    world["locations"].find { |row| row["name"] == "The First Floor" }["floor"].delete("levels_up")
+    WorldSeed::Loader.new(world).load!
+    assert_equal false, first.reload.floor.levels_up
+    assert_equal false, floors_world.then { |file| WorldSeed::Loader.new(file).load! }
+                                    .locations.find_by!(name: "The Upper Floor").floor.levels_up
   end
 
   # WHO STANDS ON A FLOOR (stage 3): its monster level on the row, and its

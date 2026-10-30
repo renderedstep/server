@@ -58,9 +58,12 @@ class Playthrough::Blow < ApplicationRecord
 
   # HOW MUCH WAS LEFT OF THE BODY AFTERWARDS, as a value rather than as a live
   # read, because that is what this row is: what was true when the blow landed.
-  # `Playthrough#vitals_for` is still the one reader of what is true NOW.
+  # `Playthrough#vitals_for` is still the one reader of what is true NOW. The
+  # maximum is the game's when the blow landed, which a floor reached since may
+  # have raised.
   def condition
-    Playthrough::Vitals::Condition.new(character: target, hp: hp_after, max: target.max_hp)
+    Playthrough::Vitals::Condition.new(character: target, hp: hp_after,
+                                       max: playthrough.max_hp_for(target, at: story_timestamp))
   end
 
   def killed? = hp_after.zero?

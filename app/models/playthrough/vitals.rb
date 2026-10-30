@@ -15,7 +15,8 @@
 #                         must not be able to tell.
 #
 # MAX HP IS DERIVED AND NEVER STORED (`Character#max_hp`): one number per body,
-# not two that can disagree.
+# not two that can disagree. In a game it is the game's (`Playthrough#max_hp_for`),
+# at the level a floor may have raised the player to.
 #
 # AN ABSENT ROW MEANS UNHURT, and that is the honest default rather than a
 # shortcut. Almost every person in a world is never touched, so writing a row at
@@ -62,7 +63,7 @@ class Playthrough::Vitals < ApplicationRecord
     return nil if playthrough.nil? || character.nil? || !character.stat_block?
 
     find_or_create_by!(playthrough: playthrough, character: character) do |row|
-      row.hp_current = character.max_hp
+      row.hp_current = playthrough.max_hp_for(character)
     end
   end
 
@@ -76,8 +77,11 @@ class Playthrough::Vitals < ApplicationRecord
   # It is a value and not the record on purpose: the three consumers above only
   # ever READ, and handing them an ActiveRecord object is handing them `update!`.
   Condition = Data.define(:character, :hp, :max) do
-    def self.for(character, row)
-      new(character: character, hp: row&.hp_current || character.max_hp, max: character.max_hp)
+    # Against the game's maximum (`Playthrough#max_hp_for`), which a floor may
+    # have raised past the world's.
+    def self.for(playthrough, character, row)
+      max = playthrough.max_hp_for(character)
+      new(character: character, hp: row&.hp_current || max, max: max)
     end
 
     def dead? = hp <= 0
@@ -101,7 +105,7 @@ class Playthrough::Vitals < ApplicationRecord
     def to_s = "#{character.fullname} is #{in_words}."
   end
 
-  def condition = Condition.for(character, self)
+  def condition = Condition.for(playthrough, character, self)
 
   # WHETHER THIS GAME HAS PICKED A FIGHT WITH THIS BODY. The captain's sixth
   # ruling of 2026-09-05: *"anyone can be attacked"*, and being attacked makes
@@ -126,7 +130,9 @@ class Playthrough::Vitals < ApplicationRecord
     self
   end
 
-  def max = character&.max_hp
+  # THIS GAME'S MAXIMUM for the body, which a floor may have raised past the
+  # world's (`Playthrough#max_hp_for`).
+  def max = playthrough ? playthrough.max_hp_for(character) : character&.max_hp
 
   def dead? = hp_current.to_i <= 0
 

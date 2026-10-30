@@ -66,6 +66,10 @@ class Location < ApplicationRecord
   # And every game's record of having stood here (`Playthrough::Visit`), for
   # the same reason.
   has_many :visits, class_name: "Playthrough::Visit", dependent: :destroy, inverse_of: :location
+  # And every game's record of having reached this floor
+  # (`Playthrough::FloorReached`), for the same reason.
+  has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :destroy,
+                            inverse_of: :location
   # WHETHER THIS PLACE IS A FLOOR, and what it is laid out to (`Floor`). Goes
   # with the place, which the foreign key's cascade says too.
   has_one :floor, dependent: :destroy, inverse_of: :location

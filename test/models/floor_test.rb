@@ -82,6 +82,12 @@ class FloorTest < ActiveSupport::TestCase
     end
   end
 
+  test "whether it raises a level is true or false, and false unless a world says so" do
+    assert_equal false, create(:floor).levels_up
+    assert_predicate build(:floor, levels_up: true), :valid?
+    assert_not build(:floor, levels_up: nil).valid?
+  end
+
   test "a guard posted to a floor is let go with its place, and outlives it" do
     guard = create(:character, :posted)
     place = guard.posted_to

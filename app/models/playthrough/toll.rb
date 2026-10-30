@@ -130,8 +130,11 @@ class Playthrough::Toll < ApplicationRecord
     "the way from #{location_connection.location.name} into #{location_connection.connected_location.name}"
   end
 
+  # Against the game's maximum when it was paid (`Playthrough#max_hp_for`), the
+  # engine's `toll_to_s`.
   def condition
-    Playthrough::Vitals::Condition.new(character: character, hp: hp_after, max: character.max_hp)
+    Playthrough::Vitals::Condition.new(character: character, hp: hp_after,
+                                       max: playthrough.max_hp_for(character, at: story_timestamp))
   end
 
   # THE TOLL AS A PROMPT STATES IT: what it cost and the facts about it a

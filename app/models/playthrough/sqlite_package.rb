@@ -32,6 +32,7 @@ class Playthrough::SqlitePackage
     playthrough_due_endings
     playthrough_endings
     playthrough_feedbacks
+    playthrough_floors
     playthrough_npc_states
     playthrough_overreaches
     playthrough_paragraphs

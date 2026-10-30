@@ -42,6 +42,10 @@ class Floor < ApplicationRecord
   # anybody's are; only the level is the floor's. Nil is the ordinary
   # `Character::StatBlock::STARTING_LEVEL`.
   validates :monster_level, inclusion: { in: Character::LEVELS }, allow_nil: true
+  # WHETHER REACHING THIS FLOOR RAISES A GAME'S LEVEL: once a game, by one, and
+  # healed to full on the same turn (the engine's `turn.rs` `reach_floor`). The
+  # level is the game's (`Playthrough::FloorReached`), never the world's.
+  validates :levels_up, inclusion: { in: [ true, false ] }
   validate :a_way_down_is_another_floor_of_this_story
 
   # HOW MANY ROOMS A FLOOR OF `rooms` IS DRAWN WITH: at least one, at least two

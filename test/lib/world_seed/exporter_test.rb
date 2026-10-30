@@ -374,6 +374,23 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_predicate again.posted_guards.first, :deliberately_absent?
   end
 
+  # WHETHER A FLOOR RAISES A LEVEL: written when it does, and left out when it
+  # does not, since the loader reads it absent as false.
+  test "exports a floor that raises a level, and it round-trips" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/three-floors-that-raise-you.yml").read)
+    world["locations"].find { |row| row["name"] == "The Third Floor" }["floor"].delete("levels_up")
+    story = WorldSeed::Loader.new(world).load!
+
+    document = WorldSeed::Exporter.new(story).document
+    floors = document["locations"].select { |row| row.key?("floor") }.to_h { |row| [ row["name"], row["floor"] ] }
+    assert_equal true, floors.fetch("The First Floor")["levels_up"]
+    assert_not floors.fetch("The Third Floor").key?("levels_up")
+
+    document["story"]["title"] = "Three Floors Again"
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+    assert_equal [ true, true, false ], reloaded.locations.joins(:floor).order(:id).map { |place| place.floor.levels_up }
+  end
+
   # AND A LAID-OUT FLOOR'S ROOMS ARE THE ENGINE'S, so they are not written: a
   # doorway onto one is written onto the floor, which is where the file had it,
   # and the loader lays a fresh copy out anew.

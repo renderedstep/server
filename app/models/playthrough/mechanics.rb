@@ -114,12 +114,14 @@ class Playthrough::Mechanics
   # the write, so the read-out is what the database says and not what this class
   # believed it had done.
   State = Data.define(:location, :exits, :items_here, :carried, :present, :foes, :provoked, :conditions,
-                      :condition, :character, :over, :hazard, :hazards_out, :arc, :ending,
+                      :condition, :character, :level, :over, :hazard, :hazards_out, :arc, :ending,
                       :ending_words, :scheduled, :fired) do
     # THE WORLD'S OWN NUMBERS FOR THE PLAYER, one line's worth. Read straight off
     # the character, because that is where they live: a stat block and three
     # abilities are the STORY's (`Character`'s header), and printing them beside
-    # a condition that is this GAME's is the layer split on the screen.
+    # a condition that is this GAME's is the layer split on the screen. The
+    # level is the one exception: it is this game's (`#level`), which a floor
+    # may have raised past the world's, as the engine's glance prints it.
     #
     # Empty for a playthrough with no protagonist and for one whose protagonist
     # has neither half of the sheet. Half a sheet prints the half that is there:
@@ -128,7 +130,7 @@ class Playthrough::Mechanics
       return [] if character.nil?
 
       [
-        ("level #{character.level}, d#{character.hit_die}" if character.stat_block?),
+        ("level #{level}, d#{character.hit_die}" if character.stat_block?),
         (Character::ABILITIES.map { |ability| "#{ability} #{character[ability]}" }.join(" ") if character.abilities?)
       ].compact
     end
@@ -491,6 +493,9 @@ class Playthrough::Mechanics
       # record rather than off the screen. Nil for a playthrough with no
       # protagonist, which every reader here already handles.
       character: playthrough.character,
+      # THE PLAYER'S LEVEL IN THIS GAME (`Playthrough#level_for`), which a floor
+      # may have raised past the world's `characters.level`.
+      level: playthrough.level_for(playthrough.character),
       # WHETHER THE GAME IS OVER, off `playthroughs.ended_at` and not derived
       # from the condition beside it: a playthrough with no protagonist has no
       # condition and could still, one day, be ended by a mechanic nobody has

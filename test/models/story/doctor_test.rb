@@ -1197,6 +1197,31 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_equal row, finding.subject
   end
 
+  # THE CEILING IS THE GAME'S: a floor raised this player to level 5 (28 on a
+  # d8) in this game only, so a routine repair must not clamp them back to the
+  # world's 18 -- and one past the game's 28 is still clamped, to 28.
+  test "a player a floor levelled is measured against the game's maximum, and clamped to it" do
+    story = create(:story)
+    room = create(:location, story: story)
+    floor = create(:location, :stub, story: story, name: "The Second Floor", width: 12, depth: 12)
+    create(:floor, location: floor, levels_up: true)
+    odile = create(:character, :protagonist, story: story, fullname: "Odile", level: 3, hit_die: 8)
+    game = create(:playthrough, story: story, character: odile, current_location: room)
+    create(:playthrough_floor_reached, playthrough: game, location: floor, level: 5)
+    row = Playthrough::Vitals.instantiate!(game, odile)
+    row.update_columns(hp_current: 28)
+
+    assert_nil finding(story, :hp_above_maximum)
+    Story::Repair.new(story).apply!
+    assert_equal 28, row.reload.hp_current
+
+    row.update_columns(hp_current: 29)
+    found = finding(story, :hp_above_maximum)
+    assert_match(/past the 28 their stat block allows at this game's level \(level 5, d8\)/, found.message)
+    Story::Repair.new(story).apply!
+    assert_equal 28, row.reload.hp_current
+  end
+
   test "a condition for somebody the world no longer has is reported and manual" do
     story = create(:story)
     room = create(:location, story: story)
@@ -2341,6 +2366,25 @@ class Story::DoctorTest < ActiveSupport::TestCase
   end
 
   def guard_codes(story) = codes(story).grep(/\Aguard_/)
+
+  # A re-seed that took `floor:` off a place a game reached: the game keeps the
+  # level it was raised to, so this is said and never repaired.
+  test "a floor a game reached that is no floor now is reported and never repaired" do
+    story, upper = laid_out_floor
+    game = create(:playthrough, story: story, character: story.characters.find_by!(is_protagonist: true),
+                                current_location: story.locations.find_by!(name: "The Landing"))
+    reached = create(:playthrough_floor_reached, playthrough: game, location: upper, level: 2)
+    assert_nil finding(story, :floor_reached_that_is_no_floor)
+
+    upper.floor.destroy!
+    found = finding(Story.find(story.id), :floor_reached_that_is_no_floor)
+
+    assert_equal [ :warning, :manual, reached ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/reached The Upper Floor as a floor and was raised to level 2 there, and The Upper Floor is no floor now/,
+                 found.message)
+    Story::Repair.new(Story.find(story.id)).apply!
+    assert_equal 2, reached.reload.level
+  end
 
   test "a guard posted to a place that is no floor is reported and never repaired" do
     story, = laid_out_floor
