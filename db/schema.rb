@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_180000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -511,6 +511,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
     t.index ["playthrough_id"], name: "index_playthrough_passages_on_playthrough_id"
   end
 
+  create_table "playthrough_rests", force: :cascade do |t|
+    t.integer "playthrough_id", null: false
+    t.integer "location_id", null: false
+    t.integer "recovered", null: false
+    t.integer "hp_after", null: false
+    t.datetime "story_timestamp", null: false
+    t.integer "scene_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["location_id"], name: "index_playthrough_rests_on_location_id"
+    t.index ["playthrough_id"], name: "index_playthrough_rests_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_rests_on_scene_id"
+  end
+
   create_table "playthrough_tolls", force: :cascade do |t|
     t.integer "playthrough_id", null: false
     t.integer "character_id", null: false
@@ -969,6 +983,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
   add_foreign_key "playthrough_passages", "items", column: "opened_by_item_id", on_delete: :nullify
   add_foreign_key "playthrough_passages", "location_connections", on_delete: :cascade
   add_foreign_key "playthrough_passages", "playthroughs", on_delete: :cascade
+  add_foreign_key "playthrough_rests", "locations"
+  add_foreign_key "playthrough_rests", "playthroughs"
+  add_foreign_key "playthrough_rests", "scenes"
   add_foreign_key "playthrough_tolls", "characters"
   add_foreign_key "playthrough_tolls", "location_connections"
   add_foreign_key "playthrough_tolls", "locations"

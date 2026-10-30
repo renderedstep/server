@@ -55,6 +55,9 @@
       <% turn.floors_reached.select { |reached| reached.playthrough_id == playthrough.id && reached.level }.sort_by(&:id).each do |reached| %>
         <p class="notice" id="<%= dom_id(reached) %>"><%= reached.to_s %></p>
       <% end %>
+      <% turn.rests.select { |rest| rest.playthrough_id == playthrough.id }.sort_by(&:id).each do |rest| %>
+        <p class="notice" id="<%= dom_id(rest) %>"><%= rest.to_s %></p>
+      <% end %>
     <% end %>
     <%# THE VERDICT ON THIS TURN, and half of the instrument's mark on the game.
         Gated on `Playthrough::Debug.enabled?` -- the same flag as the debug link
