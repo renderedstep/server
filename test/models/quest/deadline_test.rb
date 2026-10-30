@@ -219,7 +219,7 @@ class Quest::DeadlineTest < ActiveSupport::TestCase
 
   # --- a thing ---------------------------------------------------------------
 
-  test "a thing target is left lying in the deepest room the party can reach" do
+  test "with nothing unwritten, a thing target lies in the room just written" do
     step = create(:quest_step, :hold_item, quest: @quest, position: 1, target_name: "the cell key")
     deepest = open_rooms(Quest::Deadline::GRACE_ROOMS + 1).last
 
@@ -232,9 +232,27 @@ class Quest::DeadlineTest < ActiveSupport::TestCase
     assert_equal key, step.reload.target
   end
 
+  # The engine's `lay_out_alone`: the box the room's writing would give it, so
+  # the thing has a spot, and the writing keeps it.
+  test "a thing target lies in a room nobody has written, given its own box first" do
+    step = create(:quest_step, :hold_item, quest: @quest, position: 1, target_name: "the cell key")
+    rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
+    shed = create(:location, :stub, story: @story, name: "the shed")
+    connect!(rooms.first, shed)
+
+    Quest::Deadline.after_realizing!(rooms.last)
+
+    key = Item.in_story(@story).find_by(name: "the cell key")
+
+    assert_equal shed, key.location
+    assert_equal key, step.reload.target
+    assert_predicate shed.reload, :laid_out_alone?
+    assert_not_nil key.x, "the thing has a spot in the box"
+  end
+
   # --- where -----------------------------------------------------------------
 
-  test "the anchor is the deepest room by storey, and a tie goes to the furthest out" do
+  test "the way on is the deepest unwritten room by storey, and a written room gains no door" do
     rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
     cellar = rooms.last
     place = create(:location, story: @story, name: "The Old Workings", width: 10, depth: 10)
@@ -242,14 +260,17 @@ class Quest::DeadlineTest < ActiveSupport::TestCase
     connect!(cellar, Location::Interior.entry_room(place))
     # A room that can take another door: the layout is rolled, and the entry
     # room with the cellar's door on it can already be at MAX_EXITS, which the
-    # anchor rightly passes over.
+    # way on rightly passes over.
     below = place.child_locations.order(:id).detect do |room|
       LocationConnection.from_location(room).count < Location::ExitsSchema::MAX_EXITS
     end
     below.update!(z: -2)
 
     create(:quest_step, :reach_location, quest: @quest, position: 1, target_name: "Blackfang Warren")
-    Quest::Deadline.after_realizing!(cellar)
+
+    assert_no_changes -> { doorways_of(cellar) } do
+      Quest::Deadline.after_realizing!(cellar)
+    end
 
     warren = @story.locations.find_by(name: "Blackfang Warren")
 
@@ -257,7 +278,61 @@ class Quest::DeadlineTest < ActiveSupport::TestCase
                     "z decides, so a cellar is not the street just because both are two hops out"
   end
 
-  test "a room nothing leads to is never the anchor" do
+  test "an unwritten room the party can reach is preferred to the room just written" do
+    rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
+    shed = create(:location, :stub, story: @story, name: "the shed")
+    connect!(rooms.first, shed)
+
+    create(:quest_step, :reach_location, quest: @quest, position: 1, target_name: "Blackfang Warren")
+
+    assert_no_changes -> { doorways_of(rooms.last) } do
+      Quest::Deadline.after_realizing!(rooms.last)
+    end
+
+    warren = @story.locations.find_by(name: "Blackfang Warren")
+
+    assert_includes shed.reload.exits, Location::Interior.entry_room(warren)
+  end
+
+  # VISION principle 7. The old anchor was the deepest room the party could
+  # reach, written or not -- here the last of the chain, written before the one
+  # whose writing is finishing.
+  test "a written room other than the one being written never gains a doorway or a thing" do
+    rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
+    written = rooms.first
+    others = @story.locations.realized.where.not(id: written.id).to_a
+
+    create(:quest_step, :reach_location, quest: @quest, position: 1, target_name: "Blackfang Warren")
+    create(:quest_step, :hold_item, quest: @quest, position: 2, target_name: "the cell key")
+
+    assert_no_changes -> { others.map { |room| [ doorways_of(room), room.items.pluck(:id) ] } } do
+      Quest::Deadline.after_realizing!(written)
+      Quest::Deadline.after_realizing!(written)
+    end
+
+    assert_includes written.reload.exits, Location::Interior.entry_room(@story.locations.find_by(name: "Blackfang Warren"))
+    assert_not_nil Item.in_story(@story).find_by(name: "the cell key"),
+                   "the second placement goes into the rooms the first one laid out, which nobody has written"
+  end
+
+  test "nothing is placed when no unwritten room and not the room being written will take it" do
+    rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
+    written = rooms.last
+    (Location::ExitsSchema::MAX_EXITS - 1).times do |index|
+      connect!(written, create(:location, :realized, story: @story, name: "a side room #{index}"))
+    end
+
+    [ :reach_location, :hold_item, :speak_to ].each do |kind|
+      Quest::Step.where(quest: @quest).destroy_all
+      create(:quest_step, kind, quest: @quest, position: 1, target_name: "Blackfang Warren")
+
+      assert_no_difference [ "Location.count", "LocationConnection.count", "Item.count", "Character.count" ] do
+        assert_nil Quest::Deadline.after_realizing!(written), "#{kind} waits for the next room written"
+      end
+    end
+  end
+
+  test "a room nothing leads to is never the way on" do
     rooms = open_rooms(Quest::Deadline::GRACE_ROOMS + 1)
     orphan = create(:location, :realized, story: @story, name: "the orphan")
 
@@ -293,6 +368,12 @@ class Quest::DeadlineTest < ActiveSupport::TestCase
       previous = room
       room
     end
+  end
+
+  # Every doorway into or out of the room, as pairs of ids.
+  def doorways_of(room)
+    LocationConnection.where(location: room).or(LocationConnection.where(connected_location: room))
+                      .order(:id).pluck(:location_id, :connected_location_id)
   end
 
   def connect!(from, to)

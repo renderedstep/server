@@ -54,7 +54,7 @@
           "to": "Byre",
           "edge out": "missing",
           "edge back": "missing",
-          "exits from Wash House": "Yard",
+          "exits from Wash House": "Yard, where Warden Hesk is room 1",
           "at": "2026-09-12T06:03:00.000Z"
         }
       ]

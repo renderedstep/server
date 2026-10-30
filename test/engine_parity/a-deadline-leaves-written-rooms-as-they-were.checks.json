@@ -1,0 +1,64 @@
+{
+  "script": "a-deadline-leaves-written-rooms-as-they-were",
+  "doctor": {
+    "headline": "playable, 4 warnings",
+    "findings": [
+      [
+        "character_in_a_stub",
+        "warning",
+        "Warden Hesk is in \"where Warden Hesk is room 4\", which nobody has written yet. The room realizes when somebody walks in, and its description is written without knowing he is there",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Yard\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Kitchen\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"Loft\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
+  },
+  "audit": {
+    "headline": "4 scenes: 2 contradictions, 0 defects, 0 drifts, 0 still turns",
+    "flags": [
+      [
+        "unreachable_transition",
+        1000000003,
+        "the player got from \"Cold Store\" to \"Wash House\" with no edge between them",
+        {
+          "from": "Cold Store",
+          "to": "Wash House",
+          "edge out": "missing",
+          "edge back": "missing",
+          "exits from Cold Store": "Yard",
+          "at": "2026-09-12T06:02:00.000Z"
+        }
+      ],
+      [
+        "unreachable_transition",
+        1000000004,
+        "the player got from \"Wash House\" to \"Byre\" with no edge between them",
+        {
+          "from": "Wash House",
+          "to": "Byre",
+          "edge out": "missing",
+          "edge back": "missing",
+          "exits from Wash House": "Yard, where Warden Hesk is room 1",
+          "at": "2026-09-12T06:03:00.000Z"
+        }
+      ]
+    ],
+    "unjudged": []
+  }
+}
