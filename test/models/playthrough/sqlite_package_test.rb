@@ -31,6 +31,7 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
     create(:playthrough_command, playthrough: @playthrough, command: "/look",
                                  status: "completed", result_scene: opening_scene)
     @refused = create(:refused_line, playthrough_id: @playthrough.id, location_id: @opening.id)
+    create(:playthrough_floor_reached, playthrough: @playthrough, location: @cellars, level: 2)
     create(:item, :lying, name: "brass key", location: @opening, playthrough: nil)
     create(:item, :carried, name: "brass key", playthrough: @playthrough, location: nil, character: nil)
     @models = RubyLLM::ActiveRecord::Model.pluck(:id)
@@ -133,6 +134,8 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
                    Floor.includes(:location).map { |floor| [ floor.location.name, floor.rooms, floor.danger, floor.monster_level ] }
       # And so does the guard posted to it.
       assert_equal "The Cellars", Character.find_by!(fullname: "Brask Package").posted_to.name
+      # And the game's reaching it, with the level it raised.
+      assert_equal [ [ "The Cellars", 2 ] ], Playthrough::FloorReached.includes(:location).map { |row| [ row.location.name, row.level ] }
       assert_equal 1, Item.where(playthrough_id: nil).count
       assert_equal 1, Item.where(playthrough_id: @playthrough.id).count
       assert_equal "/look", Playthrough::Command.sole.command

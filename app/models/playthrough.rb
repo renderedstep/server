@@ -93,6 +93,12 @@ class Playthrough < ApplicationRecord
   # plays, and read by `Story::Doctor`; see `Playthrough::Visit`.
   has_many :visits, class_name: "Playthrough::Visit", dependent: :destroy,
                     inverse_of: :playthrough
+  # EVERY FLOOR THIS GAME HAS REACHED, and the level each raised its player to.
+  # Destroyed with the playthrough, on the visits' reasoning: a level is this
+  # player's progress. Written by the engine only; `#level_for` reads it. See
+  # `Playthrough::FloorReached`.
+  has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :destroy,
+                            inverse_of: :playthrough
   # WHAT EVERYBODY ELSE IN THE ROOM DECIDED TO DO, one row per present
   # character per played line. Destroyed with the playthrough on the tolls' and
   # the vitals' reasoning: what somebody is AFTER is the world's
@@ -375,7 +381,33 @@ class Playthrough < ApplicationRecord
   def vitals_for(character)
     return nil if character.nil? || !character.stat_block?
 
-    Playthrough::Vitals::Condition.for(character, vitals.find_by(character: character))
+    Playthrough::Vitals::Condition.for(self, character, vitals.find_by(character: character))
+  end
+
+  # THE LEVEL SOMEBODY HAS IN THIS GAME, by story time `at` (nil: every row,
+  # which is now), and the one reader of it -- the engine's `Game::level_at`.
+  # For this game's player it is the highest level a floor this game reached
+  # by then raised them to (`Playthrough::FloorReached`); for anybody else, and
+  # for a player no floor has raised, it is the world's `characters.level`. Nil
+  # for somebody with no level. The rows are read fresh unless a caller
+  # preloaded them (`#turn_log`), since the engine writes them between lines.
+  def level_for(character, at: nil)
+    return nil if character&.level.nil?
+    return character.level unless character.id == character_id
+
+    reached = floors_reached.loaded? ? floors_reached.map { |row| [ row.arrived_at, row.level ] } : floors_reached.pluck(:arrived_at, :level)
+    raised = reached.filter_map { |arrived_at, level| level if level && (at.nil? || arrived_at <= at) }.max
+    raised || character.level
+  end
+
+  # HOW MUCH SOMEBODY CAN HOLD IN THIS GAME, by story time `at`: `Character#max_hp`
+  # at `#level_for`'s level -- the engine's `Game::max_hp_at`. Every reader of a
+  # maximum on a game asks this, so a blow or a toll of then is said against
+  # the maximum of then. Nil for somebody with no stat block.
+  def max_hp_for(character, at: nil)
+    return nil if character.nil? || !character.stat_block?
+
+    Character.hit_points(level_for(character, at: at), character.hit_die)
   end
 
   # THE PLAYER'S OWN CONDITION, which is the one the prose and the read-out are
@@ -473,14 +505,18 @@ class Playthrough < ApplicationRecord
   # to name who the player was talking to, and all but the talk turns have none.
   # The toll notices read each body and hazard source, including both ends of
   # a crossed doorway. Preload them together so rendering a long history does
-  # not query once per recorded consequence.
+  # not query once per recorded consequence. A toll is said against the game's
+  # maximum then, which reads the game's floors; a floor's notice reads the
+  # place and the game's player. So those come with them.
   def turn_log
     scenes = scene_chain
 
     ActiveRecord::Associations::Preloader.new(
       records: scenes, associations: {
         interactions: :character,
-        tolls: [ :character, :location, { location_connection: [ :location, :connected_location ] } ]
+        tolls: [ { playthrough: :floors_reached }, :character, :location,
+                 { location_connection: [ :location, :connected_location ] } ],
+        floors_reached: [ :location, { playthrough: :character } ]
       }
     ).call
 

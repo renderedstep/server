@@ -192,6 +192,11 @@ class Scene < ApplicationRecord
   # where its notice appears. A toll without a scene reads as UNTOLD again.
   has_many :tolls, class_name: "Playthrough::Toll", dependent: :nullify,
                    inverse_of: :scene
+  # THE FLOORS REACHED SHOWN WITH THIS SCENE'S LOG ENTRY, nullified on the
+  # tolls' reasoning one line up: the row is the game's level and this Scene is
+  # only where its notice appears.
+  has_many :floors_reached, class_name: "Playthrough::FloorReached", dependent: :nullify,
+                            inverse_of: :scene
   # Judgements the player recorded on this turn. DESTROYED rather than nullified,
   # which is the opposite of the drift above it and for a reason: a drift is the
   # measurement and the scene is only the suspect, whereas a verdict is a

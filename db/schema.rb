@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_090000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -88,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_230000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "monster_level"
+    t.boolean "levels_up", default: false, null: false
     t.index ["down_location_id"], name: "index_floors_on_down_location_id"
     t.index ["location_id"], name: "index_floors_on_location_id", unique: true
   end
@@ -423,6 +424,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_230000) do
     t.index ["prose_prompt_digest"], name: "index_playthrough_feedbacks_on_prose_prompt_digest"
     t.index ["scene_id"], name: "index_playthrough_feedbacks_on_scene_id"
     t.index ["verdict"], name: "index_playthrough_feedbacks_on_verdict"
+  end
+
+  create_table "playthrough_floors", force: :cascade do |t|
+    t.integer "playthrough_id", null: false
+    t.integer "location_id", null: false
+    t.datetime "arrived_at", null: false
+    t.integer "level"
+    t.integer "scene_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["location_id"], name: "index_playthrough_floors_on_location_id"
+    t.index ["playthrough_id", "location_id"], name: "index_playthrough_floors_on_playthrough_and_location", unique: true
+    t.index ["playthrough_id"], name: "index_playthrough_floors_on_playthrough_id"
+    t.index ["scene_id"], name: "index_playthrough_floors_on_scene_id"
   end
 
   create_table "playthrough_npc_states", force: :cascade do |t|
@@ -932,6 +947,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_230000) do
   add_foreign_key "playthrough_endings", "quest_outcomes"
   add_foreign_key "playthrough_feedbacks", "playthroughs"
   add_foreign_key "playthrough_feedbacks", "scenes"
+  add_foreign_key "playthrough_floors", "locations"
+  add_foreign_key "playthrough_floors", "playthroughs"
+  add_foreign_key "playthrough_floors", "scenes"
   add_foreign_key "playthrough_npc_states", "characters"
   add_foreign_key "playthrough_npc_states", "locations"
   add_foreign_key "playthrough_npc_states", "playthroughs"

@@ -823,20 +823,26 @@ class Character < ApplicationRecord
   # Nil for somebody with no stat block, which is what makes it safe to ask of
   # anybody: `Playthrough::Vitals` reads nil as "there is no maximum to start
   # them at" and writes no row.
+  #
+  # THIS IS THE WORLD'S MAXIMUM. In a game, a floor may have raised the player
+  # past the world's level, so a game asks `Playthrough#max_hp_for`, which is
+  # this arithmetic (`.hit_points`) at the game's level.
   def max_hp
     return nil unless stat_block?
 
-    hit_die + (level - 1) * (hit_die / 2 + 1)
+    self.class.hit_points(level, hit_die)
   end
 
-  # THE EXPLICIT ENGINE CALL FOR A LEVEL, and it is deliberately called from
-  # nowhere -- exactly as `#move_to!` was when it landed, and for the same
-  # reason. Levels are STORED AND INERT in this PR (the captain's ruling of
-  # 2026-09-04): advancement needs a source, this game has no kills, and
-  # inventing one here would be inventing a rule nobody asked for. When there is
-  # a source -- a quest step completed is the obvious one -- this is the
-  # statement it calls, and `#max_hp` follows from it with nothing else to
-  # change.
+  # THE ONE FORMULA, at any level: `#max_hp` at the world's level and
+  # `Playthrough#max_hp_for` at a game's. The engine's `playthrough::hit_points`.
+  def self.hit_points(level, hit_die) = hit_die + (level - 1) * (hit_die / 2 + 1)
+
+  # THE EXPLICIT CALL FOR A WORLD'S LEVEL, and it is deliberately called from
+  # nowhere. It writes `characters.level`, which is the WORLD's: every game of
+  # it would rise together. A level a player earns is the GAME's -- a floor
+  # that says `levels_up` raises it, once a game, in that game's
+  # `playthrough_floors` row (`Playthrough::FloorReached`), and
+  # `Playthrough#level_for` reads it there -- so levelling never calls this.
   def advance!(to = level.to_i + 1)
     update!(level: to)
   end

@@ -1323,15 +1323,16 @@ class Playthrough::Turn
   # somebody would be building the restore-from-save he deferred, one row at a
   # time and by accident.
   #
-  # The ceiling is `Character#max_hp`, so a mend past full is full: a body
-  # cannot hold more than the template says it can, which is the same statement
-  # `Playthrough::Vitals` refuses to save a row against.
+  # The ceiling is this game's maximum (`Playthrough#max_hp_for`), so a mend
+  # past full is full: a body cannot hold more than it can at the level this
+  # game has, which is the same statement `Playthrough::Vitals` refuses to save
+  # a row against.
   def mend!(character, amount)
     row = Playthrough::Vitals.instantiate!(playthrough, character)
     return nil if row.nil?
     return row.condition if row.dead?
 
-    row.update!(hp_current: [ row.hp_current + amount.to_i, character.max_hp ].min)
+    row.update!(hp_current: [ row.hp_current + amount.to_i, playthrough.max_hp_for(character) ].min)
     row.condition
   end
 
