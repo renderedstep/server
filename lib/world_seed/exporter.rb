@@ -369,7 +369,7 @@ class WorldSeed::Exporter
   end
 
   def story_document
-    {
+    document = {
       "title" => story.title,
       "genre" => story.genre,
       # A world has a fixed in-story clock. Seeding is not a new playthrough,
@@ -378,6 +378,10 @@ class WorldSeed::Exporter
       "preface" => text(story.preface),
       "summary" => text(story.summary)
     }
+    # The story's own limits, omitted when it has none -- which is the
+    # ordinary world, and what `WorldSeed::Loader` writes for no key.
+    limits = { "people" => story.people_limit, "things" => story.things_limit }.compact
+    limits.empty? ? document : document.merge("limits" => limits)
   end
 
   # The one Scene that is world (see the class comment). Everything on it is

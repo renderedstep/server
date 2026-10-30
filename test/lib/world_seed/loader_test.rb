@@ -334,6 +334,55 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     assert_match(/there is: #{Regexp.escape(Location::Population::LABELS.join(", "))}/, error.message)
   end
 
+  # THE STORY'S OWN LIMITS, in both directions: a file with `limits:` writes
+  # them, and one without writes nil, which is the ordinary twelve and sixty --
+  # so taking `limits:` out and re-seeding gives the ordinary world back.
+  test "loads the story's own limits and takes them off when the file drops them" do
+    world = document
+    world["story"]["limits"] = { "people" => 20, "things" => 200 }
+
+    story = WorldSeed::Loader.new(world).load!
+
+    assert_equal [ 20, 200 ], [ story.people_limit, story.things_limit ]
+    assert_equal 20, Character::Registry.story_limit(story)
+    assert_equal 200, Item::Registry.story_limit(story)
+
+    story = WorldSeed::Loader.new(document).load!
+
+    assert_equal [ nil, nil ], [ story.people_limit, story.things_limit ]
+    assert_equal Character::Registry::MAX_PER_STORY, Character::Registry.story_limit(story)
+    assert_equal Item::Registry::MAX_PER_STORY, Item::Registry.story_limit(story)
+  end
+
+  test "an absent limit key is nil" do
+    world = document
+    world["story"]["limits"] = { "people" => 20 }
+
+    story = WorldSeed::Loader.new(world).load!
+
+    assert_equal 20, story.people_limit
+    assert_nil story.things_limit
+  end
+
+  test "rejects a limit that is not a whole number above zero" do
+    [ "20", 2.5, 0, -1, true ].each do |value|
+      world = document
+      world["story"]["limits"] = { "people" => value }
+
+      error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+      assert_match(/`limits: people` is #{Regexp.escape(value.inspect)}/, error.message)
+    end
+    assert_nil Story.find_by(title: "A Seeded World")
+  end
+
+  test "rejects a limit the engine has no reader for" do
+    world = document
+    world["story"]["limits"] = { "people" => 20, "rooms" => 4 }
+
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+    assert_match(/`limits:` has rooms; there is: people, things/, error.message)
+  end
+
   # WHAT SORT OF PLACE A ROOM IS AND HOW CLUTTERED, on `population`'s terms: an
   # absent key is nobody picked, re-asserted in both directions, and a word the
   # list lacks is refused with the file and the room (`Location::Kind`).

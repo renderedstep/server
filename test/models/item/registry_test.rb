@@ -204,6 +204,20 @@ class Item::RegistryTest < ActiveSupport::TestCase
     assert_equal Item::Registry::MAX_PER_STORY, Item::Registry.new(@room).story_items.count
   end
 
+  # A STORY THAT NAMES ITS OWN LIMIT is bounded by that and not by the ordinary
+  # sixty, in either direction.
+  test "a story's own things limit replaces the ordinary one" do
+    holder = create(:character, story: @story)
+    create(:item, character: holder, name: "the one thing")
+
+    @story.update!(things_limit: 2)
+    created = admit(candidate("the last one"), candidate("one past the last"))
+    assert_equal [ "the last one" ], created.map(&:name)
+
+    @story.update!(things_limit: Item::Registry::MAX_PER_STORY * 2)
+    assert_equal (Item::Registry::MAX_PER_STORY * 2) - 2, Item::Registry.new(@room).world_for_items
+  end
+
   # BOTH CAPS BOUND THE WORLD AND NOT ANY GAME. A player's own copy of a thing
   # is not a second thing in the world -- since the captain's ruling of
   # 2026-09-04 a take moves that player's copy and the world's own row never

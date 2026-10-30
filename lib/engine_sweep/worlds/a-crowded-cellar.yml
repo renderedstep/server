@@ -1,0 +1,252 @@
+# A crowded inn: the player and eleven others, twelve people in all, which is
+# the ordinary story limit, and a cellar nobody has written yet whose word is
+# `a crowd`. The story raises its own limit to twenty (`limits: people`), so
+# the cellar is still born with people; under the ordinary twelve it would be
+# born empty.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lanterns, barrels and cart wheels.
+  weapons: Cudgels.
+  geographies: A coaching inn on a wet road.
+  civilizations: A market county.
+  history: The inn has stood at the crossroads for a century.
+  economics: Coin for beds, ale and stabling.
+  politics: The county reeve keeps the road.
+  religion: Harvest festivals.
+  races:
+  - name: Countryfolk
+    description: Ordinary people of the county.
+story:
+  title: A Crowded Cellar
+  genre: country adventure
+  start_time: '2026-09-21T19:00:00Z'
+  preface: The Lantern Inn is full to the rafters on a wet night.
+  summary: Nell looks for room in a full inn.
+  limits:
+    people: 20
+opening_scene:
+  location: Taproom
+  characters: [Nell, Hob Allard, Ida Fenn]
+  description: You stand dripping by the taproom door.
+  summary: Nell comes in out of the rain.
+characters:
+- fullname: Nell
+  nickname: Nell
+  race: Countryfolk
+  age: 33
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A tinker caught out by the rain.
+  personality: Plain-spoken.
+  appearance: A soaked cloak.
+  likes: A dry corner.
+  dislikes: Crowds.
+  fears: Sleeping in the road.
+  stats: {level: 10, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+- fullname: Hob Allard
+  nickname: Hob
+  race: Countryfolk
+  location: Taproom
+  age: 44
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: The innkeeper, who has run the Lantern for twenty years.
+  personality: Gruff and fair.
+  appearance: A stained apron.
+  likes: A full house.
+  dislikes: Unpaid tabs.
+  fears: A cold hearth.
+- fullname: Ida Fenn
+  nickname: Ida
+  race: Countryfolk
+  location: Taproom
+  age: 27
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A barmaid saving for a boat of her own.
+  personality: Quick and wry.
+  appearance: Rolled sleeves.
+  likes: Tips.
+  dislikes: Spilled ale.
+  fears: Deep water.
+- fullname: Moss Tarrow
+  nickname: Moss
+  race: Countryfolk
+  location: Kitchen
+  age: 51
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: The cook, who came with the inn.
+  personality: Slow and certain.
+  appearance: A floury shirt.
+  likes: Fresh bread.
+  dislikes: Haste.
+  fears: Fire in the flue.
+- fullname: Pell Quill
+  nickname: Pell
+  race: Countryfolk
+  location: Kitchen
+  age: 19
+  sex: non-binary
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A scullion learning the trade.
+  personality: Eager and clumsy.
+  appearance: Wet cuffs.
+  likes: Praise.
+  dislikes: Scouring pots.
+  fears: The cook's temper.
+- fullname: Rue Ambry
+  nickname: Rue
+  race: Countryfolk
+  location: Kitchen
+  age: 36
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A carter waiting for her supper.
+  personality: Tired and patient.
+  appearance: A dusty coat.
+  likes: A hot meal.
+  dislikes: Delays.
+  fears: A lame horse.
+- fullname: Tam Brisk
+  nickname: Tam
+  race: Countryfolk
+  location: Stable
+  age: 23
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: The ostler who minds the guests' horses.
+  personality: Cheerful and loud.
+  appearance: Straw in his hair.
+  likes: Horses.
+  dislikes: Tight fists.
+  fears: Being kicked.
+- fullname: Vey Corran
+  nickname: Vey
+  race: Countryfolk
+  location: Stable
+  age: 40
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A drover passing through with her herd.
+  personality: Watchful.
+  appearance: A long oilskin.
+  likes: Open roads.
+  dislikes: Fences.
+  fears: Wolves.
+- fullname: Wick Dunmore
+  nickname: Wick
+  race: Countryfolk
+  location: Stable
+  age: 62
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: An old pedlar sleeping in the hay to save a coin.
+  personality: Talkative.
+  appearance: A patched pack.
+  likes: A good story.
+  dislikes: Paying for a bed.
+  fears: Dying alone.
+- fullname: Yara Holt
+  nickname: Yara
+  race: Countryfolk
+  location: Loft
+  age: 31
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A courier resting between runs.
+  personality: Restless.
+  appearance: Riding boots.
+  likes: Speed.
+  dislikes: Waiting.
+  fears: A lost letter.
+- fullname: Zeb Marrow
+  nickname: Zeb
+  race: Countryfolk
+  location: Loft
+  age: 29
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A fiddler hired for the evening.
+  personality: Easygoing.
+  appearance: A green waistcoat.
+  likes: Applause.
+  dislikes: Silence.
+  fears: A broken string.
+- fullname: Ash Penrose
+  nickname: Ash
+  race: Countryfolk
+  location: Loft
+  age: 34
+  sex: trans man
+  is_protagonist: false
+  is_companion: false
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+  backstory: A surveyor laid up by the rain.
+  personality: Precise.
+  appearance: Ink on his fingers.
+  likes: Straight lines.
+  dislikes: Muddle.
+  fears: Getting lost.
+locations:
+- name: Taproom
+  detail_level: realized
+  opening: true
+  description: Benches packed shoulder to shoulder under smoky beams.
+  teaser: A packed taproom.
+  lore: The Lantern's taproom has never been this full.
+- name: Kitchen
+  detail_level: realized
+  description: Steam, copper pans and a roaring range.
+  teaser: A hot kitchen.
+  lore: The range was built with the inn.
+- name: Stable
+  detail_level: realized
+  description: Stalls of steaming horses and a hayloft ladder.
+  teaser: A busy stable.
+  lore: Every stall is let tonight.
+- name: Loft
+  detail_level: realized
+  description: Pallets laid end to end under the eaves.
+  teaser: A crowded loft.
+  lore: The loft is let by the pallet.
+- name: Cellar
+  detail_level: stub
+  danger: safe
+  population: a crowd
+  teaser: Steps down to the barrels.
+connections:
+- between: [Taproom, Kitchen]
+  distance: adjacent
+  travel_method: walking
+- between: [Taproom, Stable]
+  distance: adjacent
+  travel_method: walking
+- between: [Taproom, Loft]
+  distance: adjacent
+  travel_method: walking
+- between: [Taproom, Cellar]
+  distance: adjacent
+  travel_method: walking

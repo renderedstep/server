@@ -874,6 +874,32 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert Story::Doctor.new(story).playable?
   end
 
+  # AGAINST THE STORY'S OWN LIMIT: a world file whose own cast is already past
+  # its `limits: people` loads and plays, and every room the engine writes in it
+  # is born with nobody -- which is worth saying, and is said here.
+  test "reports a seeded cast already past the story's own people limit" do
+    document = WorldSeed.parse(WorldSeed::DIRECTORY.join("the-salt-assizes.yml").read)
+    cast = document["characters"].size
+    document["story"]["limits"] = { "people" => cast - 2 }
+    story = WorldSeed::Loader.new(document).load!
+
+    assert_match(/has #{cast} characters, past the #{cast - 2} this world may hold \(its own limits: people\)/,
+                 finding(story, :story_over_cast_cap).message)
+    assert Story::Doctor.new(story).playable?
+
+    story.update!(people_limit: cast)
+    assert_not_includes codes(story), :story_over_cast_cap
+  end
+
+  test "a story's own things limit is the one its world is held to" do
+    story = healthy_story
+    holder = story.characters.first
+    3.times { |n| create(:item, character: holder, name: "thing #{n}") }
+    story.update!(things_limit: 2)
+
+    assert_match(/past the 2 this world may have \(its own limits: things\)/, finding(story, :story_over_item_cap).message)
+  end
+
   # THE PREMISE CHECK. Only asked of a story that IS one of the checked-in
   # worlds, and the answer is on record in the file -- so it is `safe` and
   # `Story::Repair` puts them back.
