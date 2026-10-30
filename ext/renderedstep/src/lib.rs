@@ -1346,7 +1346,9 @@ fn glance_json(glance: &Glance) -> Value {
         None => json!({ "id": target.id, "name": target.name }),
     };
     json!({
-        "room": glance.here.as_ref().map(|here| json!({ "id": here.id, "name": here.name, "within": here.within })),
+        "room": glance.here.as_ref().map(|here| json!({
+            "id": here.id, "name": here.name, "within": here.within, "safe": here.safe,
+        })),
         "exits": glance.exits.iter()
             .map(|exit| json!({ "id": exit.id, "name": exit.name, "written": exit.written, "open": exit.open }))
             .collect::<Vec<_>>(),

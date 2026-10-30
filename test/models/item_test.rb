@@ -540,6 +540,20 @@ class ItemTest < ActiveSupport::TestCase
     assert_equal [ own ], Item.lying_in(room).bespoke.to_a
   end
 
+  # A FLOOR'S SUPPLY is the floor's own count, so no cap counts it either
+  # (the engine's `realization::bespoke`).
+  test "the caps leave a floor's supply out, and a supply is one of the known kinds or none" do
+    room = create(:location)
+    supply = create(:item, :supply, location: room)
+    own = create(:item, :lying, location: room, name: "brass letter knife")
+
+    assert_equal [ own ], Item.lying_in(room).bespoke.to_a
+    assert_predicate supply, :supply?
+    assert_not_predicate own, :supply?
+    assert_not build(:item, :supply, supply: "chest").valid?
+    assert_not_includes Item::NOT_COPIED, "supply"
+  end
+
   # --- where in the room it is lying, since slice 4 -------------------------
 
   test "a thing lying somewhere in a room reads its position back" do

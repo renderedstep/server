@@ -2324,6 +2324,56 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_match(/a floor of 9 room\(s\) and was laid out with 4/, found.message)
   end
 
+  # A re-seed that changed what the floor is stocked with after it was laid
+  # out. The upper floor has a way down, so a safe room is drawn from rooms 3
+  # and 4 only, and a healing thing from rooms 2 to 4.
+  test "a laid-out floor stocked to another count is reported and never repaired" do
+    story, upper, rooms = laid_out_floor
+    upper.floor.update!(safe_rooms: 1, healing_count: 2, healing_name: "red draught", healing_description: "A vial.")
+    rooms.fourth.update!(sanctuary: true)
+    [ rooms.second, rooms.fourth ].each { |room| create(:item, :supply, location: room) }
+    assert_empty floor_codes(Story.find(story.id)), "stocked as the row says"
+
+    rooms.third.update!(sanctuary: true)
+    upper.floor.update!(safe_rooms: 5)
+    assert_empty floor_codes(Story.find(story.id)), "a count past the rooms is clamped, as the engine clamps it"
+
+    rooms.third.update!(sanctuary: false)
+    upper.floor.update!(safe_rooms: 1, healing_count: 3)
+    found = finding(Story.find(story.id), :floor_stocked_to_another_count)
+    assert_equal [ :warning, :manual, upper ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/The Upper Floor is a floor stocked with 3 healing thing\(s\) and was laid out with 2/, found.message)
+    Story::Repair.new(Story.find(story.id)).apply!
+    assert_equal 2, Item.where(supply: "floor").count
+  end
+
+  test "a safe room with somebody hostile in it is reported, in the world or in a game" do
+    story, _, rooms = laid_out_floor
+    rooms.fourth.update!(sanctuary: true)
+    assert_nil finding(story, :sanctuary_with_a_hostile_resident)
+
+    gnasher = create(:character, story: story, fullname: "Gnasher", hostile: true, location: rooms.fourth)
+    found = finding(Story.find(story.id), :sanctuary_with_a_hostile_resident)
+    assert_equal [ :warning, :manual, rooms.fourth ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/The Upper Floor room 4 is a safe room, where nothing hostile is born, and Gnasher is hostile there/,
+                 found.message)
+
+    gnasher.update!(hostile: false)
+    game = create(:playthrough, story: story)
+    create(:playthrough_vitals, playthrough: game, character: gnasher, provoked_at: Time.current)
+    assert_match(/Gnasher in playthrough ##{game.id} is hostile there/,
+                 finding(Story.find(story.id), :sanctuary_with_a_hostile_resident).message)
+  end
+
+  test "a floor's supply with a kit's key is reported" do
+    story, _, rooms = laid_out_floor
+    draught = create(:item, :supply, location: rooms.second, kit_key: "cave/loose/red draught")
+
+    found = finding(story, :supply_with_a_kit_key)
+    assert_equal [ :warning, :manual, draught ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/red draught \(##{draught.id}\) .* is a floor's supply and carries the kit key/, found.message)
+  end
+
   test "a floor whose way down is not a floor is reported" do
     story, upper, = laid_out_floor
     upper.floor.update_column(:down_location_id, story.locations.find_by!(name: "The Old Cellar").id)

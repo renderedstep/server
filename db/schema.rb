@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_150000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -90,6 +90,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_120000) do
     t.integer "monster_level"
     t.boolean "levels_up", default: false, null: false
     t.integer "minutes"
+    t.integer "safe_rooms", default: 0, null: false
+    t.integer "healing_count", default: 0, null: false
+    t.string "healing_name"
+    t.text "healing_description"
     t.index ["down_location_id"], name: "index_floors_on_down_location_id"
     t.index ["location_id"], name: "index_floors_on_location_id", unique: true
   end
@@ -146,6 +150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_120000) do
     t.string "material"
     t.string "wear"
     t.boolean "worn", default: false, null: false
+    t.string "supply"
     t.index ["character_id"], name: "index_items_on_character_id"
     t.index ["location_id", "character_id"], name: "index_items_on_location_id_and_character_id"
     t.index ["location_id"], name: "index_items_on_location_id"
@@ -268,6 +273,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_120000) do
     t.string "surface"
     t.string "kind"
     t.string "density"
+    t.boolean "sanctuary", default: false, null: false
     t.index "story_id, lower(name)", name: "index_locations_on_story_id_and_lower_name", unique: true
     t.index ["parent_location_id"], name: "index_locations_on_parent_location_id"
     t.index ["story_id", "detail_level"], name: "index_locations_on_story_id_and_detail_level"

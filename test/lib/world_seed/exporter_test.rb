@@ -406,6 +406,37 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_equal [ 30, nil ], reloaded.locations.joins(:floor).order(:id).map { |place| place.floor.minutes }
   end
 
+  # WHAT A FLOOR IS STOCKED WITH, and a sanctuary on any place: written when
+  # there is something to say, left out when there is not, and never the safe
+  # room a floor's layout made, which is not written at all.
+  test "exports a floor's supplies and a sanctuary, and they round-trip" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-stocked-floor.yml").read)).load!
+    story.locations.find_by!(name: "The Landing").update!(sanctuary: true)
+    place = story.locations.find_by!(name: "The Stocked Floor")
+    Location::Interior.lay_out!(place)
+    place.child_locations.order(:id).last.update!(sanctuary: true)
+
+    document = WorldSeed::Exporter.new(story).document
+    rows = document["locations"].index_by { |row| row["name"] }
+    assert_equal 1, rows.fetch("The Stocked Floor")["floor"]["safe_rooms"]
+    assert_equal({ "count" => 2, "name" => "red draught",
+                   "description" => "A stoppered glass vial of thick red liquid, warm to the touch. Drinking it closes wounds." },
+                 rows.fetch("The Stocked Floor")["floor"]["healing"])
+    assert rows.fetch("The Landing")["sanctuary"]
+    assert_equal [ "The Landing" ], document["locations"].select { |row| row["sanctuary"] }.map { |row| row["name"] }
+
+    document["story"]["title"] = "A Stocked Floor Again"
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+    floor = reloaded.locations.find_by!(name: "The Stocked Floor").floor
+    assert_equal [ 1, 2, "red draught" ], [ floor.safe_rooms, floor.healing_count, floor.healing_name ]
+    assert_predicate reloaded.locations.find_by!(name: "The Landing"), :sanctuary?
+
+    floor.update!(safe_rooms: 0, healing_count: 0, healing_name: nil, healing_description: nil)
+    bare = WorldSeed::Exporter.new(reloaded).document["locations"].find { |row| row["name"] == "The Stocked Floor" }["floor"]
+    assert_not bare.key?("safe_rooms")
+    assert_not bare.key?("healing")
+  end
+
   # AND A LAID-OUT FLOOR'S ROOMS ARE THE ENGINE'S, so they are not written: a
   # doorway onto one is written onto the floor, which is where the file had it,
   # and the loader lays a fresh copy out anew.

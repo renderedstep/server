@@ -539,6 +539,10 @@ class WorldSeed::Exporter
       # Omitted rather than written false, like `opening`: the file should say
       # which places move and stay quiet about the ones that do not.
       document["mobile"] = true if location.mobile?
+      # AND WHERE NOBODY IS BORN, on the same terms. A floor's laid-out safe
+      # room is the layout's and is never written (`#locations` leaves every
+      # room of a floor out).
+      document["sanctuary"] = true if location.sanctuary?
       # HOW LIKELY THIS ROOM IS TO BE BORN WITH THE WORLD'S MONSTERS IN IT.
       # Omitted when it is `Location::SAFE`, which is what every room already
       # written is and what an absent key loads back as -- the same "omitted
@@ -596,15 +600,21 @@ class WorldSeed::Exporter
       # engine's to lay out (`#locations` leaves them out), so neither is
       # written and the loader refuses a floor that carries either.
       # Its guards are written by full name, in id order, `levels_up` only
-      # when it is true, since the loader reads it absent as false, and
-      # `minutes` only when it is set.
+      # when it is true, since the loader reads it absent as false,
+      # `minutes` only when it is set, and `safe_rooms` and `healing:` only
+      # when their counts are not zero, which is what an absent key loads as.
       if location.floor
+        floor = location.floor
         guards = location.posted_guards.order(:id).pluck(:fullname)
-        document["floor"] = { "rooms" => location.floor.rooms, "danger" => location.floor.danger,
-                              "hazard" => location.floor.hazard, "down" => location.floor.down_location&.name,
-                              "monster_level" => location.floor.monster_level, "guards" => guards.presence,
-                              "levels_up" => (true if location.floor.levels_up),
-                              "minutes" => location.floor.minutes }.compact
+        healing = { "count" => floor.healing_count, "name" => floor.healing_name,
+                    "description" => text(floor.healing_description) }.compact
+        document["floor"] = { "rooms" => floor.rooms, "danger" => floor.danger,
+                              "hazard" => floor.hazard, "down" => floor.down_location&.name,
+                              "monster_level" => floor.monster_level, "guards" => guards.presence,
+                              "levels_up" => (true if floor.levels_up),
+                              "minutes" => floor.minutes,
+                              "safe_rooms" => (floor.safe_rooms unless floor.safe_rooms.zero?),
+                              "healing" => (healing unless floor.healing_count.zero?) }.compact
       elsif @rolled_layouts || !location.laid_out_alone?
         Location::Box::COLUMNS.each do |column|
           document[column] = location[column] unless location[column].nil?

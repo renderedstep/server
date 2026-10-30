@@ -227,6 +227,17 @@ class Character::RegistryTest < ActiveSupport::TestCase
     end
   end
 
+  # A SAFE ROOM IS BORN WITH NOBODY whatever its word says (`Location#sanctuary`,
+  # the engine's `realize.rs` `slots`).
+  test "a safe room has no slots and writes nobody, even a crowded one" do
+    room = create(:location, :sanctuary, story: @story, name: "The Still Pool", population: "a crowd")
+
+    assert_empty Character::Registry.new(room).slots
+    assert_no_difference -> { Character.count } do
+      Character::Registry.new(room).admit!([ sheet(fullname: "Neb Halloran") ])
+    end
+  end
+
   # AND A PERSON PAST THE LAST SLOT IS REFUSED RATHER THAN WRAPPED. It used to
   # wrap -- `slot % MAX_PER_CALL` -- which would now write a second row off the
   # first person's race and age: two people the prompt described once.
