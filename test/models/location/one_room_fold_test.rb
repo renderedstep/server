@@ -120,6 +120,14 @@ class Location::OneRoomFoldTest < ActiveSupport::TestCase
     assert_match(/never written out/, fold.reasons.join)
   end
 
+  test "a floor of one room is laid out so on purpose, and is not folded" do
+    create(:floor, location: @place, rooms: 1)
+
+    fold = Location::OneRoomFold.candidates(@story).sole
+    assert_not fold.proven?
+    assert_match(/Core Access Chamber is a floor/, fold.reasons.join)
+  end
+
   test "a single room with a name of its own is somebody's floor plan, not a candidate" do
     @room.update!(name: "The Frost Gallery")
 

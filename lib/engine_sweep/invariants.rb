@@ -693,12 +693,20 @@ class EngineSweep::Invariants
 
   # `{ name => { the five columns, plus the parent's name } }` out of the file,
   # with nil for every key it does not write -- which is all six for every room
-  # in every checked-in world.
+  # in every checked-in world. A floor's footprint is the one the loader
+  # derives from its count (`Floor.footprint`), since the file writes none.
   def geometry_in_file
     @geometry_in_file ||= Array(seed["locations"]).to_h do |row|
       [ row["name"], no_geometry.merge(Location::Box::COLUMNS.to_h { |column| [ column, row[column] ] })
+                                .merge(floor_footprint(row["floor"]))
                                 .merge("parent" => row["parent"]) ]
     end
+  end
+
+  def floor_footprint(floor)
+    return {} unless floor.is_a?(Hash)
+
+    %w[width depth].zip(Floor.footprint(Floor.room_count(floor["rooms"], down: floor["down"].present?))).to_h
   end
 
   def geometry_on_record(room)

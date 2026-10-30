@@ -16,6 +16,8 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
                                  distance: "adjacent", travel_method: "walking")
     create(:location_connection, location: @hall, connected_location: @opening,
                                  distance: "adjacent", travel_method: "walking")
+    @cellars = create(:location, :stub, story: @story, name: "The Cellars", width: 12, depth: 12)
+    create(:floor, location: @cellars, rooms: 4, danger: "uneasy")
     @hero = create(:character, story: @story, fullname: "Ada Package", is_protagonist: true,
                                location: @opening)
     other_story = create(:story, title: "Other World Not Packaged")
@@ -81,6 +83,7 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
       connection.execute("DELETE FROM characters_scenes WHERE scene_id IN (SELECT id FROM scenes WHERE story_id IN (#{list}))")
       connection.execute("DELETE FROM scenes WHERE story_id IN (#{list})")
       connection.execute("DELETE FROM location_connections WHERE location_id IN (SELECT id FROM locations WHERE story_id IN (#{list}))")
+      connection.execute("DELETE FROM floors WHERE location_id IN (SELECT id FROM locations WHERE story_id IN (#{list}))")
       connection.execute("DELETE FROM locations WHERE story_id IN (#{list})")
       connection.execute("DELETE FROM characters WHERE story_id IN (#{list})")
       connection.execute("DELETE FROM stories WHERE id IN (#{list})")
@@ -122,8 +125,10 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
       assert_equal "Package Fixture Story", Story.sole.title
       assert_equal 1, Playthrough.count
       assert_equal @playthrough.id, Playthrough.sole.id
-      assert_equal [ "The Foyer", "The Hall" ].sort, Location.order(:name).pluck(:name)
+      assert_equal [ "The Cellars", "The Foyer", "The Hall" ], Location.order(:name).pluck(:name)
       assert_nil Location.find_by(name: "Should Not Appear")
+      # A floor goes with the place it is.
+      assert_equal [ [ "The Cellars", 4, "uneasy" ] ], Floor.includes(:location).map { |floor| [ floor.location.name, floor.rooms, floor.danger ] }
       assert_equal 1, Item.where(playthrough_id: nil).count
       assert_equal 1, Item.where(playthrough_id: @playthrough.id).count
       assert_equal "/look", Playthrough::Command.sole.command

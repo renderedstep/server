@@ -351,6 +351,87 @@ class Location::GeneratorTest < ActiveSupport::TestCase
     assert_equal "climbing", edge.travel_method
   end
 
+  # AND KEEPS EVERYTHING ELSE IT WAS, side by side: its lock and key on both
+  # rows, its hazard on the row that had one, every game's opening through it
+  # and every toll paid crossing it. renderedstep/engine#94 made the same move
+  # in the engine's `open_the_way_in`.
+  def keyed_cellar
+    place = stub_location(name: "The Old Cellar", width: 12, depth: 9)
+    landing = create(:location, story: @story, name: "The Landing")
+    key = create(:item, character: nil, location: landing, use_kind: "key", name: "cellar key")
+    down = create(:location_connection, location: landing, connected_location: place, distance: "adjacent",
+                                        travel_method: "taking stairs", barrier: "keyed", key_template: key,
+                                        hazard: "drop", hazard_die: 4)
+    up = create(:location_connection, location: place, connected_location: landing, distance: "adjacent",
+                                      travel_method: "taking stairs", barrier: "keyed", key_template: key)
+    [ place, landing, key, down, up ]
+  end
+
+  def lay_out_and_open!(place)
+    Location::Interior.lay_out!(place)
+    Location::Generator.new(place).open_the_way_in!
+    Location::Interior.entry_room(place.reload)
+  end
+
+  test "a moved doorway keeps its lock and its key on both sides" do
+    place, landing, key, = keyed_cellar
+
+    entry = lay_out_and_open!(place)
+
+    [ [ landing, entry ], [ entry, landing ] ].each do |from, to|
+      edge = LocationConnection.find_by!(location: from, connected_location: to)
+      assert_equal [ "keyed", key ], [ edge.barrier, edge.key_template ], "#{from.name} -> #{to.name}"
+    end
+  end
+
+  test "a moved doorway keeps a one-way hazard on the side that had it" do
+    place, landing, = keyed_cellar
+
+    entry = lay_out_and_open!(place)
+
+    assert_equal [ "drop", 4 ], LocationConnection.find_by!(location: landing, connected_location: entry).slice(:hazard, :hazard_die).values
+    assert_equal [ nil, nil ], LocationConnection.find_by!(location: entry, connected_location: landing).slice(:hazard, :hazard_die).values
+  end
+
+  # A SIDE NEVER WRITTEN is made from the way back: its lock and key, and no
+  # hazard, since a hazard is paid in one direction.
+  test "a half-written doorway is moved whole, its missing side locked like the other and free of its hazard" do
+    place, landing, key, _, up = keyed_cellar
+    up.destroy!
+
+    entry = lay_out_and_open!(place)
+
+    back = LocationConnection.find_by!(location: entry, connected_location: landing)
+    assert_equal [ "keyed", key, nil ], [ back.barrier, back.key_template, back.hazard ]
+  end
+
+  test "a moved doorway keeps every game's opening through it, ids and all" do
+    place, landing, key, down, = keyed_cellar
+    first = create(:playthrough, story: @story, current_location: landing)
+    second = create(:playthrough, story: @story, current_location: landing)
+    opened = Playthrough::Passage.open!(first, down, means: "key", item: first.items.find_by!(template: key))
+
+    entry = lay_out_and_open!(place)
+
+    moved = Playthrough::Passage.where(id: opened.map(&:id)).order(:id)
+    assert_equal opened.map(&:id), moved.map(&:id)
+    assert_equal [ [ landing, entry ], [ entry, landing ] ],
+                 moved.map { |passage| [ passage.location_connection.location, passage.location_connection.connected_location ] }
+    assert(moved.all? { |passage| passage.playthrough == first && passage.means == "key" })
+    assert LocationConnection.find_by!(location: landing, connected_location: entry).open_for?(first)
+    assert_not LocationConnection.find_by!(location: landing, connected_location: entry).open_for?(second)
+  end
+
+  test "a toll paid crossing a moved doorway names the doorway it moved to" do
+    place, landing, _, down, = keyed_cellar
+    game = create(:playthrough, :started, story: @story)
+    toll = create(:playthrough_toll, playthrough: game, location: place, hazard: "drop", location_connection: down)
+
+    entry = lay_out_and_open!(place)
+
+    assert_equal LocationConnection.find_by!(location: landing, connected_location: entry), toll.reload.location_connection
+  end
+
   # A PLACE WITH AN INSIDE IS ASKED FOR NO WAYS OUT, and a fake with one queued
   # answer is what proves the call was never made: a second ask raises.
   test "a place that has been laid out is asked for no ways out of its own" do

@@ -251,6 +251,16 @@ class Location::Generator
   # method a model picked for "the way to The Rusted Anchor" are the distance
   # and travel method of the way to its taproom.
   #
+  # AND SO IS EVERYTHING ELSE THE DOORWAY WAS, side by side
+  # (`#doorway_side`): its barrier and its key on both rows, its hazard on the
+  # row that had one -- so a one-way drop keeps its direction -- and every
+  # game's opening through it (`Playthrough::Passage`, re-made on the new row
+  # with its id kept) and every toll paid crossing it (`Playthrough::Toll`,
+  # pointed at the new row). Before this, a locked door onto a building came
+  # out of the layout unlocked for everybody, and a toll on the old row made
+  # its delete fail its foreign key. The engine's `open_the_way_in` is the same
+  # move, and renderedstep/engine#94 made it.
+  #
   # A DOOR IS TWO ROWS, so the pair is dropped and the pair is rewritten, and
   # #connect! is what writes them -- the same writer, the same direction-neutral
   # values, no second spelling of what a doorway is.
@@ -267,21 +277,54 @@ class Location::Generator
   # a party standing in a container, its rooms reachable from nowhere. A
   # building nothing can reach is `Story::Doctor`'s to report
   # (`place_reachable_only_from_inside`) and the neighbour keeps every other way
-  # out it had.
+  # out it had. Its tolls are left naming no doorway, as a demolished one's are.
+  #
+  # A FLOOR'S WAY DOWN IS NOT ROUTED HERE: this generator never lays a floor
+  # out (the engine does, `Floor`), so it has no way-down room to open one onto.
   def open_the_way_in!
     doorstep = Location::Interior.doorstep(location)
     return if doorstep.empty?
 
     ways_in.each do |neighbour, attributes|
-      LocationConnection.where(location: location, connected_location: neighbour).delete_all
-      LocationConnection.where(location: neighbour, connected_location: location).delete_all
+      sides = [ doorway_side(location, neighbour), doorway_side(neighbour, location) ]
+      Playthrough::Toll.where(id: sides.flat_map { |side| side[:tolls] }).update_all(location_connection_id: nil)
+      doomed = LocationConnection.where(location: location, connected_location: neighbour)
+                                 .or(LocationConnection.where(location: neighbour, connected_location: location))
+      Playthrough::Passage.where(location_connection: doomed).delete_all
+      doomed.delete_all
 
       room = doorstep.find { |candidate| room_for_a_way_in?(candidate) }
       next if room.nil?
 
-      connect!(room, neighbour, attributes)
-      connect!(neighbour, room, attributes)
+      [ [ room, neighbour, sides.first ], [ neighbour, room, sides.last ] ].each do |from, to, side|
+        written = connect!(from, to, attributes, carried: side[:values]) or next
+
+        side[:passages].each { |passage| Playthrough::Passage.create!(passage.merge("location_connection_id" => written.id)) }
+        Playthrough::Toll.where(id: side[:tolls]).update_all(location_connection_id: written.id)
+      end
     end
+  end
+
+  # WHAT A MOVED DOORWAY KEEPS ON ITS SIDE FROM `from` TO `to`. Read before
+  # anything is deleted. `values` are the columns the new row is written with:
+  # the barrier and the key, and the hazard only where this side had the row --
+  # a side never written takes the way back's barrier and key and no hazard,
+  # since a hazard is paid in one direction. `passages` are every game's
+  # openings of this side, id included, and `tolls` the ids of every toll paid
+  # crossing it.
+  PASSAGE_COLUMNS = %w[id playthrough_id means opened_at opened_by_item_id created_at updated_at].freeze
+
+  def doorway_side(from, to)
+    own = LocationConnection.find_by(location: from, connected_location: to)
+    source = own || LocationConnection.find_by(location: to, connected_location: from)
+    return { values: {}, passages: [], tolls: [] } if source.nil?
+
+    values = { "barrier" => source.barrier, "key_template_id" => source.key_template_id }
+    return { values: values, passages: [], tolls: [] } if own.nil?
+
+    { values: values.merge("hazard" => own.hazard, "hazard_die" => own.hazard_die),
+      passages: own.passages.order(:id).map { |passage| passage.attributes.slice(*PASSAGE_COLUMNS) },
+      tolls: own.tolls.order(:id).ids }
   end
 
   # EVERY DOORWAY THIS PLACE ARRIVED WITH, as the far end and the label to carry
@@ -1583,17 +1626,22 @@ class Location::Generator
   # not keep a paid answer through. Anything the save itself raises is left as
   # itself: a uniqueness collision written by the far side's own generator is
   # not a bad label and does not cost this room its answer.
-  def connect!(from, to, attributes)
+  #
+  # `carried` is what a moved doorway keeps (`#doorway_side`); the row written
+  # is returned, or nil when it was already there.
+  def connect!(from, to, attributes, carried: {})
     return if LocationConnection.exists?(location: from, connected_location: to)
 
     edge = LocationConnection.new(
       location: from,
       connected_location: to,
       distance: sanitize_string(attributes["distance"]),
-      travel_method: sanitize_string(attributes["travel_method"])
+      travel_method: sanitize_string(attributes["travel_method"]),
+      **carried.symbolize_keys
     )
     raise UnusableExitLabel.new(edge) unless edge.valid?
 
     edge.save!
+    edge
   end
 end

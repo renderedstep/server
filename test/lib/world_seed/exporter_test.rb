@@ -323,6 +323,52 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_equal [ 20, 200 ], [ reloaded.people_limit, reloaded.things_limit ]
   end
 
+  # A FLOOR IS WRITTEN AS ITS PARAMETERS (`Floor`): the loader derives its
+  # footprint and the engine lays out its rooms, so neither is written.
+  test "exports a floor as its parameters, and a world with floors round-trips" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)
+    story = WorldSeed::Loader.new(world).load!
+
+    document = WorldSeed::Exporter.new(story).document
+    rows = document["locations"].index_by { |row| row["name"] }
+    assert_equal({ "rooms" => 4, "danger" => "uneasy", "hazard" => "none", "down" => "The Lower Floor" },
+                 rows["The Upper Floor"]["floor"])
+    assert_equal({ "rooms" => 2, "danger" => "dangerous", "hazard" => "unlit" }, rows["The Lower Floor"]["floor"])
+    assert_not rows["The Upper Floor"].key?("width"), "the loader derives a floor's footprint"
+    assert_not rows["The Old Cellar"].key?("floor")
+
+    document["story"]["title"] = "Two Floors Again"
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+    floors = ->(of) { Floor.where(location: of.locations).includes(:location, :down_location).order(:id).map { |floor| [ floor.location.name, floor.rooms, floor.danger, floor.hazard, floor.down_location&.name ] } }
+    assert_equal floors.call(story), floors.call(reloaded)
+    assert_equal [ 12, 12 ], reloaded.locations.find_by!(name: "The Upper Floor").slice(:width, :depth).values
+  end
+
+  # AND A LAID-OUT FLOOR'S ROOMS ARE THE ENGINE'S, so they are not written: a
+  # doorway onto one is written onto the floor, which is where the file had it,
+  # and the loader lays a fresh copy out anew.
+  test "a laid-out floor exports without its rooms, its doorways written onto the floor" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)
+    story = WorldSeed::Loader.new(world).load!
+    upper = story.locations.find_by!(name: "The Upper Floor")
+    Location::Interior.lay_out!(upper)
+    Location::Generator.new(upper).open_the_way_in!
+    assert_empty upper.reload.exits, "the fixture moves the floor's doorways onto its rooms"
+
+    exporter = WorldSeed::Exporter.new(story)
+    document = exporter.document
+
+    assert_equal world["locations"].map { |row| row["name"] }, document["locations"].map { |row| row["name"] }
+    assert_equal world["connections"].map { |row| row["between"].sort }.sort,
+                 document["connections"].map { |row| row["between"].sort }.sort
+    stair = document["connections"].find { |row| row["between"].sort == [ "The Lower Floor", "The Upper Floor" ] }
+    assert_equal [ "keyed", "stair key" ], stair.values_at("barrier", "key_template")
+    assert(exporter.warnings.any? { |line| line.match?(/room\(s\) of a floor not exported/) })
+
+    document["story"]["title"] = "Two Floors Again"
+    WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+  end
+
   test "exports a thing's material, and a world with one round-trips" do
     create(:character, :protagonist, story: @story, fullname: "Isbet Marrow")
     create(:item, character: nil, location: @opening, name: "A Clay Jar", material: "pottery", fragility: "brittle")

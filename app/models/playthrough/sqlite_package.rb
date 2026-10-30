@@ -151,6 +151,9 @@ class Playthrough::SqlitePackage
       "characters" => rows_by_id(connection, "characters", character_ids),
       "items" => rows_by_id(connection, "items", template_ids + playthrough_item_ids),
       "location_connections" => location_connection_rows(connection, location_ids),
+      # A FLOOR GOES WITH THE PLACE IT IS, and its way down is one of the
+      # story's own places, so every row it names is in the package.
+      "floors" => rows_where(connection, "floors", "location_id", location_ids),
       "quests" => rows_by_id(connection, "quests", quest_ids),
       "quest_steps" => rows_where(connection, "quest_steps", "quest_id", quest_ids),
       "quest_outcomes" => rows_where(connection, "quest_outcomes", "quest_id", quest_ids),
@@ -338,6 +341,7 @@ class Playthrough::SqlitePackage
       insert_table(connection, "characters", bundle["characters"])
       insert_table(connection, "items", bundle["items"])
       insert_table(connection, "location_connections", bundle["location_connections"])
+      insert_table(connection, "floors", bundle["floors"])
       insert_table(connection, "quests", bundle["quests"])
       insert_table(connection, "quest_steps", bundle["quest_steps"])
       insert_table(connection, "quest_outcomes", bundle["quest_outcomes"])

@@ -2256,6 +2256,98 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_not_includes codes(story), :door_between_rooms_that_share_no_wall
   end
 
+  # --- floors ---------------------------------------------------------------
+  #
+  # A FLOOR LAID OUT AS THE ENGINE LAYS ONE (`Floor`): its four rooms on storey
+  # 0 inside its 12x12 footprint, the way in on the entry and the way down on
+  # the second room. Drawn here by hand so each test can break one thing.
+  def laid_out_floor
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)).load!
+    upper, lower = [ "The Upper Floor", "The Lower Floor" ].map { |name| story.locations.find_by!(name: name) }
+    rooms = [ [ 0, 0 ], [ 6, 0 ], [ 6, 6 ], [ 0, 6 ] ].each_with_index.map do |(x, y), index|
+      create(:location, :stub, story: story, name: "The Upper Floor room #{index + 1}", parent_location: upper,
+                               x: x, y: y, z: 0, width: 6, depth: 6)
+    end
+    rooms.each_cons(2) { |one, other| connect(one, other) }
+    LocationConnection.where(location: upper).or(LocationConnection.where(connected_location: upper)).delete_all
+    connect(rooms.first, story.locations.find_by!(name: "The Landing"), travel_method: "taking stairs")
+    connect(rooms.second, lower, travel_method: "taking stairs")
+    [ story, upper, rooms ]
+  end
+
+  def floor_codes(story) = codes(story).grep(/\Afloor_/)
+
+  test "a floor laid out as the engine lays one is not a finding" do
+    story, = laid_out_floor
+
+    assert_empty floor_codes(story)
+  end
+
+  test "a floor unlaid out is not a finding" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)).load!
+
+    assert_empty floor_codes(story)
+  end
+
+  # A re-seed that changed the count after the floor was laid out.
+  test "a laid-out floor whose count changed after it was laid out is reported and never repaired" do
+    story, upper, = laid_out_floor
+    upper.floor.update!(rooms: 9)
+
+    found = finding(story, :floor_laid_out_to_another_count)
+    assert_equal [ :warning, :manual, upper ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/a floor of 9 room\(s\) and was laid out with 4/, found.message)
+  end
+
+  test "a floor whose way down is not a floor is reported" do
+    story, upper, = laid_out_floor
+    upper.floor.update_column(:down_location_id, story.locations.find_by!(name: "The Old Cellar").id)
+
+    assert_match(/whose way down is The Old Cellar, which is not a floor/, finding(story, :floor_going_down_to_no_floor).message)
+  end
+
+  test "a room of a floor the engine could not have laid out is reported" do
+    story, _, rooms = laid_out_floor
+    rooms.last.update!(z: 1)
+
+    assert_match(/The Upper Floor room 4 is inside The Upper Floor, a floor, and not on its storey 0/,
+                 finding(story, :floor_with_a_hand_drawn_room).message)
+
+    rooms.last.update!(z: 0, x: 12)
+    assert_includes floor_codes(story), :floor_with_a_hand_drawn_room
+  end
+
+  test "a laid-out floor none of whose rooms leads down is reported" do
+    story, _, rooms = laid_out_floor
+    lower = story.locations.find_by!(name: "The Lower Floor")
+    LocationConnection.where(location: rooms.second, connected_location: lower).delete_all
+
+    assert_match(/whose way down is The Lower Floor, and none of its rooms leads there/,
+                 finding(story, :floor_with_no_way_down).message)
+  end
+
+  # The way down may land on a room of the floor below, once that is laid out.
+  test "a way down onto a room of the floor below is a way down" do
+    story, _, rooms = laid_out_floor
+    lower = story.locations.find_by!(name: "The Lower Floor")
+    below, beyond = [ 0, 6 ].each_with_index.map do |x, index|
+      create(:location, :stub, story: story, name: "The Lower Floor room #{index + 1}", parent_location: lower,
+                               x: x, y: 0, z: 0, width: 6, depth: 6)
+    end
+    connect(below, beyond)
+    LocationConnection.where(location: rooms.second, connected_location: lower).update_all(connected_location_id: below.id)
+
+    assert_empty floor_codes(story)
+  end
+
+  test "a floor whose way down is on its entry is reported" do
+    story, _, rooms = laid_out_floor
+    connect(rooms.first, story.locations.find_by!(name: "The Lower Floor"), travel_method: "taking stairs")
+
+    assert_match(/entry room The Upper Floor room 1 leads down to The Lower Floor/,
+                 finding(story, :floor_way_down_on_its_entry).message)
+  end
+
   # A BUILDING WRITTEN OUT IN FULL WITH NOTHING INSIDE IT. The layout and the
   # flip to `realized` are one transaction, so a realized place with a footprint
   # has rooms -- see `Location::Generator#lay_out_interior!`.

@@ -174,6 +174,7 @@ class WorldSeed::Exporter
     end
 
     report_unloadable_geometry
+    report_floor_rooms
 
     # A ROW THAT SAYS BOTH THINGS. `deliberately_absent` with a whereabouts is
     # a contradiction no code path in the app writes -- `Character#move_to!`
@@ -193,6 +194,19 @@ class WorldSeed::Exporter
     end
 
     report_partial_stats
+  end
+
+  # WHAT A LAID-OUT FLOOR HOLDS THAT THE FILE CANNOT: its rooms, and the things
+  # and people in them. The file carries the floor's parameters, and a fresh
+  # load lays it out anew from them (`Floor`), so what was born in these rooms
+  # is left behind and said so.
+  def report_floor_rooms
+    return if floor_rooms.empty?
+
+    things = Item.templates.where(location_id: floor_rooms.keys).count
+    people = story.characters.where(location_id: floor_rooms.keys).count
+    @warnings << "#{floor_rooms.size} room(s) of a floor not exported, with the #{things} thing(s) and #{people} " \
+                 "person(s) in them: the engine lays a floor out from its `floor:` key, and lays a fresh load's out anew."
   end
 
   # THE REST OF WHAT `WorldSeed::Loader#validate_boxes!` REFUSES, and it is here
@@ -415,7 +429,10 @@ class WorldSeed::Exporter
       # follow on a location. The key is what makes a seeded cast reachable:
       # `Character.present_in` is the closed set `talk` resolves against, so a
       # world exported without it loads with nobody standing anywhere.
-      document["location"] = character.location.name if character.location
+      #
+      # SOMEBODY STANDING IN A ROOM OF A FLOOR IS WRITTEN NOWHERE, because the
+      # room is not written (`#locations`), and `#warn_about_unexported!` says so.
+      document["location"] = character.location.name if character.location && !floor_rooms.key?(character.location_id)
       # NOWHERE ON PURPOSE, and written only when the record says so -- the
       # same "omitted rather than written false" rule `opening`, `mobile` and
       # `readable` follow. It is mutually exclusive with `location` above
@@ -568,7 +585,14 @@ class WorldSeed::Exporter
       # A row in neither shape is a partial box, which the loader refuses; it is
       # reported by `#warnings` rather than quietly repaired here.
       document["parent"] = location.parent_location.name if location.parent_location
-      unless !@rolled_layouts && location.laid_out_alone?
+      # A FLOOR IS WRITTEN AS ITS PARAMETERS AND NOTHING THE ENGINE DREW: its
+      # footprint is the loader's to derive from `rooms` and its rooms are the
+      # engine's to lay out (`#locations` leaves them out), so neither is
+      # written and the loader refuses a floor that carries either.
+      if location.floor
+        document["floor"] = { "rooms" => location.floor.rooms, "danger" => location.floor.danger,
+                              "hazard" => location.floor.hazard, "down" => location.floor.down_location&.name }.compact
+      elsif @rolled_layouts || !location.laid_out_alone?
         Location::Box::COLUMNS.each do |column|
           document[column] = location[column] unless location[column].nil?
         end
@@ -656,10 +680,16 @@ class WorldSeed::Exporter
 
   # One entry per undirected edge, ordered by where its endpoints appear in the
   # locations list, so the file reads outward from the opening location.
+  #
+  # A DOORWAY ONTO A ROOM OF A FLOOR IS WRITTEN AS ONE ONTO THE FLOOR, which is
+  # what the file said before the engine moved it there (`#open_the_way_in!`),
+  # and a doorway between two rooms of one floor is the engine's and is not
+  # written at all.
   def connections_document
     order = locations.each_with_index.to_h { |location, index| [ location.id, index ] }
-    rows = LocationConnection.where(location: locations).includes(:location, :connected_location)
-    by_pair = rows.group_by { |row| [ row.location_id, row.connected_location_id ].sort }
+    rows = LocationConnection.where(location: story.locations).includes(:location, :connected_location)
+    by_pair = rows.group_by { |row| [ exported_id(row.location_id), exported_id(row.connected_location_id) ].sort }
+    by_pair.reject! { |(one, other), _| one == other }
 
     by_pair.keys.sort_by { |pair| pair.map { |id| order.fetch(id, Float::INFINITY) } }.map do |pair|
       edge_document(pair, by_pair.fetch(pair), order)
@@ -775,7 +805,7 @@ class WorldSeed::Exporter
   end
 
   def edge_document(pair, rows, order)
-    row = rows.min_by { |candidate| order.fetch(candidate.location_id, Float::INFINITY) }
+    row = rows.min_by { |candidate| order.fetch(exported_id(candidate.location_id), Float::INFINITY) }
     names = pair.sort_by { |id| order.fetch(id, Float::INFINITY) }.map { |id| location_names.fetch(id) }
 
     warn_about(row, rows, names)
@@ -801,12 +831,13 @@ class WorldSeed::Exporter
     return {} if hazardous.empty?
 
     row = hazardous.first
+    from = location_names.fetch(exported_id(row.location_id))
     if hazardous.size > 1
-      @warnings << "#{rows.map { |candidate| candidate.location.name }.join(" <-> ")}: both directions carry a " \
-                   "hazard and a file can only say one; exported #{row.location.name}'s. Fix it by hand before loading."
+      @warnings << "#{rows.map { |candidate| location_names.fetch(exported_id(candidate.location_id)) }.join(" <-> ")}: " \
+                   "both directions carry a hazard and a file can only say one; exported #{from}'s. Fix it by hand before loading."
     end
 
-    { "hazard" => row.hazard, "hazard_die" => row.hazard_die, "hazard_from" => row.location.name }
+    { "hazard" => row.hazard, "hazard_die" => row.hazard_die, "hazard_from" => from }
   end
 
   def warn_about(row, rows, names)
@@ -830,13 +861,26 @@ class WorldSeed::Exporter
   # Opening location first: Story#opening_location is the story's lowest-id
   # location, so the order locations appear in the file is the order the loader
   # creates them in and has to put the opening first.
+  #
+  # A ROOM OF A FLOOR IS NOT WRITTEN: the engine laid it out and lays a fresh
+  # load's out again (`Floor`), and the loader refuses a location inside one.
   def locations
     @locations ||= begin
-      all = story.locations.order(:id).to_a
+      all = story.locations.includes(:floor).order(:id).to_a.reject { |location| floor_rooms.key?(location.id) }
       opening = story.opening_location
       ([ opening ] + all.reject { |location| location == opening }).compact
     end
   end
+
+  # `{ room id => its floor's id }` for every room of a floor in the story.
+  def floor_rooms
+    @floor_rooms ||= story.locations.where(parent_location_id: Floor.where(location: story.locations).select(:location_id))
+                          .pluck(:id, :parent_location_id).to_h
+  end
+
+  # The location a row names as the file writes it: a room of a floor is its
+  # floor.
+  def exported_id(id) = floor_rooms.fetch(id, id)
 
   def location_names
     @location_names ||= locations.index_by(&:id).transform_values(&:name)

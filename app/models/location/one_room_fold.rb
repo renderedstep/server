@@ -60,7 +60,12 @@ class Location::OneRoomFold
     [ Playthrough::Visit, :location_id ],
     [ Playthrough::Volition::Record, :location_id ],
     [ LocationConnection, :location_id ],
-    [ LocationConnection, :connected_location_id ]
+    [ LocationConnection, :connected_location_id ],
+    # Never a room's: a floors row names a floor and the floor below it, and a
+    # floor is never folded (`#reasons`). Moved anyway, so nothing is left
+    # naming the deleted row whatever a database carries.
+    [ Floor, :location_id ],
+    [ Floor, :down_location_id ]
   ].freeze
 
   # What somebody may have put IN the place row itself. Any of it makes the
@@ -108,6 +113,9 @@ class Location::OneRoomFold
   def reasons
     @reasons ||= [
       ("#{place.name} carries no footprint of its own" unless place.place?),
+      # A floor of one room is laid out so on purpose (`Floor`), and is left
+      # alone once it is (VISION principle 7).
+      ("#{place.name} is a floor" if place.floor),
       ("#{room.name} does not fill the whole of #{place.name}" unless fills_the_place?),
       ("#{room.name} has rooms inside it" if room.child_locations.exists?),
       ("#{room.name} was never written out" unless room.realized?),

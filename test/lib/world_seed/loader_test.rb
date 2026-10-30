@@ -383,6 +383,102 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     assert_match(/`limits:` has rooms; there is: people, things/, error.message)
   end
 
+  # A FLOOR (`Floor`): its row, every key in both directions, and the footprint
+  # the loader derives from its count so it is a place before anybody walks in.
+  test "seeds a floor with its row and the footprint its count derives" do
+    story = WorldSeed::Loader.new(floors_world).load!
+    upper, lower = %w[The\ Upper\ Floor The\ Lower\ Floor].map { |name| story.locations.find_by!(name: name) }
+
+    assert_equal [ 4, "uneasy", "none", lower ], upper.floor.values_at(:rooms, :danger, :hazard).push(upper.floor.down_location)
+    assert_equal [ 2, "dangerous", "unlit", nil ], lower.floor.values_at(:rooms, :danger, :hazard).push(lower.floor.down_location)
+    assert_equal [ 12, 12 ], [ upper.width, upper.depth ]
+    assert_equal [ 12, 6 ], [ lower.width, lower.depth ]
+    assert_equal "warren", upper.kind
+    assert_predicate upper, :place?
+    assert_nil story.locations.find_by!(name: "The Old Cellar").floor
+  end
+
+  test "an absent floor key writes nil, and a place the file stops calling a floor is not one" do
+    WorldSeed::Loader.new(floors_world).load!
+
+    world = floors_world
+    upper = world["locations"].find { |row| row["name"] == "The Upper Floor" }
+    upper["floor"] = { "rooms" => 4 }
+    world["locations"].find { |row| row["name"] == "The Lower Floor" }.except!("floor", "kind")
+    story = WorldSeed::Loader.new(world).load!
+
+    floor = story.locations.find_by!(name: "The Upper Floor").floor
+    assert_equal [ 4, nil, nil, nil ], [ floor.rooms, floor.danger, floor.hazard, floor.down_location_id ]
+    assert_nil story.locations.find_by!(name: "The Lower Floor").floor
+    assert_equal 1, Floor.where(location: story.locations).count
+  end
+
+  # VISION principle 7: a floor is laid out once. A re-seed that changes its
+  # count after that changes the row and nothing it drew.
+  test "re-seeding a laid-out floor changes its row and leaves its rooms and footprint alone" do
+    story = WorldSeed::Loader.new(floors_world).load!
+    upper = story.locations.find_by!(name: "The Upper Floor")
+    Location::Interior.lay_out!(upper)
+    rooms = upper.child_locations.order(:id).pluck(:id, :x, :y, :z, :width, :depth)
+
+    world = floors_world
+    world["locations"].find { |row| row["name"] == "The Upper Floor" }["floor"]["rooms"] = 9
+    WorldSeed::Loader.new(world).load!
+
+    upper.reload
+    assert_equal 9, upper.floor.rooms
+    assert_equal [ 12, 12 ], [ upper.width, upper.depth ]
+    assert_equal rooms, upper.child_locations.order(:id).pluck(:id, :x, :y, :z, :width, :depth)
+  end
+
+  test "rejects a floor the engine could not lay out as the file says" do
+    {
+      ->(floor, _) { floor["rooms"] = "4" } => /`floor: rooms: "4"`; a floor is a whole number of rooms from 1 to 1000/,
+      ->(floor, _) { floor["rooms"] = 0 } => /`floor: rooms: 0`/,
+      ->(floor, _) { floor["rooms"] = 1001 } => /`floor: rooms: 1001`/,
+      ->(floor, _) { floor["rooms"] = 1 } => /has a way down and `floor: rooms: 1`/,
+      ->(floor, _) { floor["danger"] = "deadly" } => /`floor: danger: "deadly"`; there is: safe, uneasy, dangerous/,
+      ->(floor, _) { floor["hazard"] = "lava" } => /`floor: hazard: "lava"`; there is: none, flooded/,
+      ->(floor, _) { floor["guards"] = 2 } => /`floor:` has guards; there is: rooms, danger, hazard, down/,
+      ->(floor, _) { floor["down"] = "The Old Cellar" } => /goes down to "The Old Cellar", which is not a `floor:` location/,
+      ->(floor, _) { floor["down"] = "The Upper Floor" } => /"The Upper Floor" goes down to itself/,
+      ->(_, row) { row["width"] = 12 } => /is a floor and carries width; a floor's footprint is derived/,
+      ->(_, row) { row["z"] = 0 } => /is a floor and carries z/,
+      ->(_, row) { row.merge!("detail_level" => "realized", "description" => "A floor.", "lore" => "Old.") } =>
+        /is a floor and is `detail_level: "realized"`/,
+      ->(_, row) { row["kind"] = "cave" } => /`kind: "cave"`; there is: house, farmhouse/
+    }.each do |edit, message|
+      world = floors_world
+      row = world["locations"].find { |candidate| candidate["name"] == "The Upper Floor" }
+      edit.call(row["floor"], row)
+
+      error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+      assert_match message, error.message
+    end
+    assert_nil Story.find_by(title: "Two Floors and a Key")
+  end
+
+  test "rejects a way down no connection joins, and floors that go down into each other" do
+    world = floors_world
+    world["connections"].reject! { |row| row["between"] == [ "The Upper Floor", "The Lower Floor" ] }
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+    assert_match(/goes down to "The Lower Floor", and no connection joins the two/, error.message)
+
+    world = floors_world
+    world["locations"].find { |row| row["name"] == "The Lower Floor" }["floor"]["down"] = "The Upper Floor"
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+    assert_match(/these floors go down into each other: The Upper Floor -> The Lower Floor -> The Upper Floor/, error.message)
+  end
+
+  test "rejects a location the file puts inside a floor" do
+    world = floors_world
+    world["locations"] << { "name" => "A Drawn Room", "detail_level" => "stub", "parent" => "The Upper Floor",
+                            "teaser" => "A room somebody drew by hand." }
+
+    error = assert_raises(WorldSeed::Loader::InvalidWorld) { WorldSeed::Loader.new(world).load! }
+    assert_match(/"A Drawn Room" has `parent: "The Upper Floor"`, which is a floor/, error.message)
+  end
+
   # WHAT SORT OF PLACE A ROOM IS AND HOW CLUTTERED, on `population`'s terms: an
   # absent key is nobody picked, re-asserted in both directions, and a word the
   # list lacks is refused with the file and the room (`Location::Kind`).
@@ -1990,6 +2086,10 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
 
     assert_match(/is in no room/, error.message)
   end
+
+  # The sweep's world of two floors and a keyed cellar stair, fresh on every
+  # call, for `document`'s reason.
+  def floors_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)
 
   # Built fresh on every call so a test can edit it without touching another's.
   def document

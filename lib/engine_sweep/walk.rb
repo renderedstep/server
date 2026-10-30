@@ -283,10 +283,21 @@ class EngineSweep::Walk
     end
     doors = LocationConnection.where(location: story.locations).where.not(id: before.fetch(:connections))
                               .includes(:location, :connected_location)
-                              .map { |row| [ row.location.name, row.connected_location.name ].sort }.uniq
+                              .group_by { |row| [ row.location.name, row.connected_location.name ].sort }
     @loaded["locations"] = Array(@loaded["locations"]) + born
     @loaded["connections"] = Array(@loaded["connections"]).reject { |row| moved_in(story, before).include?(Array(row["between"]).sort) } +
-                             doors.map { |pair| { "between" => pair } }
+                             doors.map { |pair, rows| born_door(pair, rows) }
+  end
+
+  # A BORN DOOR AS THE FILE WOULD WRITE IT, with the hazard on the side that
+  # has one: a doorway a layout moved keeps its hazard
+  # (`Location::Generator#open_the_way_in!`), and every later turn must too.
+  def born_door(pair, rows)
+    hazardous = rows.find { |row| row.hazard.present? }
+    return { "between" => pair } if hazardous.nil?
+
+    { "between" => pair, "hazard" => hazardous.hazard, "hazard_die" => hazardous.hazard_die,
+      "hazard_from" => hazardous.location.name }
   end
 
   # AND THE DOORS A BUILDING'S REALIZATION MOVED. Laying a building out moves
