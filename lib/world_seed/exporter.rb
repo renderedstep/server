@@ -595,14 +595,16 @@ class WorldSeed::Exporter
       # footprint is the loader's to derive from `rooms` and its rooms are the
       # engine's to lay out (`#locations` leaves them out), so neither is
       # written and the loader refuses a floor that carries either.
-      # Its guards are written by full name, in id order, and `levels_up` only
-      # when it is true, since the loader reads it absent as false.
+      # Its guards are written by full name, in id order, `levels_up` only
+      # when it is true, since the loader reads it absent as false, and
+      # `minutes` only when it is set.
       if location.floor
         guards = location.posted_guards.order(:id).pluck(:fullname)
         document["floor"] = { "rooms" => location.floor.rooms, "danger" => location.floor.danger,
                               "hazard" => location.floor.hazard, "down" => location.floor.down_location&.name,
                               "monster_level" => location.floor.monster_level, "guards" => guards.presence,
-                              "levels_up" => (true if location.floor.levels_up) }.compact
+                              "levels_up" => (true if location.floor.levels_up),
+                              "minutes" => location.floor.minutes }.compact
       elsif @rolled_layouts || !location.laid_out_alone?
         Location::Box::COLUMNS.each do |column|
           document[column] = location[column] unless location[column].nil?

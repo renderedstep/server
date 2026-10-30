@@ -3127,12 +3127,30 @@ class Story::Doctor
   #                                    a guard once, so nothing ever will
   #   floor_reached_that_is_no_floor   a game reached a place that is no
   #                                    floor now
+  #   floor_fallen_with_no_countdown   a floor fell in a game and has no
+  #                                    `minutes` now
   def floors
     Floor.where(location: story.locations).includes(:location, down_location: :floor).order(:id).flat_map do |floor|
       place = floor.location
       rooms = place.child_locations.order(:id).to_a
       [ *floor_going_down_to_no_floor(floor), *(rooms.any? ? laid_out_floor(floor, place, rooms) : []) ]
-    end + posted_guards + floors_reached_that_are_no_floor
+    end + posted_guards + floors_reached_that_are_no_floor + floors_fallen_with_no_countdown
+  end
+
+  # A FLOOR THAT FELL IN A GAME AND HAS NO COUNTDOWN NOW (`Playthrough::FloorReached#fell_at`).
+  # The engine fells only a floor with `minutes`, so a re-seed that took
+  # `minutes:` off it leaves exactly this. Reported and never repaired: the
+  # floor stays fallen in that game, which is the game's own record of what
+  # happened, and whoever was on it stays dead.
+  def floors_fallen_with_no_countdown
+    Playthrough::FloorReached.joins(:playthrough, location: :floor).where(playthroughs: { story_id: story.id })
+                             .where.not(fell_at: nil).where(floors: { minutes: nil })
+                             .includes(:location).order(:id).map do |row|
+      finding(:floor_fallen_with_no_countdown, :warning,
+              "#{row.location.name} fell in playthrough ##{row.playthrough_id} and has no `minutes:` now -- a " \
+              "re-seed that removed its countdown leaves this. The floor stays fallen in that game",
+              :manual, subject: row)
+    end
   end
 
   # A FLOOR A GAME REACHED THAT IS NO FLOOR NOW (`Playthrough::FloorReached`).

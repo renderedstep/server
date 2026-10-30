@@ -425,6 +425,8 @@
           "sheet",
           "next_beat",
           "story_time",
+          "floor",
+          "collapse",
           "over",
           "ended",
           "verbs"
@@ -518,6 +520,50 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "floor": {
+            "description": "The floor the player stands on and how long it has left in this game, while it has a countdown and has not fallen; null otherwise. Since revision 1.7.",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "falls_at",
+                  "minutes_left",
+                  "countdown"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "falls_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The story time the floor gives way in this game."
+                  },
+                  "minutes_left": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Whole story minutes until then, a part of a minute counted as one."
+                  },
+                  "countdown": {
+                    "type": "string",
+                    "description": "The engine's sentence for it, as in `The First Floor falls in 25 minutes.`"
+                  }
+                }
+              }
+            ]
+          },
+          "collapse": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The engine's sentence for a floor that gave way under the player; the death statement in `ended` follows it. Null for any other game. Since revision 1.7."
           },
           "ending_due": {
             "type": "boolean",
@@ -904,6 +950,8 @@
               ],
               "next_beat": "Find out who signed the night ledger.",
               "story_time": "1894-03-02T23:40:00Z",
+              "floor": null,
+              "collapse": null,
               "ending_due": false,
               "ending_offer": null,
               "over": false,
@@ -1219,6 +1267,8 @@
               ],
               "next_beat": "Find out who signed the night ledger.",
               "story_time": "1894-03-02T23:40:00Z",
+              "floor": null,
+              "collapse": null,
               "ending_due": false,
               "ending_offer": null,
               "over": false,
@@ -1608,6 +1658,8 @@
                         ],
                         "next_beat": "Find out who signed the night ledger.",
                         "story_time": "1894-03-02T23:40:00Z",
+                        "floor": null,
+                        "collapse": null,
                         "ending_due": false,
                         "ending_offer": null,
                         "over": false,
@@ -1875,6 +1927,8 @@
                         ],
                         "next_beat": "Find out who signed the night ledger.",
                         "story_time": "1894-03-02T23:40:00Z",
+                        "floor": null,
+                        "collapse": null,
                         "ending_due": false,
                         "ending_offer": null,
                         "over": false,
@@ -2280,7 +2334,7 @@
                 },
                 "examples": {
                   "example": {
-                    "value": "id: 1\nevent: started\ndata: {\"turn\":\"412\",\"line\":\"/offer tide-slate to Ammon Brace\"}\n\nid: 2\nevent: prose\ndata: {\"turn\":\"412\",\"text\":\"Ammon turns the slate over in his hands. \"}\n\nid: 3\nevent: glance\ndata: {\"turn\":\"412\",\"glance\":{\"room\":{\"name\":\"Ward Office 12\",\"within\":\"St. Brennan's Infirmary\"},\"exits\":[{\"name\":\"The Supply Closet\",\"written\":true,\"open\":true}],\"people\":[{\"name\":\"Ammon Brace\",\"condition\":\"unhurt\",\"foe\":false,\"provoked\":false}],\"fixtures\":[],\"lying_here\":[{\"name\":\"brass lamp\",\"on\":null}],\"counts\":{\"visible\":1,\"unsearched\":0},\"carrying\":[{\"name\":\"tide-slate\",\"on\":null}],\"condition\":\"unhurt\",\"sheet\":[\"level 1, hit die d8\",\"strength 12, agility 10, wits 14\"],\"next_beat\":\"Find out who signed the night ledger.\",\"story_time\":\"1894-03-02T23:40:00Z\",\"ending_due\":false,\"ending_offer\":null,\"over\":false,\"ended\":null,\"verbs\":[{\"name\":\"move\",\"available\":true,\"reason\":null,\"targets\":[\"The Supply Closet\"],\"aims\":null,\"word\":\"go\",\"lines\":null},{\"name\":\"talk\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"talk\",\"lines\":null},{\"name\":\"examine\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":null,\"word\":\"inspect\",\"lines\":null},{\"name\":\"take\",\"available\":true,\"reason\":null,\"targets\":[\"brass lamp\"],\"aims\":null,\"word\":\"take\",\"lines\":null},{\"name\":\"drop\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\"],\"aims\":null,\"word\":\"drop\",\"lines\":null},{\"name\":\"attack\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"attack\",\"lines\":null},{\"name\":\"throw\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":[\"Ammon Brace\",\"The Supply Closet\"],\"word\":\"throw\",\"lines\":null},{\"name\":\"use\",\"available\":true,\"reason\":null,\"targets\":[\"Offer tide-slate to Ammon Brace; they may refuse\"],\"aims\":null,\"word\":null,\"lines\":[\"/offer tide-slate to Ammon Brace\"]}]}}\n\nid: 4\nevent: finished\ndata: {\"turn\":\"412\",\"outcome\":{\"kind\":\"used\"},\"refusal\":null,\"resolved_by\":\"grammar\",\"rolls\":[{\"kind\":\"check\",\"die\":20,\"result\":7,\"target\":10}],\"text\":\"Ammon turns the slate over in his hands, and keeps it.\",\"notices\":[],\"glance\":{\"room\":{\"name\":\"Ward Office 12\",\"within\":\"St. Brennan's Infirmary\"},\"exits\":[{\"name\":\"The Supply Closet\",\"written\":true,\"open\":true}],\"people\":[{\"name\":\"Ammon Brace\",\"condition\":\"unhurt\",\"foe\":false,\"provoked\":false}],\"fixtures\":[],\"lying_here\":[{\"name\":\"brass lamp\",\"on\":null}],\"counts\":{\"visible\":1,\"unsearched\":0},\"carrying\":[{\"name\":\"tide-slate\",\"on\":null}],\"condition\":\"unhurt\",\"sheet\":[\"level 1, hit die d8\",\"strength 12, agility 10, wits 14\"],\"next_beat\":\"Find out who signed the night ledger.\",\"story_time\":\"1894-03-02T23:40:00Z\",\"ending_due\":false,\"ending_offer\":null,\"over\":false,\"ended\":null,\"verbs\":[{\"name\":\"move\",\"available\":true,\"reason\":null,\"targets\":[\"The Supply Closet\"],\"aims\":null,\"word\":\"go\",\"lines\":null},{\"name\":\"talk\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"talk\",\"lines\":null},{\"name\":\"examine\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":null,\"word\":\"inspect\",\"lines\":null},{\"name\":\"take\",\"available\":true,\"reason\":null,\"targets\":[\"brass lamp\"],\"aims\":null,\"word\":\"take\",\"lines\":null},{\"name\":\"drop\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\"],\"aims\":null,\"word\":\"drop\",\"lines\":null},{\"name\":\"attack\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"attack\",\"lines\":null},{\"name\":\"throw\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":[\"Ammon Brace\",\"The Supply Closet\"],\"word\":\"throw\",\"lines\":null},{\"name\":\"use\",\"available\":true,\"reason\":null,\"targets\":[\"Offer tide-slate to Ammon Brace; they may refuse\"],\"aims\":null,\"word\":null,\"lines\":[\"/offer tide-slate to Ammon Brace\"]}]},\"standing\":{\"over\":false,\"ended\":null,\"finished\":null,\"busy\":false,\"running_turn\":null,\"saved_turn\":null}}\n\n"
+                    "value": "id: 1\nevent: started\ndata: {\"turn\":\"412\",\"line\":\"/offer tide-slate to Ammon Brace\"}\n\nid: 2\nevent: prose\ndata: {\"turn\":\"412\",\"text\":\"Ammon turns the slate over in his hands. \"}\n\nid: 3\nevent: glance\ndata: {\"turn\":\"412\",\"glance\":{\"room\":{\"name\":\"Ward Office 12\",\"within\":\"St. Brennan's Infirmary\"},\"exits\":[{\"name\":\"The Supply Closet\",\"written\":true,\"open\":true}],\"people\":[{\"name\":\"Ammon Brace\",\"condition\":\"unhurt\",\"foe\":false,\"provoked\":false}],\"fixtures\":[],\"lying_here\":[{\"name\":\"brass lamp\",\"on\":null}],\"counts\":{\"visible\":1,\"unsearched\":0},\"carrying\":[{\"name\":\"tide-slate\",\"on\":null}],\"condition\":\"unhurt\",\"sheet\":[\"level 1, hit die d8\",\"strength 12, agility 10, wits 14\"],\"next_beat\":\"Find out who signed the night ledger.\",\"story_time\":\"1894-03-02T23:40:00Z\",\"floor\":null,\"collapse\":null,\"ending_due\":false,\"ending_offer\":null,\"over\":false,\"ended\":null,\"verbs\":[{\"name\":\"move\",\"available\":true,\"reason\":null,\"targets\":[\"The Supply Closet\"],\"aims\":null,\"word\":\"go\",\"lines\":null},{\"name\":\"talk\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"talk\",\"lines\":null},{\"name\":\"examine\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":null,\"word\":\"inspect\",\"lines\":null},{\"name\":\"take\",\"available\":true,\"reason\":null,\"targets\":[\"brass lamp\"],\"aims\":null,\"word\":\"take\",\"lines\":null},{\"name\":\"drop\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\"],\"aims\":null,\"word\":\"drop\",\"lines\":null},{\"name\":\"attack\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"attack\",\"lines\":null},{\"name\":\"throw\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":[\"Ammon Brace\",\"The Supply Closet\"],\"word\":\"throw\",\"lines\":null},{\"name\":\"use\",\"available\":true,\"reason\":null,\"targets\":[\"Offer tide-slate to Ammon Brace; they may refuse\"],\"aims\":null,\"word\":null,\"lines\":[\"/offer tide-slate to Ammon Brace\"]}]}}\n\nid: 4\nevent: finished\ndata: {\"turn\":\"412\",\"outcome\":{\"kind\":\"used\"},\"refusal\":null,\"resolved_by\":\"grammar\",\"rolls\":[{\"kind\":\"check\",\"die\":20,\"result\":7,\"target\":10}],\"text\":\"Ammon turns the slate over in his hands, and keeps it.\",\"notices\":[],\"glance\":{\"room\":{\"name\":\"Ward Office 12\",\"within\":\"St. Brennan's Infirmary\"},\"exits\":[{\"name\":\"The Supply Closet\",\"written\":true,\"open\":true}],\"people\":[{\"name\":\"Ammon Brace\",\"condition\":\"unhurt\",\"foe\":false,\"provoked\":false}],\"fixtures\":[],\"lying_here\":[{\"name\":\"brass lamp\",\"on\":null}],\"counts\":{\"visible\":1,\"unsearched\":0},\"carrying\":[{\"name\":\"tide-slate\",\"on\":null}],\"condition\":\"unhurt\",\"sheet\":[\"level 1, hit die d8\",\"strength 12, agility 10, wits 14\"],\"next_beat\":\"Find out who signed the night ledger.\",\"story_time\":\"1894-03-02T23:40:00Z\",\"floor\":null,\"collapse\":null,\"ending_due\":false,\"ending_offer\":null,\"over\":false,\"ended\":null,\"verbs\":[{\"name\":\"move\",\"available\":true,\"reason\":null,\"targets\":[\"The Supply Closet\"],\"aims\":null,\"word\":\"go\",\"lines\":null},{\"name\":\"talk\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"talk\",\"lines\":null},{\"name\":\"examine\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":null,\"word\":\"inspect\",\"lines\":null},{\"name\":\"take\",\"available\":true,\"reason\":null,\"targets\":[\"brass lamp\"],\"aims\":null,\"word\":\"take\",\"lines\":null},{\"name\":\"drop\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\"],\"aims\":null,\"word\":\"drop\",\"lines\":null},{\"name\":\"attack\",\"available\":true,\"reason\":null,\"targets\":[\"Ammon Brace\"],\"aims\":null,\"word\":\"attack\",\"lines\":null},{\"name\":\"throw\",\"available\":true,\"reason\":null,\"targets\":[\"tide-slate\",\"brass lamp\"],\"aims\":[\"Ammon Brace\",\"The Supply Closet\"],\"word\":\"throw\",\"lines\":null},{\"name\":\"use\",\"available\":true,\"reason\":null,\"targets\":[\"Offer tide-slate to Ammon Brace; they may refuse\"],\"aims\":null,\"word\":null,\"lines\":[\"/offer tide-slate to Ammon Brace\"]}]},\"standing\":{\"over\":false,\"ended\":null,\"finished\":null,\"busy\":false,\"running_turn\":null,\"saved_turn\":null}}\n\n"
                   }
                 }
               }

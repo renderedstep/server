@@ -175,6 +175,12 @@
   <% if playthrough.over? %>
     <% ended = Playthrough::EndNotice.for(playthrough) %>
     <div class="notice">
+      <%# A FLOOR THAT GAVE WAY UNDER THE PLAYER, in the engine's own sentence
+          (`Playthrough::Glance#collapse`), on its own line before the death
+          statement, which is unchanged: the reason is still `:died`. %>
+      <% if (collapse = Playthrough::Session.new(playthrough).glance.collapse) %>
+        <p><%= collapse %></p>
+      <% end %>
       <p><strong><%= ended.heading %></strong></p>
       <%# WHICH GOAL ENDED IT AND WHY THIS ENDING, out of the records
           (`Playthrough::EndNotice#finished`) -- so a player who has just read

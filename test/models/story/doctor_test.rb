@@ -2386,6 +2386,26 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_equal 2, reached.reload.level
   end
 
+  # A re-seed that took `minutes:` off a floor that fell in a game: the floor
+  # stays fallen in that game, so this is said and never repaired.
+  test "a floor that fell in a game and has no countdown now is reported and never repaired" do
+    story, upper = laid_out_floor
+    upper.floor.update!(minutes: 30)
+    game = create(:playthrough, story: story, character: story.characters.find_by!(is_protagonist: true),
+                                current_location: story.locations.find_by!(name: "The Landing"))
+    reached = create(:playthrough_floor_reached, playthrough: game, location: upper)
+    reached.update!(fell_at: reached.falls_at)
+    assert_nil finding(story, :floor_fallen_with_no_countdown)
+
+    upper.floor.update!(minutes: nil)
+    found = finding(Story.find(story.id), :floor_fallen_with_no_countdown)
+
+    assert_equal [ :warning, :manual, reached ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/The Upper Floor fell in playthrough ##{game.id} and has no `minutes:` now/, found.message)
+    Story::Repair.new(Story.find(story.id)).apply!
+    assert_predicate reached.reload, :fallen?
+  end
+
   test "a guard posted to a place that is no floor is reported and never repaired" do
     story, = laid_out_floor
     guard = create(:character, :absent, story: story, fullname: "Brask the Stairwarden",

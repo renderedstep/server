@@ -114,6 +114,37 @@ class ProtocolV1Test < ActionDispatch::IntegrationTest
                  glance["verbs"].map { |verb| verb["name"] }
   end
 
+  # A FLOOR THAT FALLS (revision 1.7): the countdown while the player stands
+  # on it, and the engine's sentence once it gave way under them.
+  test "the glance carries a floor's countdown, and the collapse once it gave way under the player" do
+    player, token = Player.invite!("Ada")
+    story = create(:story, start_time: Time.zone.parse("2026-10-31T08:00:00Z"))
+    create(:location, story: story, name: "The Landing")
+    floor = create(:location, :stub, story: story, name: "The First Floor", width: 12, depth: 12)
+    create(:floor, location: floor, minutes: 30)
+    create(:character, :protagonist, story: story, fullname: "Odile")
+    game = Playthrough::Session.begin!(story, player: player).playthrough
+    game.update!(current_location: floor)
+    reached = create(:playthrough_floor_reached, playthrough: game, location: floor, arrived_at: story.start_time)
+    headers = { "Authorization" => "Bearer #{token}" }
+
+    get api_v1_game_path(game.token), headers: headers
+    glance = JSON.parse(response.body)["glance"]
+    assert_protocol "Glance", glance
+    assert_equal({ "name" => "The First Floor", "falls_at" => "2026-10-31T08:30:00Z", "minutes_left" => 30,
+                   "countdown" => "The First Floor falls in 30 minutes." }, glance["floor"])
+    assert_nil glance["collapse"]
+
+    reached.update!(fell_at: reached.falls_at)
+    game.end!
+
+    get api_v1_game_path(game.token), headers: headers
+    glance = JSON.parse(response.body)["glance"]
+    assert_protocol "Glance", glance
+    assert_nil glance["floor"]
+    assert_equal "The First Floor gave way at 8:30 am, and Odile fell with it.", glance["collapse"]
+  end
+
   test "a story that concluded says which goal ended it and why, in the standing" do
     player, token = Player.invite!("Ada")
     story = create(:story)

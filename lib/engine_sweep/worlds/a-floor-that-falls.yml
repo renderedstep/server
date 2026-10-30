@@ -1,0 +1,99 @@
+# A floor that falls. The First Floor is a FLOOR, laid out by the engine the
+# first time anybody walks into it, and it says `minutes: 30`: the first time
+# a game stands on it, that game's row for it (`playthrough_floors`) starts a
+# countdown, and thirty story minutes later the floor gives way in that game.
+# A player standing on it then falls with it and dies; a player who has gone
+# down already loses only the stair back up, and everybody left on it is dead
+# in that game. The world's rows are never touched, so another game finds the
+# floor whole and starts a countdown of its own. Wenna Cole is posted to The
+# First Floor (`guards:`), so its layout stands her in the room with the stair
+# down; she is no foe. The Second Floor has no `minutes:`, so it never falls.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lanterns, iron keys and hand tools.
+  weapons: Short blades and cudgels.
+  geographies: A dungeon cut down into black stone under a lantern-lit landing.
+  civilizations: Delvers who sell what they bring up.
+  history: The dungeon was cut long ago by people nobody remembers.
+  economics: Coin for what comes up from below.
+  politics: Nobody governs the dungeon.
+  religion: Delvers leave a coin on the landing for luck.
+  races:
+  - name: Delvers
+    description: People who go down into the dungeon for a living.
+story:
+  title: A Floor That Falls
+  genre: dungeon crawl
+  start_time: '2026-10-31T08:00:00Z'
+  preface: The floors of this dungeon do not stay up for long.
+  summary: Odile goes down before the first floor gives way, or does not.
+opening_scene:
+  location: The Landing
+  characters: [Odile]
+  description: You stand on the lantern-lit landing above the first floor.
+  summary: Odile reaches the landing.
+characters:
+- fullname: Odile
+  nickname: Odile
+  race: Delvers
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A delver who has never been below the first floor.
+  personality: Careful and stubborn.
+  appearance: A lantern on a pole and a short blade.
+  likes: A clear way back.
+  dislikes: Doors she cannot open.
+  fears: The floor giving way under her.
+  stats: {level: 3, hit_die: 8, strength: 14, dexterity: 12, will: 12}
+- fullname: Wenna Cole
+  nickname: Wenna
+  race: Delvers
+  age: 41
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  backstory: She sells candles to delvers at the head of the stair down, and has never seen a floor fall.
+  personality: Cheerful and talkative.
+  appearance: A patched cloak and a sack of candles.
+  likes: Company.
+  dislikes: Silence.
+  fears: Being left in the dark.
+  absent: true
+  stats: {level: 1, hit_die: 6, strength: 8, dexterity: 10, will: 10}
+locations:
+- name: The Landing
+  detail_level: realized
+  population: nobody
+  opening: true
+  description: A square landing of black stone lit by one lantern, a stair going down from it.
+  teaser: A lantern-lit landing.
+  lore: Delvers gather here before they go down.
+- name: The First Floor
+  detail_level: stub
+  kind: warren
+  teaser: The first level of the dungeon, cracked through, with a stair somewhere that goes further down.
+  floor:
+    rooms: 2
+    danger: safe
+    hazard: none
+    down: The Second Floor
+    guards: [Wenna Cole]
+    minutes: 30
+- name: The Second Floor
+  detail_level: stub
+  kind: warren
+  teaser: The second level of the dungeon, where the stair ends.
+  floor:
+    rooms: 2
+    danger: safe
+    hazard: none
+connections:
+- between: [The Landing, The First Floor]
+  distance: adjacent
+  travel_method: taking stairs
+- between: [The First Floor, The Second Floor]
+  distance: adjacent
+  travel_method: taking stairs

@@ -391,6 +391,21 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_equal [ true, true, false ], reloaded.locations.joins(:floor).order(:id).map { |place| place.floor.levels_up }
   end
 
+  # WHETHER A FLOOR FALLS: its minutes written when it has them, and left out
+  # when it does not.
+  test "exports a floor that falls, and it round-trips" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-floor-that-falls.yml").read)).load!
+
+    document = WorldSeed::Exporter.new(story).document
+    floors = document["locations"].select { |row| row.key?("floor") }.to_h { |row| [ row["name"], row["floor"] ] }
+    assert_equal 30, floors.fetch("The First Floor")["minutes"]
+    assert_not floors.fetch("The Second Floor").key?("minutes")
+
+    document["story"]["title"] = "A Floor That Falls Again"
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+    assert_equal [ 30, nil ], reloaded.locations.joins(:floor).order(:id).map { |place| place.floor.minutes }
+  end
+
   # AND A LAID-OUT FLOOR'S ROOMS ARE THE ENGINE'S, so they are not written: a
   # doorway onto one is written onto the floor, which is where the file had it,
   # and the loader lays a fresh copy out anew.
