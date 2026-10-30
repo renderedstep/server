@@ -1,0 +1,91 @@
+# A FLOOR'S MONSTER LEVEL IS THE LEVEL OF EVERYBODY BORN ON IT. The Bottom
+# Floor names `monster_level: 4`; The Upper Floor names none. Each is one room,
+# and its room writer writes one person into it. The person born on the bottom
+# floor is level 4 and the one born on the upper floor is level 1, the
+# ordinary starting level: the hit die and the three abilities are rolled for
+# both exactly as they are for anybody, and only the level is the floor's.
+#
+# A script may not assert a level directly, so it asserts the hit points a
+# newly born person stands at, which are their maximum:
+# hit die + (level - 1) * (hit die / 2 + 1). Hollin's die is a d6, so 18 is
+# level 4 (and 6 would have been level 1); Wenna's is a d8, so 8 is level 1.
+# The records file pins the `level` column itself.
+story: A Deeper Floor
+steps:
+- id: down-to-the-bottom-floor
+  why: >-
+    The bottom floor is laid out as its one room, and the room writer writes
+    Hollin into it. He is born at the floor's monster level, 4: on his d6 that
+    is 18 hit points.
+  type: "/move The Bottom Floor"
+  browser:
+    token: into-the-bottom-floor
+    realizes: The Bottom Floor
+    replies:
+    - purpose: location
+      content:
+        description: The bottom level of the dungeon, one chamber cut far down.
+        lore: Whatever lives this deep has lived here a long time.
+        place_kind: warren
+    - purpose: location
+      content:
+        description: A wide chamber where somebody has made a camp among the stones.
+        lore: Delvers who stay down here too long stop going back up.
+        items: []
+        people:
+        - fullname: Hollin Graves
+          nickname: Hollin
+          appearance: A delver's coat gone grey with stone dust.
+          personality: Watchful and slow to speak.
+          backstory: A delver who stopped going back up years ago.
+          likes: The quiet down here.
+          dislikes: Lanterns from above.
+          fears: The surface.
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Bottom Floor room 1 (realized)
+    present:
+    - Hollin Graves
+    hp_of:
+      Hollin Graves: 18
+- id: back-up-to-the-landing
+  type: "/move The Landing"
+  expect:
+    location: The Landing (realized)
+- id: into-the-upper-floor
+  why: >-
+    The upper floor names no monster level, so Wenna, written into its one
+    room, is born at the ordinary level 1: on her d8 that is 8 hit points.
+  type: "/move The Upper Floor"
+  browser:
+    token: into-the-upper-floor
+    realizes: The Upper Floor
+    replies:
+    - purpose: location
+      content:
+        description: The upper level of the dungeon, one chamber just under the landing.
+        lore: Delvers pass through here on their way to somewhere worse.
+        place_kind: warren
+    - purpose: location
+      content:
+        description: A low chamber with a bedroll by the wall.
+        lore: Somebody sleeps here between delves.
+        items: []
+        people:
+        - fullname: Wenna Cole
+          nickname: Wenna
+          appearance: A patched cloak and a sack of candles.
+          personality: Cheerful and talkative.
+          backstory: A candle-seller who follows the delvers down.
+          likes: Company.
+          dislikes: Silence.
+          fears: Being left in the dark.
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 1 (realized)
+    present:
+    - Wenna Cole
+    hp_of:
+      Wenna Cole: 8

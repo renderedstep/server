@@ -3120,11 +3120,40 @@ class Story::Doctor
   #                                    outside the floor's footprint
   #   floor_with_no_way_down           no room of it leads to its way down
   #   floor_way_down_on_its_entry      its entry room leads there
+  #   guard_posted_to_no_floor         a guard posted to a place with no row
+  #   guard_nowhere_on_a_laid_out_floor
+  #                                    a guard still nowhere after their
+  #                                    floor was laid out: the engine stands
+  #                                    a guard once, so nothing ever will
   def floors
     Floor.where(location: story.locations).includes(:location, down_location: :floor).order(:id).flat_map do |floor|
       place = floor.location
       rooms = place.child_locations.order(:id).to_a
       [ *floor_going_down_to_no_floor(floor), *(rooms.any? ? laid_out_floor(floor, place, rooms) : []) ]
+    end + posted_guards
+  end
+
+  # A GUARD THE ENGINE WILL NEVER STAND (`Character#posted_to`). The engine
+  # stands a guard in their floor's way-down room when it lays the floor out,
+  # once; a guard posted to a place that is no floor is never stood, and one
+  # still nowhere once their floor has rooms -- a re-seed from before the
+  # loader kept a laid-out guard where they stood can leave one so -- never
+  # will be.
+  def posted_guards
+    story.characters.where.not(posted_to_id: nil).includes(posted_to: :floor).order(:id).filter_map do |guard|
+      floor = guard.posted_to
+      if floor.floor.nil?
+        finding(:guard_posted_to_no_floor, :warning,
+                "#{guard.fullname} is posted to #{floor.name}, which is not a floor -- the engine stands a guard " \
+                "only when it lays a floor out, so nothing will ever stand them there",
+                :manual, subject: guard)
+      elsif guard.location_id.nil? && floor.child_locations.exists?
+        finding(:guard_nowhere_on_a_laid_out_floor, :warning,
+                "#{guard.fullname} is posted to #{floor.name}, which is laid out, and stands nowhere -- the engine " \
+                "stood its guards once, when it laid the floor out, and never will again. Place them in a room of " \
+                "it by hand",
+                :manual, subject: guard)
+      end
     end
   end
 

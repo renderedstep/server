@@ -163,6 +163,28 @@ class Character::RegistryTest < ActiveSupport::TestCase
     assert_equal [ created ], Character.present_in(@here).to_a
   end
 
+  # A FLOOR'S MONSTER LEVEL IS THE LEVEL OF EVERYBODY BORN ON IT, in it or in a
+  # room of it: renderedstep/engine `realize.rs` `admit_new`. The hit die and
+  # the abilities are the roll anybody gets; only the level is the floor's.
+  test "somebody born on a floor, or in a room of one, takes its monster level" do
+    floor = create(:floor, :deep, location: create(:location, :stub, story: @story, width: 12, depth: 12))
+    room = create(:location, story: @story, name: "The Bottom Floor room 1", parent_location: floor.location)
+
+    Location::Population.stub(:count_for, 1) do
+      [ floor.location, room ].each_with_index do |where, index|
+        born = Character::Registry.new(where).admit!([ sheet(fullname: "Hollin Graves #{index}") ]).sole
+        rolled = Character::StatBlock.for_new(@story, sequence: 0)
+
+        assert_equal 4, born.level, where.name
+        assert_equal rolled.except(:level), born.slice(:hit_die, *Character::ABILITIES).symbolize_keys
+      end
+
+      floor.update!(monster_level: nil)
+      Character::Registry.new(room).admit!([ sheet(fullname: "Wenna Cole") ])
+      assert_equal Character::StatBlock::STARTING_LEVEL, @story.characters.find_by!(fullname: "Wenna Cole").level
+    end
+  end
+
   # Every field a `Character` is validated on has to arrive, or the row cannot
   # be talked to -- `Character#interaction_instructions` interpolates all six.
   test "a created person carries the whole sheet the conversation prompt reads" do

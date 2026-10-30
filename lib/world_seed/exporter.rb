@@ -199,12 +199,13 @@ class WorldSeed::Exporter
   # WHAT A LAID-OUT FLOOR HOLDS THAT THE FILE CANNOT: its rooms, and the things
   # and people in them. The file carries the floor's parameters, and a fresh
   # load lays it out anew from them (`Floor`), so what was born in these rooms
-  # is left behind and said so.
+  # is left behind and said so. A guard is not: the file posts them back to
+  # their floor (`guards:`), and the fresh layout stands them again.
   def report_floor_rooms
     return if floor_rooms.empty?
 
     things = Item.templates.where(location_id: floor_rooms.keys).count
-    people = story.characters.where(location_id: floor_rooms.keys).count
+    people = story.characters.where(location_id: floor_rooms.keys, posted_to_id: nil).count
     @warnings << "#{floor_rooms.size} room(s) of a floor not exported, with the #{things} thing(s) and #{people} " \
                  "person(s) in them: the engine lays a floor out from its `floor:` key, and lays a fresh load's out anew."
   end
@@ -432,7 +433,12 @@ class WorldSeed::Exporter
       #
       # SOMEBODY STANDING IN A ROOM OF A FLOOR IS WRITTEN NOWHERE, because the
       # room is not written (`#locations`), and `#warn_about_unexported!` says so.
-      document["location"] = character.location.name if character.location && !floor_rooms.key?(character.location_id)
+      #
+      # A GUARD POSTED TO A FLOOR IS WRITTEN AS THE FILE POSTED THEM, `absent:
+      # true` and nowhere, wherever the layout stood them: the floor's
+      # `guards:` posts them back, and a fresh load's layout stands them again.
+      posted = character.posted_to&.floor.present?
+      document["location"] = character.location.name if character.location && !floor_rooms.key?(character.location_id) && !posted
       # NOWHERE ON PURPOSE, and written only when the record says so -- the
       # same "omitted rather than written false" rule `opening`, `mobile` and
       # `readable` follow. It is mutually exclusive with `location` above
@@ -442,7 +448,7 @@ class WorldSeed::Exporter
       # somehow holds both is exported as it stands and reported below, because
       # an exporter that silently dropped half of a contradiction would hide
       # the thing the file's reader needs to fix.
-      document["absent"] = true if character.deliberately_absent?
+      document["absent"] = true if character.deliberately_absent? || posted
       # WHERE IN THE ROOM THEY STAND. Omitted rather than written null when the
       # records place them nowhere in particular, which is the rule every key
       # here follows and is also what the loader reads back as "unplaced" -- so
@@ -454,7 +460,7 @@ class WorldSeed::Exporter
       # holding half of one is exported as it stands and reported below, for
       # `stats`' reason -- an exporter that silently dropped half a
       # contradiction would hide the thing the file's reader needs to fix.
-      unless rolled?(character)
+      unless rolled?(character) || posted
         Location::Spot::COLUMNS.each do |column|
           document[column] = character[column] unless character[column].nil?
         end
@@ -589,9 +595,12 @@ class WorldSeed::Exporter
       # footprint is the loader's to derive from `rooms` and its rooms are the
       # engine's to lay out (`#locations` leaves them out), so neither is
       # written and the loader refuses a floor that carries either.
+      # Its guards are written by full name, in id order.
       if location.floor
+        guards = location.posted_guards.order(:id).pluck(:fullname)
         document["floor"] = { "rooms" => location.floor.rooms, "danger" => location.floor.danger,
-                              "hazard" => location.floor.hazard, "down" => location.floor.down_location&.name }.compact
+                              "hazard" => location.floor.hazard, "down" => location.floor.down_location&.name,
+                              "monster_level" => location.floor.monster_level, "guards" => guards.presence }.compact
       elsif @rolled_layouts || !location.laid_out_alone?
         Location::Box::COLUMNS.each do |column|
           document[column] = location[column] unless location[column].nil?

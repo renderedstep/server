@@ -471,7 +471,12 @@ class Character::Registry
       # column further: `Location::DetailSchema` has no field for a stat and
       # nothing in the realization prompt mentions one, so there is nothing here
       # for a model to have answered. See `Character::StatBlock`.
-      **Character::StatBlock.for_new(story, sequence: slot),
+      #
+      # AT THE LEVEL OF THE FLOOR THEY ARE BORN ON, when it names one
+      # (`Floor#monster_level`): the hit die and abilities are rolled as
+      # anybody's are, and only the level is the floor's -- renderedstep/engine
+      # `realize.rs` `admit_new`.
+      **Character::StatBlock.for_new(story, sequence: slot).merge({ level: monster_level }.compact),
       **fields.slice(*SHEET),
       # WHAT THIS PERSON IS AFTER, out of the same answer the sheet came in.
       # The four prose fields are already sanitized under `PERSON_LIMITS` by
@@ -532,6 +537,13 @@ class Character::Registry
   # branch reads their prose; `Story::Doctor` already reports a person missing
   # them. Storing no claim is safer than storing half a claim, and it does not
   # cost the room a person whose required conversational sheet is complete.
+  # THE MONSTER LEVEL OF THE FLOOR THIS ROOM IS, or is a room of; nil when it
+  # is neither or the floor names none.
+  def monster_level
+    floor = location.floor || location.parent_location&.floor
+    floor&.monster_level
+  end
+
   def field(attributes, name)
     text = attributes[name.to_s].to_s
     sanitize_string(text, max_length: PERSON_LIMITS.fetch(name))

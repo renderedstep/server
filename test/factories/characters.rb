@@ -197,6 +197,14 @@ FactoryBot.define do
       deliberately_absent { true }
     end
 
+    # A GUARD THE WORLD POSTS TO A FLOOR (`guards:`), as the loader writes one
+    # before the floor is laid out: absent, posted to a floor of this story.
+    # Pass `posted_to:` for a particular floor's place.
+    trait :posted do
+      absent
+      posted_to { association(:floor, location: association(:location, :stub, story: instance.story, width: 12, depth: 12)).location }
+    end
+
     trait :companion do
       is_companion { true }
       personality { "Loyal, supportive, and ready to face danger alongside friends" }

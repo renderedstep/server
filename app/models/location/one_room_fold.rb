@@ -65,7 +65,10 @@ class Location::OneRoomFold
     # floor is never folded (`#reasons`). Moved anyway, so nothing is left
     # naming the deleted row whatever a database carries.
     [ Floor, :location_id ],
-    [ Floor, :down_location_id ]
+    [ Floor, :down_location_id ],
+    # Never a room's either: a guard is posted to a floor. Moved for the reason
+    # the two above are.
+    [ Character, :posted_to_id ]
   ].freeze
 
   # What somebody may have put IN the place row itself. Any of it makes the

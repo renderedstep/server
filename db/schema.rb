@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_230000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -44,10 +44,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_200000) do
     t.text "unrecognized_need"
     t.string "desire_pursuit"
     t.string "need_pursuit"
+    t.integer "posted_to_id"
     t.index "story_id, LOWER(fullname)", name: "index_characters_on_story_id_and_lower_fullname", unique: true
     t.index ["location_id", "hostile"], name: "index_characters_on_location_id_and_hostile"
     t.index ["location_id", "id"], name: "index_characters_on_location_id_and_id"
     t.index ["location_id"], name: "index_characters_on_location_id"
+    t.index ["posted_to_id"], name: "index_characters_on_posted_to_id"
     t.index ["race_id"], name: "index_characters_on_race_id"
     t.index ["story_id", "is_protagonist"], name: "index_characters_on_story_id_and_is_protagonist"
     t.index ["story_id"], name: "index_characters_on_story_id"
@@ -85,6 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_200000) do
     t.integer "down_location_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "monster_level"
     t.index ["down_location_id"], name: "index_floors_on_down_location_id"
     t.index ["location_id"], name: "index_floors_on_location_id", unique: true
   end
@@ -883,6 +886,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_200000) do
   end
 
   add_foreign_key "characters", "locations"
+  add_foreign_key "characters", "locations", column: "posted_to_id", on_delete: :nullify
   add_foreign_key "characters", "races"
   add_foreign_key "characters", "stories"
   add_foreign_key "chats", "characters"

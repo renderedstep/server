@@ -1,0 +1,106 @@
+# A floor with a guard on its way down. The Upper Floor and The Lower Floor
+# are FLOORS, laid out by the engine the first time anybody walks into them.
+# Brask the Stairwarden is posted to The Upper Floor (`guards:`): the file
+# keeps him absent (`absent: true`), and when the floor is laid out the
+# engine stands him in the room it rolled for the way down, once, for the
+# world. He carries the stair key, and the stair down is locked with it: kill
+# him, take the key, open the stair, go down.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lanterns, iron keys and hand tools.
+  weapons: Short blades and cudgels.
+  geographies: A dungeon cut down into black stone under a lantern-lit landing.
+  civilizations: Delvers who sell what they bring up, and the things that keep the stairs.
+  history: The dungeon was cut long ago by people nobody remembers.
+  economics: Coin for what comes up from below.
+  politics: Nobody governs the dungeon.
+  religion: Delvers leave a coin on the landing for luck.
+  races:
+  - name: Delvers
+    description: People who go down into the dungeon for a living.
+  - name: Stairwardens
+    description: Grey, silent things that keep the dungeon's stairs.
+    monstrous: true
+story:
+  title: A Guarded Stair
+  genre: dungeon crawl
+  start_time: '2026-10-30T08:00:00Z'
+  preface: Every stair down in the dungeon has something standing at the top of it.
+  summary: Odile goes down past the thing that keeps the stair.
+opening_scene:
+  location: The Landing
+  characters: [Odile]
+  description: You stand on the lantern-lit landing above the first floor.
+  summary: Odile reaches the landing.
+characters:
+- fullname: Odile
+  nickname: Odile
+  race: Delvers
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A delver who has never been below the first floor.
+  personality: Careful and stubborn.
+  appearance: A lantern on a pole and a short blade.
+  likes: A clear way back.
+  dislikes: Doors she cannot open.
+  fears: The dark below the first floor.
+  stats: {level: 3, hit_die: 8, strength: 14, dexterity: 12, will: 12}
+- fullname: Brask the Stairwarden
+  nickname: Brask
+  race: Stairwardens
+  age: 90
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  backstory: He has kept the stair down for longer than the delvers have come.
+  personality: Silent and patient.
+  appearance: A grey, stooped thing with a long iron key on a cord.
+  likes: Stillness.
+  dislikes: Footsteps on the stair.
+  fears: Nothing.
+  hostile: true
+  absent: true
+  stats: {level: 1, hit_die: 6, strength: 8, dexterity: 8, will: 8}
+  items:
+  - name: stair key
+    description: A long iron key on a cord, cold to hold.
+    properties: '{}'
+    use_kind: key
+locations:
+- name: The Landing
+  detail_level: realized
+  population: nobody
+  opening: true
+  description: A square landing of black stone lit by one lantern, a stair going down from it.
+  teaser: A lantern-lit landing.
+  lore: Delvers gather here before they go down.
+- name: The Upper Floor
+  detail_level: stub
+  kind: warren
+  teaser: The first level of the dungeon, with a stair somewhere that goes further down.
+  floor:
+    rooms: 3
+    danger: uneasy
+    hazard: none
+    down: The Lower Floor
+    guards: [Brask the Stairwarden]
+- name: The Lower Floor
+  detail_level: stub
+  kind: warren
+  teaser: The second level of the dungeon, colder and quieter than the first.
+  floor:
+    rooms: 2
+    danger: dangerous
+    hazard: unlit
+connections:
+- between: [The Landing, The Upper Floor]
+  distance: adjacent
+  travel_method: taking stairs
+- between: [The Upper Floor, The Lower Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: stair key

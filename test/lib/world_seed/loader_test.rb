@@ -439,7 +439,7 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       ->(floor, _) { floor["rooms"] = 1 } => /has a way down and `floor: rooms: 1`/,
       ->(floor, _) { floor["danger"] = "deadly" } => /`floor: danger: "deadly"`; there is: safe, uneasy, dangerous/,
       ->(floor, _) { floor["hazard"] = "lava" } => /`floor: hazard: "lava"`; there is: none, flooded/,
-      ->(floor, _) { floor["guards"] = 2 } => /`floor:` has guards; there is: rooms, danger, hazard, down/,
+      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards/,
       ->(floor, _) { floor["down"] = "The Old Cellar" } => /goes down to "The Old Cellar", which is not a `floor:` location/,
       ->(floor, _) { floor["down"] = "The Upper Floor" } => /"The Upper Floor" goes down to itself/,
       ->(_, row) { row["width"] = 12 } => /is a floor and carries width; a floor's footprint is derived/,
@@ -456,6 +456,94 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       assert_match message, error.message
     end
     assert_nil Story.find_by(title: "Two Floors and a Key")
+  end
+
+  # WHO STANDS ON A FLOOR (stage 3): its monster level on the row, and its
+  # guards posted to it, absent until the engine lays the floor out.
+  test "seeds a floor's monster level and posts its guards, in both directions" do
+    story = WorldSeed::Loader.new(guarded_world).load!
+    upper = story.locations.find_by!(name: "The Upper Floor")
+    brask = story.characters.find_by!(fullname: "Brask the Stairwarden")
+
+    assert_equal upper, brask.posted_to
+    assert_nil brask.location
+    assert_predicate brask, :deliberately_absent?
+    assert_nil story.characters.find_by!(fullname: "Odile").posted_to_id
+    assert_nil upper.floor.monster_level
+
+    deeper = WorldSeed::Loader.new(deeper_world).load!
+    assert_equal 4, deeper.locations.find_by!(name: "The Bottom Floor").floor.monster_level
+    assert_nil deeper.locations.find_by!(name: "The Upper Floor").floor.monster_level
+
+    world = guarded_world
+    floor = world["locations"].find { |row| row["name"] == "The Upper Floor" }["floor"]
+    floor.delete("guards")
+    floor["monster_level"] = 2
+    WorldSeed::Loader.new(world).load!
+
+    assert_nil brask.reload.posted_to_id
+    assert_equal 2, upper.reload.floor.monster_level
+
+    WorldSeed::Loader.new(guarded_world).load!
+    assert_nil upper.reload.floor.monster_level
+    assert_equal upper, brask.reload.posted_to
+  end
+
+  # The engine stands a guard once, for the world, when it lays the floor out
+  # (renderedstep/engine `realize.rs` `lay_out`), and never again: a re-seed
+  # that wrote the file's `absent: true` over that would leave them nowhere.
+  test "re-seeding after the floor is laid out leaves a placed guard where they stand" do
+    story = WorldSeed::Loader.new(guarded_world).load!
+    upper = story.locations.find_by!(name: "The Upper Floor")
+    Location::Interior.lay_out!(upper)
+    room = upper.child_locations.order(:id).second
+    brask = story.characters.find_by!(fullname: "Brask the Stairwarden")
+    brask.update!(location: room, deliberately_absent: false, x: room.x, y: room.y)
+
+    WorldSeed::Loader.new(guarded_world).load!
+
+    brask.reload
+    assert_equal [ room.id, false, room.x, room.y, upper.id ],
+                 [ brask.location_id, brask.deliberately_absent, brask.x, brask.y, brask.posted_to_id ]
+  end
+
+  test "before the floor is laid out, a re-seed writes the guard's absence as for anybody" do
+    story = WorldSeed::Loader.new(guarded_world).load!
+    brask = story.characters.find_by!(fullname: "Brask the Stairwarden")
+    brask.update!(location: story.locations.find_by!(name: "The Landing"), deliberately_absent: false)
+
+    WorldSeed::Loader.new(guarded_world).load!
+
+    assert_nil brask.reload.location_id
+    assert_predicate brask, :deliberately_absent?
+  end
+
+  test "rejects a monster level or a guard the engine could not stand on the floor" do
+    brask = ->(world) { world["characters"].find { |row| row["fullname"] == "Brask the Stairwarden" } }
+    {
+      ->(floor, _) { floor["monster_level"] = "4" } => /`floor: monster_level: "4"`; a monster level is a character's level, 1..20/,
+      ->(floor, _) { floor["monster_level"] = 0 } => /`floor: monster_level: 0`/,
+      ->(floor, _) { floor["monster_level"] = 21 } => /`floor: monster_level: 21`/,
+      ->(floor, _) { floor["monster_level"] = 2.0 } => /`floor: monster_level: 2.0`/,
+      ->(floor, _) { floor["guards"] = "Brask the Stairwarden" } => /`floor: guards: "Brask the Stairwarden"`; it is a list/,
+      ->(floor, _) { floor["guards"] = [ 7 ] } => /`floor: guards: \[7\]`; it is a list/,
+      ->(floor, _) { floor["guards"] = [ "Nobody" ] } => /posts "Nobody", which is not a character of this file/,
+      ->(_, world) { brask.call(world).delete("absent") } => /posts "Brask the Stairwarden", who is not `absent: true`/,
+      ->(_, world) { brask.call(world).merge!("absent" => false, "location" => "The Landing") } =>
+        /posts "Brask the Stairwarden", who is not `absent: true` with no `location`/,
+      ->(_, world) { brask.call(world).delete("stats") } => /posts "Brask the Stairwarden", who has no `stats`/,
+      ->(floor, _) { floor["guards"] = [ "Odile" ] } => /posts "Odile", who is the protagonist or a companion/,
+      ->(_, world) { brask.call(world)["is_companion"] = true } => /posts "Brask the Stairwarden", who is the protagonist or a companion/,
+      ->(_, world) { world["locations"].find { |row| row["name"] == "The Lower Floor" }["floor"]["guards"] = [ "Brask the Stairwarden" ] } =>
+        /"Brask the Stairwarden" is posted to two floors, "The Upper Floor" and "The Lower Floor"/
+    }.each do |edit, message|
+      world = guarded_world
+      edit.call(world["locations"].find { |row| row["name"] == "The Upper Floor" }["floor"], world)
+
+      error = assert_raises(WorldSeed::Loader::InvalidWorld, message.inspect) { WorldSeed::Loader.new(world).load! }
+      assert_match message, error.message
+    end
+    assert_nil Story.find_by(title: "A Guarded Stair")
   end
 
   test "rejects a way down no connection joins, and floors that go down into each other" do
@@ -2090,6 +2178,8 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
   # The sweep's world of two floors and a keyed cellar stair, fresh on every
   # call, for `document`'s reason.
   def floors_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)
+  def guarded_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-guarded-stair.yml").read)
+  def deeper_world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-deeper-floor.yml").read)
 
   # Built fresh on every call so a test can edit it without touching another's.
   def document

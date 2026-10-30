@@ -17,7 +17,8 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
     create(:location_connection, location: @hall, connected_location: @opening,
                                  distance: "adjacent", travel_method: "walking")
     @cellars = create(:location, :stub, story: @story, name: "The Cellars", width: 12, depth: 12)
-    create(:floor, location: @cellars, rooms: 4, danger: "uneasy")
+    create(:floor, location: @cellars, rooms: 4, danger: "uneasy", monster_level: 4)
+    create(:character, :posted, story: @story, fullname: "Brask Package", posted_to: @cellars)
     @hero = create(:character, story: @story, fullname: "Ada Package", is_protagonist: true,
                                location: @opening)
     other_story = create(:story, title: "Other World Not Packaged")
@@ -128,7 +129,10 @@ class Playthrough::SqlitePackageTest < ActiveSupport::TestCase
       assert_equal [ "The Cellars", "The Foyer", "The Hall" ], Location.order(:name).pluck(:name)
       assert_nil Location.find_by(name: "Should Not Appear")
       # A floor goes with the place it is.
-      assert_equal [ [ "The Cellars", 4, "uneasy" ] ], Floor.includes(:location).map { |floor| [ floor.location.name, floor.rooms, floor.danger ] }
+      assert_equal [ [ "The Cellars", 4, "uneasy", 4 ] ],
+                   Floor.includes(:location).map { |floor| [ floor.location.name, floor.rooms, floor.danger, floor.monster_level ] }
+      # And so does the guard posted to it.
+      assert_equal "The Cellars", Character.find_by!(fullname: "Brask Package").posted_to.name
       assert_equal 1, Item.where(playthrough_id: nil).count
       assert_equal 1, Item.where(playthrough_id: @playthrough.id).count
       assert_equal "/look", Playthrough::Command.sole.command

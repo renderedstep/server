@@ -69,6 +69,11 @@ class Location < ApplicationRecord
   # WHETHER THIS PLACE IS A FLOOR, and what it is laid out to (`Floor`). Goes
   # with the place, which the foreign key's cascade says too.
   has_one :floor, dependent: :destroy, inverse_of: :location
+  # WHO THIS FLOOR'S WORLD POSTS TO IT (`Character#posted_to`). Nullified with
+  # the place, as the foreign key's `on delete set null` says too: a guard
+  # outlives the floor they kept, as anybody outlives a room.
+  has_many :posted_guards, class_name: "Character", foreign_key: :posted_to_id,
+                           dependent: :nullify, inverse_of: :posted_to
   has_and_belongs_to_many :connected_locations,
                           class_name: "Location",
                           join_table: "location_connections",

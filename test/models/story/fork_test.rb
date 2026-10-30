@@ -126,6 +126,23 @@ class Story::ForkTest < ActiveSupport::TestCase
     assert_equal floors.call(story), floors.call(forked)
   end
 
+  # AND WHO STANDS ON IT: its monster level, and its guards posted to the
+  # fork's own floor rather than the original's.
+  test "the fork's guards are posted to the fork's floors" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-guarded-stair.yml").read)).load!
+    Story::Snapshot.capture!(story)
+
+    forked = Story::Fork.new(story).create!
+
+    brask = forked.characters.find_by!(fullname: "Brask the Stairwarden")
+    assert_equal forked.locations.find_by!(name: "The Upper Floor"), brask.posted_to
+    assert_predicate brask, :deliberately_absent?
+
+    deeper = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-deeper-floor.yml").read)).load!
+    Story::Snapshot.capture!(deeper)
+    assert_equal 4, Story::Fork.new(deeper).create!.locations.find_by!(name: "The Bottom Floor").floor.monster_level
+  end
+
   test "a fork can be forked, because it is snapshotted as it is written" do
     story = seeded_world
     forked = Story::Fork.new(story).create!

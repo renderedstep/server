@@ -1,0 +1,141 @@
+# A POSTED GUARD STANDS ON THE WAY DOWN. Brask the Stairwarden is posted to The
+# Upper Floor (`guards:`, written as `characters.posted_to_id`) and the file
+# keeps him absent. When the floor is first laid out, the engine stands him in
+# the room it rolled for the way down (room 2), as part of laying the floor
+# out: once, for the world. He carries the stair key, and the stair down is
+# locked with it, so the way down is: kill him, take the key, open the stair,
+# go down.
+#
+# A second game walks onto the floor as it was laid out and finds him standing
+# in the same room, alive in that game: the layout does not run again, and the
+# dead stay dead only in the game that killed them.
+story: A Guarded Stair
+steps:
+- id: into-the-upper-floor
+  why: >-
+    The floor is laid out on this turn. Its entry room is empty: the guard
+    stands on the way down, never on the entry.
+  type: "/move The Upper Floor"
+  browser:
+    token: into-the-upper-floor
+    realizes: The Upper Floor
+    replies:
+    - purpose: location
+      content:
+        description: A level of black stone passages lit by nothing you can see.
+        lore: The first floor was cut by people nobody remembers.
+        place_kind: warren
+    - purpose: location
+      content:
+        description: A low chamber at the foot of the stair.
+        lore: Delvers rest here before going on.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 1 (realized)
+    exits:
+    - The Landing (realized)
+    - The Upper Floor room 2 (stub)
+    present: []
+- id: the-guard-stands-on-the-way-down
+  why: >-
+    Room 2 holds the stair down to The Lower Floor, and Brask stands in it,
+    hostile and whole. The room writer wrote nobody: he was put there by the
+    layout, not by the writer.
+  type: "/move The Upper Floor room 2"
+  browser:
+    token: room-2
+    realizes: The Upper Floor room 2
+    replies:
+    - purpose: location
+      content:
+        description: A bare chamber with a stair cut down into its floor.
+        lore: The stair down is older than the rest.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 2 (realized)
+    exits:
+    - The Lower Floor (stub)
+    - The Upper Floor room 1 (realized)
+    - The Upper Floor room 3 (stub)
+    present:
+    - Brask the Stairwarden
+    foes:
+    - Brask the Stairwarden
+    hp_of:
+      Brask the Stairwarden: 6
+- id: kill-the-guard
+  why: >-
+    One blow kills him, and the key he carried falls where he stood.
+  type: "/attack Brask the Stairwarden"
+  expect:
+    changed: true
+    present: []
+    foes: []
+- id: the-stair-key-off-the-floor
+  type: "/take stair key"
+  expect:
+    carrying:
+    - stair key
+- id: the-stair-down-is-locked
+  why: >-
+    The stair kept its lock when the layout moved it onto room 2.
+  type: "/move The Lower Floor"
+  expect:
+    location: The Upper Floor room 2 (realized)
+    refused: true
+    offers: locked
+- id: his-key-opens-it
+  type: "/unlock The Lower Floor with stair key"
+  expect:
+    changed: true
+    refused: false
+- id: down-to-the-lower-floor
+  type: "/move The Lower Floor"
+  browser:
+    token: into-the-lower-floor
+    realizes: The Lower Floor
+    replies:
+    - purpose: location
+      content:
+        description: A colder level, the air still and the dark close.
+        lore: Few delvers come this far.
+        place_kind: warren
+    - purpose: location
+      content:
+        description: The foot of the stair, cold and unlit.
+        lore: The stair comes down here from the floor above.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Lower Floor room 1 (realized)
+    exits_include:
+    - The Upper Floor room 2 (realized)
+    refused: false
+- id: a-second-game-walks-onto-the-laid-out-floor
+  player: second
+  type: "/move The Upper Floor room 1"
+  expect:
+    location: The Upper Floor room 1 (realized)
+    present: []
+- id: and-finds-the-guard-where-the-layout-stood-him
+  why: >-
+    The same room, with no call: the floor and its guard are world rows from
+    the first layout on. He is alive in this game.
+  player: second
+  type: "/move The Upper Floor room 2"
+  expect:
+    location: The Upper Floor room 2 (realized)
+    present:
+    - Brask the Stairwarden
+    foes:
+    - Brask the Stairwarden
+    hp_of:
+      Brask the Stairwarden: 6

@@ -208,6 +208,12 @@ class Character < ApplicationRecord
   # this column existed, or somebody whose room has been deleted. See the
   # header, and `Story::Doctor#whereabouts` for what each of those reads as.
   belongs_to :location, optional: true
+  # THE FLOOR THIS PERSON GUARDS, when their world posts them to one (a
+  # floor's `guards:`, `WorldSeed::Loader`). The file keeps them nowhere, and
+  # the engine stands them in the floor's way-down room when it lays the floor
+  # out -- once, for the world (renderedstep/engine `realize.rs` `lay_out`).
+  # Kept after that, so `Story::Doctor` can tell a posted guard apart.
+  belongs_to :posted_to, class_name: "Location", optional: true
   has_many :interactions, dependent: :destroy
   has_many :npc_states, class_name: "Playthrough::NpcState", dependent: :destroy,
                        inverse_of: :character

@@ -405,7 +405,8 @@ class WorldSeed::Loader
   end
 
   # EVERY FLOOR'S ROW, every key in both directions on every load: an absent
-  # `danger`, `hazard` or `down` writes nil. AFTER every place exists, because
+  # `danger`, `hazard`, `down` or `monster_level` writes nil. Its `guards` are
+  # written on the characters (`#load_characters!`). AFTER every place exists, because
   # a way down names a floor the file may declare further down. A re-seed that
   # changes `rooms` after the floor is laid out changes this row only; the
   # rooms are never laid out again (`Floor`).
@@ -416,7 +417,8 @@ class WorldSeed::Loader
       floor = attributes["floor"] or next
       down = floor["down"].presence&.then { |name| by_key.fetch(WorldSeed.natural_key(name)) }
       locations.fetch(attributes.fetch("name")).floor.update!(rooms: floor["rooms"], danger: floor["danger"],
-                                                              hazard: floor["hazard"], down_location: down)
+                                                              hazard: floor["hazard"], down_location: down,
+                                                              monster_level: floor["monster_level"])
     end
   end
 
@@ -638,16 +640,29 @@ class WorldSeed::Loader
   # to put a played world's cast back where the file says they belong. That is
   # the same "the file re-asserts itself over a played world" rule the
   # connections and the items already follow.
+  #
+  # A GUARD IS THE ONE EXCEPTION. A floor's `guards:` writes `posted_to` on
+  # each of them, and nil on everybody else, in both directions on every load.
+  # Before the floor is laid out the file's `absent: true` is written as for
+  # anybody. Once it has rooms, the engine has stood the guard in its way-down
+  # room -- once, for the world -- and never will again, so re-asserting
+  # nowhere would leave them nowhere for good: their `location`,
+  # `deliberately_absent` and spot are left as they stand.
   def load_characters!(story, universe)
+    posts = guard_posts(story)
+
     character_documents.each do |attributes|
       race = universe.races.detect { |candidate| candidate.name == attributes.fetch("race") }
       character = SameName.first(story.characters, attributes.fetch("fullname"), :fullname) ||
                   story.characters.new(fullname: attributes.fetch("fullname"))
       where = attributes["location"].presence && find_location(story, attributes["location"])
+      posted_to = posts.find { |name, _| SameName.same?(name, attributes.fetch("fullname")) }&.last
+      stood = posted_to&.child_locations&.exists?
 
       character.assign_attributes(
         attributes.except("race", "items", "location", "absent", "stats", "hostile")
                   .merge(race: race, location: where, deliberately_absent: attributes["absent"] == true,
+                         posted_to: posted_to,
                          # WHETHER THIS PERSON ATTACKS THE PARTY, and the file
                          # is the decision -- so a hand-authored world can hold
                          # a tame beast of a monstrous race as easily as a
@@ -668,10 +683,18 @@ class WorldSeed::Loader
                   # deleting the keys from a file and re-seeding takes the person
                   # out of that corner again. An absent pair is unplaced.
                   .merge(Location::Spot::COLUMNS.to_h { |column| [ column, attributes[column] ] })
+                  .then { |written| stood ? written.except(:location, :deliberately_absent, *Location::Spot::COLUMNS) : written }
       )
       character.save!
 
       load_items!(story, attributes["items"], character: character, location: nil)
+    end
+  end
+
+  # `{ guard's name => the floor's place }`, from every floor's `guards:`.
+  def guard_posts(story)
+    location_documents.each_with_object({}) do |attributes, posts|
+      Array(attributes.dig("floor", "guards")).each { |guard| posts[guard] = find_location(story, attributes.fetch("name")) }
     end
   end
 
@@ -1560,7 +1583,12 @@ class WorldSeed::Loader
   # first time anybody walks in, and it is a stub until then. So a floor
   # carrying a box column or a description, or a location the file puts
   # inside one, is a floor plan the engine would never read, and is refused.
-  FLOOR_KEYS = %w[rooms danger hazard down].freeze
+  #
+  # WHO STANDS ON IT (stage 3): `monster_level` is the level everybody the
+  # engine births there is born at, a `Character::LEVELS` level; `guards`
+  # names characters of this file the engine stands in the floor's way-down
+  # room when it lays the floor out (`#validate_guards!`).
+  FLOOR_KEYS = %w[rooms danger hazard down monster_level guards].freeze
 
   def validate_floors!
     floors = location_documents.select { |attributes| attributes.key?("floor") }
@@ -1591,6 +1619,12 @@ class WorldSeed::Loader
         raise InvalidWorld, "#{where}: location #{name} has `floor: #{key}: #{word.inspect}`; there is: #{words.join(", ")}"
       end
 
+      level = floor["monster_level"]
+      unless level.nil? || (level.is_a?(Integer) && Character::LEVELS.include?(level))
+        raise InvalidWorld, "#{where}: location #{name} has `floor: monster_level: #{level.inspect}`; a monster level is " \
+                            "a character's level, #{Character::LEVELS.first}..#{Character::LEVELS.last}"
+      end
+
       drawn = (Location::Box::COLUMNS & attributes.keys).reject { |column| attributes[column].nil? }
       if drawn.any?
         raise InvalidWorld, "#{where}: location #{name} is a floor and carries #{drawn.join(", ")}; a floor's footprint " \
@@ -1604,12 +1638,59 @@ class WorldSeed::Loader
       validate_way_down!(attributes, by_key)
     end
 
+    validate_guards!(floors)
+
     location_documents.each do |attributes|
       parent = attributes["parent"]
       next if parent.blank? || !by_key.key?(WorldSeed.natural_key(parent))
 
       raise InvalidWorld, "#{where}: location #{attributes.fetch("name").inspect} has `parent: #{parent.inspect}`, which " \
                           "is a floor; the engine lays a floor's rooms out, and a file draws none of them"
+    end
+  end
+
+  # A GUARD THE ENGINE COULD NOT STAND WHERE THE FILE POSTS THEM. The engine
+  # stands a posted guard in the floor's way-down room only while they stand
+  # nowhere, so the file keeps them `absent: true` and places them nowhere;
+  # they stand there with a whole body, since a guard is there to be fought;
+  # they are somebody the party is not (no protagonist, no companion); and they
+  # keep one floor, since `characters.posted_to_id` holds one.
+  def validate_guards!(floors)
+    posted = {}
+
+    floors.each do |attributes|
+      name = attributes.fetch("name").inspect
+      guards = attributes.dig("floor", "guards")
+      next if guards.nil?
+
+      unless guards.is_a?(Array) && guards.all? { |guard| guard.is_a?(String) && guard.present? }
+        raise InvalidWorld, "#{where}: location #{name} has `floor: guards: #{guards.inspect}`; it is a list of the " \
+                            "names of characters of this file"
+      end
+
+      guards.each do |guard|
+        character = character_documents.find { |document| SameName.same?(document.fetch("fullname"), guard) }
+        raise InvalidWorld, "#{where}: floor #{name} posts #{guard.inspect}, which is not a character of this file" if character.nil?
+
+        who = character.fetch("fullname").inspect
+        if character["is_protagonist"] == true || character["is_companion"] == true
+          raise InvalidWorld, "#{where}: floor #{name} posts #{who}, who is the protagonist or a companion; a guard is " \
+                              "somebody the party meets"
+        end
+        unless character["absent"] == true && character["location"].blank?
+          raise InvalidWorld, "#{where}: floor #{name} posts #{who}, who is not `absent: true` with no `location`; the " \
+                              "engine stands a guard on the floor when it lays it out, so the file keeps them nowhere"
+        end
+        unless character["stats"].is_a?(Hash)
+          raise InvalidWorld, "#{where}: floor #{name} posts #{who}, who has no `stats`; a guard stands with a whole " \
+                              "body, #{STAT_KEYS.map { |key| "`#{key}`" }.join(", ")}"
+        end
+        if (other = posted[character.fetch("fullname")])
+          raise InvalidWorld, "#{where}: #{who} is posted to two floors, #{other} and #{name}; a guard keeps one"
+        end
+
+        posted[character.fetch("fullname")] = name
+      end
     end
   end
 
