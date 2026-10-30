@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_30_200000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -75,6 +75,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.index ["playthrough_id", "character_id", "purpose"], name: "index_chats_on_conversation_key"
     t.index ["playthrough_id"], name: "index_chats_on_playthrough_id"
     t.index ["ruby_llm_model_id"], name: "index_chats_on_ruby_llm_model_id"
+  end
+
+  create_table "floors", force: :cascade do |t|
+    t.integer "location_id", null: false
+    t.integer "rooms", null: false
+    t.string "danger"
+    t.string "hazard"
+    t.integer "down_location_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["down_location_id"], name: "index_floors_on_down_location_id"
+    t.index ["location_id"], name: "index_floors_on_location_id", unique: true
   end
 
   create_table "interactions", force: :cascade do |t|
@@ -877,6 +889,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   add_foreign_key "chats", "players"
   add_foreign_key "chats", "playthroughs"
   add_foreign_key "chats", "ruby_llm_models"
+  add_foreign_key "floors", "locations", column: "down_location_id", on_delete: :nullify
+  add_foreign_key "floors", "locations", on_delete: :cascade
   add_foreign_key "interactions", "characters"
   add_foreign_key "interactions", "locations"
   add_foreign_key "interactions", "scenes"

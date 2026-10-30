@@ -220,6 +220,7 @@ class WorldSeed::Loader
       story = load_story!(universe)
       locations = load_locations!(story)
       load_containment!(locations)
+      load_floors!(locations)
       load_characters!(story, universe)
       # AFTER THE ROOMS, THEIR THINGS AND THEIR PEOPLE, because laying a room
       # out gives each of them a spot.
@@ -364,7 +365,7 @@ class WorldSeed::Loader
       # later entry could replay old generated detail over the author's world.
       # Rooms this document does not declare retain their own progress.
       location.assign_attributes(
-        attributes.except("opening", "items", "parent")
+        attributes.except("opening", "items", "parent", "floor")
                   .merge("name" => written, "danger" => attributes["danger"].presence || Location::SAFE,
                          "generation_checkpoint" => nil,
                          "population" => attributes["population"].presence,
@@ -372,11 +373,50 @@ class WorldSeed::Loader
                          "hazard" => attributes["hazard"].presence, "hazard_die" => attributes["hazard_die"],
                          "surface" => attributes["surface"].presence)
                   .merge(Location::Box::COLUMNS.to_h { |column| [ column, attributes[column] ] })
+                  .merge(floor_footprint(location, attributes["floor"]))
       )
+      # A FLOOR IS BUILT BEFORE ITS PLACE IS SAVED, so the place may carry a
+      # building's word (`Location#a_building_word_is_a_floors`); every key of
+      # it is written in `#load_floors!`, once every place exists for its way
+      # down to name. A place the file no longer marks a floor stops being one.
+      if attributes.key?("floor")
+        location.build_floor(rooms: attributes.dig("floor", "rooms")) if location.floor.nil?
+      elsif location.floor
+        location.floor = nil
+      end
       location.save!
       load_items!(story, attributes["items"], character: nil, location: location)
 
       [ name, location ]
+    end
+  end
+
+  # A FLOOR'S FOOTPRINT, derived from its count (`Floor.footprint`) so it is a
+  # place (`Location#place?`) before anybody walks into it -- and only while it
+  # has no rooms. A laid-out floor keeps the footprint its rooms were laid out
+  # in, whatever the file now says (VISION principle 7). Nothing for a
+  # location that is not a floor, whose box is the file's own.
+  def floor_footprint(location, floor)
+    return {} if floor.nil?
+    return { "width" => location.width, "depth" => location.depth } if location.persisted? && location.child_locations.exists?
+
+    width, depth = Floor.footprint(Floor.room_count(floor["rooms"], down: floor["down"].present?))
+    { "width" => width, "depth" => depth }
+  end
+
+  # EVERY FLOOR'S ROW, every key in both directions on every load: an absent
+  # `danger`, `hazard` or `down` writes nil. AFTER every place exists, because
+  # a way down names a floor the file may declare further down. A re-seed that
+  # changes `rooms` after the floor is laid out changes this row only; the
+  # rooms are never laid out again (`Floor`).
+  def load_floors!(locations)
+    by_key = locations.transform_keys { |name| WorldSeed.natural_key(name) }
+
+    location_documents.each do |attributes|
+      floor = attributes["floor"] or next
+      down = floor["down"].presence&.then { |name| by_key.fetch(WorldSeed.natural_key(name)) }
+      locations.fetch(attributes.fetch("name")).floor.update!(rooms: floor["rooms"], danger: floor["danger"],
+                                                              hazard: floor["hazard"], down_location: down)
     end
   end
 
@@ -1099,6 +1139,7 @@ class WorldSeed::Loader
     validate_dangers!
     validate_populations!
     validate_kinds!
+    validate_floors!
     validate_hazards!
     validate_boxes!
     validate_positions!
@@ -1506,6 +1547,106 @@ class WorldSeed::Loader
     end
   end
 
+  # A FLOOR THE ENGINE COULD NOT LAY OUT AS THE FILE SAYS. `floor:` names the
+  # four parameters this stage reads (`Floor`), and every one of them is
+  # checked here with the file and the place, `#validate_limits!`'s rule: a
+  # count outside `1..Floor::MOST_ROOMS`, a word outside
+  # `Location::Parameters`' tables, or a way down that is not another floor
+  # this one is joined to. A key this stage does not read is refused rather
+  # than dropped; the later ones arrive with their stages.
+  #
+  # AND A FLOOR IS DRAWN BY THE ENGINE, NEVER BY THE FILE: its footprint is
+  # derived from its count (`Floor.footprint`), its rooms are laid out the
+  # first time anybody walks in, and it is a stub until then. So a floor
+  # carrying a box column or a description, or a location the file puts
+  # inside one, is a floor plan the engine would never read, and is refused.
+  FLOOR_KEYS = %w[rooms danger hazard down].freeze
+
+  def validate_floors!
+    floors = location_documents.select { |attributes| attributes.key?("floor") }
+    by_key = floors.index_by { |attributes| WorldSeed.natural_key(attributes.fetch("name")) }
+
+    floors.each do |attributes|
+      floor = attributes["floor"]
+      name = attributes.fetch("name").inspect
+      raise InvalidWorld, "#{where}: location #{name}'s `floor:` must be a map of #{FLOOR_KEYS.join(", ")}, got #{floor.inspect}" unless floor.is_a?(Hash)
+
+      unknown = floor.keys - FLOOR_KEYS
+      raise InvalidWorld, "#{where}: location #{name}'s `floor:` has #{unknown.join(", ")}; there is: #{FLOOR_KEYS.join(", ")}" if unknown.any?
+
+      rooms = floor["rooms"]
+      unless rooms.is_a?(Integer) && rooms.between?(1, Floor::MOST_ROOMS)
+        raise InvalidWorld, "#{where}: location #{name} has `floor: rooms: #{rooms.inspect}`; a floor is a whole number " \
+                            "of rooms from 1 to #{Floor::MOST_ROOMS}"
+      end
+      if floor["down"].present? && rooms < 2
+        raise InvalidWorld, "#{where}: location #{name} has a way down and `floor: rooms: #{rooms}`; the way down is " \
+                            "never the entry, so a floor with one has at least 2 rooms"
+      end
+
+      { "danger" => Location::Parameters::DANGER.keys, "hazard" => Location::Parameters::HAZARDS }.each do |key, words|
+        word = floor[key]
+        next if word.nil? || words.include?(word)
+
+        raise InvalidWorld, "#{where}: location #{name} has `floor: #{key}: #{word.inspect}`; there is: #{words.join(", ")}"
+      end
+
+      drawn = (Location::Box::COLUMNS & attributes.keys).reject { |column| attributes[column].nil? }
+      if drawn.any?
+        raise InvalidWorld, "#{where}: location #{name} is a floor and carries #{drawn.join(", ")}; a floor's footprint " \
+                            "is derived from its rooms, and the engine lays them out"
+      end
+      unless attributes.fetch("detail_level", "stub") == "stub"
+        raise InvalidWorld, "#{where}: location #{name} is a floor and is `detail_level: #{attributes["detail_level"].inspect}`; " \
+                            "a floor is a stub until somebody walks into it and the engine lays it out"
+      end
+
+      validate_way_down!(attributes, by_key)
+    end
+
+    location_documents.each do |attributes|
+      parent = attributes["parent"]
+      next if parent.blank? || !by_key.key?(WorldSeed.natural_key(parent))
+
+      raise InvalidWorld, "#{where}: location #{attributes.fetch("name").inspect} has `parent: #{parent.inspect}`, which " \
+                          "is a floor; the engine lays a floor's rooms out, and a file draws none of them"
+    end
+  end
+
+  def validate_way_down!(attributes, floors)
+    name = attributes.fetch("name")
+    down = attributes.dig("floor", "down")
+    return if down.nil?
+
+    key = WorldSeed.natural_key(down.to_s)
+    raise InvalidWorld, "#{where}: floor #{name.inspect} goes down to itself" if key == WorldSeed.natural_key(name)
+    unless floors.key?(key)
+      raise InvalidWorld, "#{where}: floor #{name.inspect} goes down to #{down.inspect}, which is not a `floor:` location " \
+                          "of this file"
+    end
+
+    joined = connection_documents.any? do |connection|
+      Array(connection["between"]).map { |end_name| WorldSeed.natural_key(end_name.to_s) }.sort ==
+        [ WorldSeed.natural_key(name), key ].sort
+    end
+    unless joined
+      raise InvalidWorld, "#{where}: floor #{name.inspect} goes down to #{down.inspect}, and no connection joins the two; " \
+                          "the way down is a doorway between them"
+    end
+
+    seen = [ WorldSeed.natural_key(name) ]
+    walker = key
+    while walker
+      if seen.include?(walker)
+        ring = (seen + [ walker ]).map { |floor| floors.fetch(floor).fetch("name") }
+        raise InvalidWorld, "#{where}: these floors go down into each other: #{ring.join(" -> ")}"
+      end
+
+      seen << walker
+      walker = floors[walker]&.dig("floor", "down")&.then { |next_down| WorldSeed.natural_key(next_down.to_s) }
+    end
+  end
+
   def validate_populations!
     location_documents.each do |attributes|
       population = attributes["population"]
@@ -1521,9 +1662,14 @@ class WorldSeed::Loader
   # lists are closed, so a word outside them is a typo and is named here with
   # the file and the room, `#validate_populations!`'s rule and its reason; a
   # blank key means the file does not say, and passes.
+  #
+  # A FLOOR'S `kind:` IS A BUILDING'S (`Location::Kind::BUILDINGS`): nobody
+  # stands in a floor, and its word deals its rooms their sorts as the engine
+  # lays them out (`Floor`).
   def validate_kinds!
     location_documents.each do |attributes|
-      { "kind" => Location::Kind::KINDS, "density" => Location::Kind::DENSITIES }.each do |key, words|
+      kinds = attributes.key?("floor") ? Location::Kind::BUILDINGS : Location::Kind::KINDS
+      { "kind" => kinds, "density" => Location::Kind::DENSITIES }.each do |key, words|
         word = attributes[key]
         next if word.blank? || words.include?(word)
 

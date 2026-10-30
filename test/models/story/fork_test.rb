@@ -113,6 +113,19 @@ class Story::ForkTest < ActiveSupport::TestCase
     assert_equal forked.universe_id, forked.characters.first.race.universe_id
   end
 
+  # A FLOOR GOES WITH THE PLACE IT IS: its count, its words and its way down,
+  # through the snapshot the fork is loaded from.
+  test "the fork's floors are the original's" do
+    story = WorldSeed::Loader.new(WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/two-floors-and-a-key.yml").read)).load!
+    Story::Snapshot.capture!(story)
+
+    forked = Story::Fork.new(story).create!
+
+    floors = ->(of) { Floor.where(location: of.locations).includes(:location, :down_location).order(:id).map { |floor| [ floor.location.name, floor.rooms, floor.danger, floor.hazard, floor.down_location&.name ] } }
+    assert_equal 2, floors.call(forked).size
+    assert_equal floors.call(story), floors.call(forked)
+  end
+
   test "a fork can be forked, because it is snapshotted as it is written" do
     story = seeded_world
     forked = Story::Fork.new(story).create!

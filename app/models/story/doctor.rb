@@ -76,6 +76,7 @@ class Story::Doctor
       *hostility,
       *hazards,
       *geometry,
+      *floors,
       *vitals_rows,
       *arc,
       *event_stream,
@@ -3102,6 +3103,81 @@ class Story::Doctor
 
     [ finding(:worn_things_unchecked, :warning,
               "this story has things that can be worn, and they could not be checked: #{e.message}", :manual) ]
+  end
+
+  # ------------------------------------------------------------------------
+  # A FLOOR THE ENGINE WOULD NOT HAVE LAID OUT AS IT STANDS (`Floor`). A floor
+  # is laid out once, the first time anybody walks in, as exactly its count of
+  # rooms on storey 0 inside its footprint, with its way down on a room that is
+  # never the entry -- and then left alone. So each of these is reported and
+  # never repaired: laying a floor out again would rewrite rooms every game in
+  # the world has walked (VISION principle 7).
+  #
+  #   floor_laid_out_to_another_count  rooms on record differ from its count
+  #   floor_going_down_to_no_floor     its way down names a place with no row
+  #   floor_with_a_hand_drawn_room     a room the engine's layout cannot have
+  #                                    drawn: off storey 0, unplaced, or
+  #                                    outside the floor's footprint
+  #   floor_with_no_way_down           no room of it leads to its way down
+  #   floor_way_down_on_its_entry      its entry room leads there
+  def floors
+    Floor.where(location: story.locations).includes(:location, down_location: :floor).order(:id).flat_map do |floor|
+      place = floor.location
+      rooms = place.child_locations.order(:id).to_a
+      [ *floor_going_down_to_no_floor(floor), *(rooms.any? ? laid_out_floor(floor, place, rooms) : []) ]
+    end
+  end
+
+  def floor_going_down_to_no_floor(floor)
+    down = floor.down_location
+    return [] if down.nil? || down.floor
+
+    [ finding(:floor_going_down_to_no_floor, :warning,
+              "#{floor.location.name} is a floor whose way down is #{down.name}, which is not a floor -- a way " \
+              "down leads to the floor below, and the world file that wrote it would not load",
+              :manual, subject: floor.location) ]
+  end
+
+  # A re-seed may change a laid-out floor's count (`WorldSeed::Loader#load_floors!`),
+  # and the rooms stay as they were laid out; this is that difference said.
+  def laid_out_floor(floor, place, rooms)
+    findings = []
+    if rooms.size != floor.room_count
+      findings << finding(:floor_laid_out_to_another_count, :warning,
+                          "#{place.name} is a floor of #{floor.room_count} room(s) and was laid out with #{rooms.size} -- " \
+                          "a floor is laid out once and never again, so its count changed after it was laid out",
+                          :manual, subject: place)
+    end
+
+    drawn = rooms.reject { |room| room.placed? && room.z.zero? && place.interior? && room.box.inside_footprint?(place.width, place.depth) }
+    if drawn.any?
+      findings << finding(:floor_with_a_hand_drawn_room, :warning,
+                          "#{drawn.map(&:name).join(", ")} #{drawn.one? ? "is" : "are"} inside #{place.name}, a floor, " \
+                          "and not on its storey 0 inside its #{place.width}x#{place.depth} footprint -- the engine " \
+                          "lays a floor's rooms out, and it did not lay #{drawn.one? ? "this one" : "these"} out",
+                          :manual, subject: place)
+    end
+
+    findings.concat(floor_way_down(floor, place, rooms))
+  end
+
+  def floor_way_down(floor, place, rooms)
+    down = floor.down_location
+    return [] if down.nil?
+
+    below = [ down.id, *down.child_locations.ids ]
+    leading = rooms.select { |room| LocationConnection.exists?(location: room, connected_location_id: below) }
+    if leading.empty?
+      return [ finding(:floor_with_no_way_down, :warning,
+                       "#{place.name} is a floor whose way down is #{down.name}, and none of its rooms leads there",
+                       :manual, subject: place) ]
+    end
+    return [] unless leading.include?(rooms.first)
+
+    [ finding(:floor_way_down_on_its_entry, :warning,
+              "#{place.name}'s entry room #{rooms.first.name} leads down to #{down.name} -- a floor's way down is " \
+              "never on its entry",
+              :manual, subject: place) ]
   end
 
   # ------------------------------------------------------------------------

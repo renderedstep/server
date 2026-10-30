@@ -1,0 +1,112 @@
+# Two floors under a landing, and an old cellar beside it. The Upper Floor and
+# The Lower Floor are FLOORS: neither has a room in this file, and each is laid
+# out by the engine the first time anybody walks into it, as exactly the
+# number of rooms its `floor:` names (`floors.rooms`), on one storey, its
+# rooms dealt their sorts from its own `kind:` and their danger and hazard
+# from its own words. The Upper Floor's way down leads to The Lower Floor, and
+# the stair between them is locked with the stair key: the layout opens that
+# stair onto the room it rolls for the way down, never the entry, and the
+# stair keeps its lock.
+#
+# The Old Cellar is an ordinary place with a footprint and no rooms yet, and
+# the stair onto it from the landing is locked with the cellar key and drops
+# you on the way down only (`hazard_from: The Landing`). It is the doorway
+# carry-over on its own: when the cellar is laid out, the stair moves onto its
+# entry room and keeps its lock, its key, its one-way drop, and the opening a
+# game already made through it.
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Lanterns, iron keys and hand tools.
+  weapons: Short blades and cudgels.
+  geographies: A dungeon cut down into black stone under a lantern-lit landing.
+  civilizations: Delvers who sell what they bring up.
+  history: The dungeon was cut long ago by people nobody remembers.
+  economics: Coin for what comes up from below.
+  politics: Nobody governs the dungeon.
+  religion: Delvers leave a coin on the landing for luck.
+  races:
+  - name: Delvers
+    description: People who go down into the dungeon for a living.
+story:
+  title: Two Floors and a Key
+  genre: dungeon crawl
+  start_time: '2026-10-30T08:00:00Z'
+  preface: The stair down from the landing goes further than anyone has mapped.
+  summary: Odile goes down through two floors and a locked stair.
+opening_scene:
+  location: The Landing
+  characters: [Odile]
+  description: You stand on the lantern-lit landing with two keys at your feet.
+  summary: Odile reaches the landing.
+characters:
+- fullname: Odile
+  nickname: Odile
+  race: Delvers
+  age: 29
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A delver who has never been below the first floor.
+  personality: Careful and stubborn.
+  appearance: A lantern on a pole and a coil of rope.
+  likes: A clear way back.
+  dislikes: Doors she cannot open.
+  fears: The dark below the first floor.
+  stats: {level: 3, hit_die: 8, strength: 12, dexterity: 12, will: 12}
+locations:
+- name: The Landing
+  detail_level: realized
+  population: nobody
+  opening: true
+  description: A square landing of black stone lit by one lantern, a stair going down from it and a narrow stair beside it.
+  teaser: A lantern-lit landing.
+  lore: Delvers gather here before they go down.
+  items:
+  - name: stair key
+    description: A long iron key, cold to hold.
+    properties: '{}'
+    use_kind: key
+  - name: cellar key
+    description: A short brass key with a worn bow.
+    properties: '{}'
+    use_kind: key
+- name: The Upper Floor
+  detail_level: stub
+  kind: warren
+  teaser: The first level of the dungeon, cut from black stone, with a stair somewhere that goes further down.
+  floor:
+    rooms: 4
+    danger: uneasy
+    hazard: none
+    down: The Lower Floor
+- name: The Lower Floor
+  detail_level: stub
+  kind: warren
+  teaser: The second level of the dungeon, colder and quieter than the first.
+  floor:
+    rooms: 2
+    danger: dangerous
+    hazard: unlit
+- name: The Old Cellar
+  detail_level: stub
+  width: 12
+  depth: 9
+  teaser: An old cellar beside the landing, down a narrow stair.
+connections:
+- between: [The Landing, The Upper Floor]
+  distance: adjacent
+  travel_method: taking stairs
+- between: [The Upper Floor, The Lower Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: stair key
+- between: [The Landing, The Old Cellar]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: cellar key
+  hazard: drop
+  hazard_die: 4
+  hazard_from: The Landing

@@ -66,6 +66,9 @@ class Location < ApplicationRecord
   # And every game's record of having stood here (`Playthrough::Visit`), for
   # the same reason.
   has_many :visits, class_name: "Playthrough::Visit", dependent: :destroy, inverse_of: :location
+  # WHETHER THIS PLACE IS A FLOOR, and what it is laid out to (`Floor`). Goes
+  # with the place, which the foreign key's cascade says too.
+  has_one :floor, dependent: :destroy, inverse_of: :location
   has_and_belongs_to_many :connected_locations,
                           class_name: "Location",
                           join_table: "location_connections",
@@ -230,7 +233,13 @@ class Location < ApplicationRecord
   # one of `Location::Kind`'s words or nothing at all -- `population`'s shape
   # above and its reason: nil means NOBODY PICKED, and it is a state rather
   # than a missing value. See `Location::Kind`'s header and the migration's.
-  validates :kind, inclusion: { in: Location::Kind::KINDS }, allow_nil: true
+  #
+  # A FLOOR MAY ALSO CARRY A BUILDING'S WORD (`Location::Kind::BUILDINGS`),
+  # because nobody stands in a floor: its word deals its rooms their sorts as
+  # the engine lays them out (`Floor`), which is the place call's `place_kind`
+  # written down. The floor is only asked about for a word that needs it.
+  validates :kind, inclusion: { in: Location::Kind::KINDS + Location::Kind::BUILDINGS }, allow_nil: true
+  validate :a_building_word_is_a_floors
   validates :density, inclusion: { in: Location::Kind::DENSITIES }, allow_nil: true
 
   validates :name, presence: true
@@ -503,6 +512,12 @@ class Location < ApplicationRecord
   end
 
   private
+
+  def a_building_word_is_a_floors
+    return if kind.nil? || Location::Kind::KINDS.include?(kind) || !Location::Kind::BUILDINGS.include?(kind) || floor
+
+    errors.add(:kind, "is a building's word, which only a floor carries")
+  end
 
   # See `validate :a_box_is_whole` above for why this is one rule over five
   # columns rather than five rules, and `Location::Box.shape` for the three

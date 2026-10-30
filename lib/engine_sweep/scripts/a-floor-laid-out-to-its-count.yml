@@ -1,0 +1,214 @@
+# A FLOOR IS LAID OUT TO ITS OWN COUNT, ITS WAY DOWN OFF THE ENTRY AND STILL
+# LOCKED, AND IT IS LAID OUT ONCE.
+#
+# The Upper Floor's `floor:` names four rooms and a way down to The Lower
+# Floor, behind a stair locked with the stair key. Walking in lays it out
+# (`floor::lay_out`, from `realize.rs` `lay_out`): exactly four rooms on one
+# storey, whatever the place call's picks say (this one asks for a few rooms
+# over five storeys, safe and flooded, and is not obeyed). The way down is
+# rolled from rooms 2-4, never the entry, and the stair onto The Lower Floor is
+# opened onto that room, keyed as the file wrote it. Walking every room shows
+# the whole floor: room 4 leads nowhere new, so there is no fifth.
+#
+# A second game walks the same rooms: the layout is world rows written on the
+# first entry and never laid out again (VISION principle 7).
+story: Two Floors and a Key
+steps:
+- id: take-the-stair-key
+  type: "/take stair key"
+  why: the stair down from the upper floor is locked with it
+  expect:
+    location: The Landing (realized)
+    carrying: [stair key]
+- id: into-the-upper-floor
+  type: "/move The Upper Floor"
+  why: the floor is laid out as it is first walked into, at its entry, and the way down is not on the entry
+  browser:
+    token: into-the-upper-floor
+    realizes: The Upper Floor
+    replies:
+    - purpose: location
+      content:
+        description: A level of black stone passages lit by nothing you can see.
+        lore: The first floor was cut by people nobody remembers.
+        place_kind: mansion
+        parameters:
+          inside: a few rooms
+          storeys_above: two storeys up
+          storeys_below: deep
+          danger: safe
+          gradient: worse the deeper you go
+          hazard: flooded
+    - purpose: location
+      content:
+        description: A low chamber at the foot of the stair.
+        lore: Delvers rest here before going on.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 1 (realized)
+    storey: 0
+    exits:
+    - The Landing (realized)
+    - The Upper Floor room 2 (stub)
+    changed: true
+    refused: false
+- id: the-way-down-is-off-room-two
+  type: "/move The Upper Floor room 2"
+  why: the stair onto the lower floor was moved onto the room rolled for the way down
+  browser:
+    token: room-2
+    realizes: The Upper Floor room 2
+    replies:
+    - purpose: location
+      content:
+        description: A bare chamber with a stair cut down into its floor.
+        lore: The stair down is older than the rest.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 2 (realized)
+    storey: 0
+    exits:
+    - The Lower Floor (stub)
+    - The Upper Floor room 1 (realized)
+    - The Upper Floor room 3 (stub)
+- id: room-three
+  type: "/move The Upper Floor room 3"
+  browser:
+    token: room-3
+    realizes: The Upper Floor room 3
+    replies:
+    - purpose: location
+      content:
+        description: A narrow chamber of dripping stone.
+        lore: Water finds its way down here.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 3 (realized)
+    exits:
+    - The Upper Floor room 2 (realized)
+    - The Upper Floor room 4 (stub)
+- id: room-four-is-the-last
+  type: "/move The Upper Floor room 4"
+  why: four rooms and no more; the floor ends here
+  browser:
+    token: room-4
+    realizes: The Upper Floor room 4
+    replies:
+    - purpose: location
+      content:
+        description: A dead end of rough-cut stone.
+        lore: The cutters stopped here.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Upper Floor room 4 (realized)
+    exits:
+    - The Upper Floor room 3 (realized)
+- id: back-to-room-three
+  type: "/move The Upper Floor room 3"
+  expect:
+    location: The Upper Floor room 3 (realized)
+- id: back-to-the-way-down
+  type: "/move The Upper Floor room 2"
+  expect:
+    location: The Upper Floor room 2 (realized)
+- id: the-stair-down-kept-its-lock
+  type: "/move The Lower Floor"
+  why: the stair was moved onto room 2 and kept its barrier
+  expect:
+    location: The Upper Floor room 2 (realized)
+    refused: true
+    offers: locked
+    changed: false
+- id: the-stair-key-opens-it
+  type: "/unlock The Lower Floor with stair key"
+  why: and kept its key
+  expect:
+    location: The Upper Floor room 2 (realized)
+    changed: true
+    refused: false
+- id: down-to-the-lower-floor
+  type: "/move The Lower Floor"
+  why: the lower floor is laid out to its own two rooms, and the stair up lands on its entry
+  browser:
+    token: into-the-lower-floor
+    realizes: The Lower Floor
+    replies:
+    - purpose: location
+      content:
+        description: A colder level, the air still and the dark close.
+        lore: Few delvers come this far.
+        place_kind: house
+    - purpose: location
+      content:
+        description: The foot of the stair, cold and unlit.
+        lore: The stair comes down here from the floor above.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Lower Floor room 1 (realized)
+    storey: 0
+    exits:
+    - The Lower Floor room 2 (stub)
+    - The Upper Floor room 2 (realized)
+    refused: false
+- id: the-lower-floor-has-two-rooms
+  type: "/move The Lower Floor room 2"
+  why: it has no way down, and no third room
+  browser:
+    token: lower-room-2
+    realizes: The Lower Floor room 2
+    replies:
+    - purpose: location
+      content:
+        description: A low chamber at the bottom of everything.
+        lore: Nothing below this has been found.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The Lower Floor room 2 (realized)
+    exits:
+    - The Lower Floor room 1 (realized)
+- id: a-second-game-finds-the-floor-as-it-was-laid-out
+  player: second
+  type: "/move The Upper Floor room 1"
+  why: the floor was laid out once, by the first game, and the second walks the same rooms with no call
+  expect:
+    location: The Upper Floor room 1 (realized)
+    storey: 0
+    exits:
+    - The Landing (realized)
+    - The Upper Floor room 2 (realized)
+- id: and-the-same-way-down
+  player: second
+  type: "/move The Upper Floor room 2"
+  why: the stair now leads onto the lower floor's entry, which the first game laid out
+  expect:
+    location: The Upper Floor room 2 (realized)
+    exits:
+    - The Lower Floor room 1 (realized)
+    - The Upper Floor room 1 (realized)
+    - The Upper Floor room 3 (realized)
+- id: still-locked-for-the-second-game
+  player: second
+  type: "/move The Lower Floor room 1"
+  why: the first game's opening is its own
+  expect:
+    location: The Upper Floor room 2 (realized)
+    refused: true
+    offers: locked
