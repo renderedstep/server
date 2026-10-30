@@ -95,6 +95,10 @@ module Protocol::V1
       sheet: glance.sheet,
       next_beat: glance.next_beat,
       story_time: glance.story_time&.iso8601,
+      floor: glance.floor&.then do |floor|
+        { name: floor.name, falls_at: floor.falls_at.iso8601, minutes_left: floor.minutes_left, countdown: floor.countdown }
+      end,
+      collapse: glance.collapse,
       ending_due: glance.ending_due? ? true : false,
       ending_offer: glance.ending_offer&.to_h,
       over: glance.over? ? true : false,

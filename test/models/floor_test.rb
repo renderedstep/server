@@ -88,6 +88,14 @@ class FloorTest < ActiveSupport::TestCase
     assert_not build(:floor, levels_up: nil).valid?
   end
 
+  test "a floor falls a positive whole number of minutes after a game reaches it, or never" do
+    assert_nil create(:floor).minutes
+    assert_predicate build(:floor, minutes: 30), :valid?
+    [ 0, -5, 2.5 ].each do |minutes|
+      assert_not build(:floor, minutes: minutes).valid?, "#{minutes.inspect} is no countdown"
+    end
+  end
+
   test "a guard posted to a floor is let go with its place, and outlives it" do
     guard = create(:character, :posted)
     place = guard.posted_to

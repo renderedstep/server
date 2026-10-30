@@ -17,6 +17,13 @@
 # the level a game's player has, and every max-HP reader on a game asks
 # `Playthrough#max_hp_for`.
 #
+# AND WHEN IT FELL, IN THIS GAME (stage 6). A floor with `minutes` gives way
+# that many story minutes after `arrived_at`; the engine writes `fell_at`, the
+# deadline, on the turn it notices (renderedstep/engine `turn.rs`
+# `floors_fall`), and the player on the floor dies with it. Only this row
+# says so: the world's rows are untouched, and every other game finds the
+# floor whole (VISION.md principle 7).
+#
 # NO MODEL IS TOLD. The notice is the engine's own words, for the player only:
 # nothing a request is built from reads this table.
 class Playthrough::FloorReached < ApplicationRecord
@@ -29,6 +36,20 @@ class Playthrough::FloorReached < ApplicationRecord
   validates :arrived_at, presence: true
   validates :level, inclusion: { in: Character::LEVELS }, allow_nil: true
   validates :location_id, uniqueness: { scope: :playthrough_id }
+
+  # THE STORY TIME THIS FLOOR GIVES WAY IN THIS GAME, the engine's
+  # `Game::falls_at`: its countdown (`Floor#minutes`) from the time this game
+  # first stood on it. Nil for a floor with no countdown.
+  def falls_at
+    minutes = location.floor&.minutes
+    arrived_at + minutes.minutes if minutes
+  end
+
+  # WHETHER IT HAS FALLEN IN THIS GAME. The engine writes `fell_at` -- the
+  # deadline, not the minute it noticed -- and nothing here does; everybody on
+  # the floor is then dead in this game and no way out leads onto it
+  # (`Playthrough#fallen?`). The world's rows are untouched.
+  def fallen? = fell_at.present?
 
   # THE NOTICE, word for word the engine's `Game::floor_to_s`: "Reaching The
   # Second Floor raised Odile to level 5: 28 hit points, and healed to full."

@@ -49,6 +49,11 @@ class Playthrough::Glance
   # question, the label of the answer that ends the story and the line it
   # plays (`/end`), and the label of "Not yet".
   EndingOffer = Data.define(:heading, :goals, :question, :end, :end_line, :not_yet)
+  # THE FLOOR THE PLAYER STANDS ON AND HOW LONG IT HAS LEFT, in the engine's
+  # words (`glance::Floor`): its name, the story time it gives way in this
+  # game, the whole minutes until then (a part of a minute counted as one) and
+  # the engine's line, "The First Floor falls in 25 minutes."
+  Floor = Data.define(:name, :falls_at, :minutes_left, :countdown)
 
   attr_reader :playthrough, :document
 
@@ -78,6 +83,20 @@ class Playthrough::Glance
 
   # Story time now, for this game.
   def story_time = document["story_time"] && Time.zone.at(document["story_time"])
+
+  # THE COUNTDOWN, while the player stands on a floor that has one and has not
+  # fallen; nil off a floor, on one with no countdown, and once it has fallen.
+  # The narrator is never told it.
+  def floor
+    floor = document["floor"] or return nil
+
+    Floor.new(**fields(floor), falls_at: Time.zone.at(floor["falls_at"]))
+  end
+
+  # THE ENGINE'S SENTENCE FOR A FLOOR THAT GAVE WAY UNDER THE PLAYER, for a game
+  # that ended so, and nil for any other: "The First Floor gave way at 8:30 am,
+  # and Odile fell with it." The death statement (`#ended`) follows it.
+  def collapse = document["collapse"]
 
   def over? = document["over"]
 
@@ -122,6 +141,8 @@ class Playthrough::Glance
       line("carrying", carrying.map(&:name), "nothing"),
       line("condition", [ condition, *sheet ].compact, "no stat block", "; "),
       "  next beat   #{next_beat || "this world has no arc"}",
+      *("  floor       #{floor.countdown}" if floor),
+      *("  collapse    #{collapse}" if collapse),
       *("  ending      #{ending_offer ? ending_offer.question : "due"} (#{ending_offer&.end_line || "/end"})" if ending_due?),
       *("  ended       #{ended}" if ended),
       *verbs.map { |verb| verb_line(verb) }

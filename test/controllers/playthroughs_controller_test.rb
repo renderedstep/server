@@ -801,6 +801,27 @@ class PlaythroughsControllerTest < ActionDispatch::IntegrationTest
     assert_select "div.notice", text: /#{Regexp.escape(Playthrough::DeathNotice::HEADING)}/
   end
 
+  # A FLOOR THAT GAVE WAY UNDER THE PLAYER: the engine's sentence on its own
+  # line, then the death statement as it always reads.
+  test "a playthrough whose floor gave way under the player says so, then that they are dead" do
+    story = create(:story, start_time: Time.zone.parse("2026-10-31T08:00:00Z"))
+    floor = create(:location, :stub, story: story, name: "The First Floor", width: 12, depth: 12)
+    create(:floor, location: floor, minutes: 30)
+    hero = create(:character, :protagonist, story: story, fullname: "Odile", level: 1, hit_die: 6)
+    playthrough = create(:playthrough, story: story, character: hero, current_location: floor,
+                                       current_scene: create(:scene, story: story, location: floor))
+    create(:playthrough_floor_reached, playthrough: playthrough, location: floor, arrived_at: story.start_time,
+                                       fell_at: story.start_time + 30.minutes)
+    wound!(playthrough, hero, 99)
+
+    get playthrough_path(playthrough)
+
+    assert_select "div.notice p", text: "The First Floor gave way at 8:30 am, and Odile fell with it."
+    assert_match(/gave way at 8:30 am, and Odile fell with it\.<\/p>\s*<p><strong>#{Regexp.escape(Playthrough::DeathNotice::HEADING)}/,
+                 response.body)
+    assert_select "div.notice", text: /The First Floor gave way/, count: 1
+  end
+
   test "a dead playthrough offers the one way on: a new playthrough of the same world" do
     playthrough = dead_playthrough
 

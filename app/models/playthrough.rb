@@ -245,10 +245,26 @@ class Playthrough < ApplicationRecord
   # A DEAD BODY IS STILL IN THE ROOM, in the world and on the record: nothing is
   # moved and `characters.location_id` is untouched. What changes is what the
   # closed sets OFFER this game.
+  #
+  # NOBODY ON A FLOOR THAT HAS FALLEN IN THIS GAME is alive in it (`#fallen?`),
+  # so the room's cast is empty there, as the engine's `Game::cast_in` says.
   def cast_in(location)
-    return [] if location.nil?
+    return [] if location.nil? || fallen?(location)
 
     characters_located_in(location).reject { |who| vitals_for(who)&.dead? }
+  end
+
+  # WHETHER A ROOM IS ON A FLOOR THAT HAS FALLEN IN THIS GAME, the engine's
+  # `Game::fallen`: the floor is the room's own `floors` row or its parent's
+  # (the engine's `playthrough::floor_of`, the first by id when both have
+  # one), and it has fallen once this game's row for it has a `fell_at`
+  # (`Playthrough::FloorReached#fallen?`). The world's rows are untouched, so
+  # every other game sees the floor whole.
+  def fallen?(location)
+    return false if location.nil?
+
+    floor = Floor.where(location_id: [ location.id, location.parent_location_id ].compact).order(:id).first
+    floor.present? && floors_reached.where(location_id: floor.location_id).where.not(fell_at: nil).exists?
   end
 
   # Bodies in this game's room, including those who cannot answer anymore.
@@ -537,9 +553,13 @@ class Playthrough < ApplicationRecord
 
   # The ways out of where the player is standing -- the move targets
   # `Playthrough::Classifier` will accept, which is why the play page prints
-  # them rather than leaving the player to guess.
+  # them rather than leaving the player to guess. A way onto a floor that has
+  # fallen in this game is no way out (`#fallen?`, the engine's `Game::exits`).
   def exits
-    current_location&.exits&.order(:id) || Location.none
+    exits = current_location&.exits&.order(:id) || Location.none
+    return exits unless floors_reached.where.not(fell_at: nil).exists?
+
+    exits.where.not(id: exits.select { |room| fallen?(room) }.map(&:id))
   end
 
   # HOW MUCH OF THE PLAYTHROUGH A PROMPT IS ALLOWED TO CARRY, in characters.

@@ -103,6 +103,51 @@ class Playthrough::FloorReachedTest < ActiveSupport::TestCase
     assert_includes Playthrough::Mechanics.new(@game, model: false).state.sheet, "level 4, d8"
   end
 
+  # A FLOOR THAT FALLS (stage 6): its deadline is this game's arrival plus the
+  # floor's minutes, and it has fallen once the engine wrote `fell_at`.
+  test "a floor with minutes falls at its arrival plus them, and has fallen once the engine says so" do
+    @first.floor.update!(minutes: 30)
+    row = reach(@first, level: nil)
+
+    assert_equal ARRIVED + 30.minutes, row.falls_at
+    assert_not row.fallen?
+    assert_nil reach(@second, level: nil).falls_at
+
+    row.update!(fell_at: row.falls_at)
+    assert_predicate row, :fallen?
+  end
+
+  # WHAT A FALLEN FLOOR HIDES IN ONE GAME, the engine's `Game::cast_in`,
+  # `Game::exits` and `Game::fallen`: nobody on it, a room of it included, is
+  # alive in that game, and no way out leads onto it. Another game, and the
+  # world, see the floor whole.
+  test "a fallen floor leaves nobody standing on it and no way onto it, in its own game only" do
+    @first.floor.update!(minutes: 30)
+    room = create(:location, story: @story, name: "The First Floor room 1", parent_location: @first)
+    wenna = create(:character, story: @story, fullname: "Wenna Cole", location: room)
+    create(:location_connection, location: @landing, connected_location: @first)
+    create(:location_connection, location: @landing, connected_location: @second)
+    other = create(:playthrough, story: @story, character: @odile, current_location: @landing)
+    row = reach(@first, level: nil)
+
+    assert_includes @game.cast_in(room), wenna
+    assert_equal [ @first, @second ], @game.exits.to_a
+
+    row.update!(fell_at: row.falls_at)
+    assert @game.fallen?(@first)
+    assert @game.fallen?(room)
+    assert_not @game.fallen?(@second)
+    assert_empty @game.cast_in(room)
+    assert_empty @game.foes_in(room)
+    assert_equal [ @second ], @game.exits.to_a
+    assert_equal [ @second ], Playthrough::Classifier.new(@game).exits_here
+
+    assert_not other.fallen?(room)
+    assert_includes other.cast_in(room), wenna
+    assert_equal [ @first, @second ], other.exits.to_a
+    assert_equal room, wenna.reload.location
+  end
+
   test "a row goes with its game and its place, and outlives its scene" do
     scene = create(:scene, story: @story, location: @landing)
     row = create(:playthrough_floor_reached, playthrough: @game, location: @first, level: 4, scene: scene)

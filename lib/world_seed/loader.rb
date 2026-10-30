@@ -406,7 +406,7 @@ class WorldSeed::Loader
 
   # EVERY FLOOR'S ROW, every key in both directions on every load: an absent
   # `danger`, `hazard`, `down` or `monster_level` writes nil, and an absent
-  # `levels_up` writes false. Its `guards` are
+  # `levels_up` writes false, and an absent `minutes` writes nil. Its `guards` are
   # written on the characters (`#load_characters!`). AFTER every place exists, because
   # a way down names a floor the file may declare further down. A re-seed that
   # changes `rooms` after the floor is laid out changes this row only; the
@@ -420,7 +420,8 @@ class WorldSeed::Loader
       locations.fetch(attributes.fetch("name")).floor.update!(rooms: floor["rooms"], danger: floor["danger"],
                                                               hazard: floor["hazard"], down_location: down,
                                                               monster_level: floor["monster_level"],
-                                                              levels_up: floor["levels_up"] == true)
+                                                              levels_up: floor["levels_up"] == true,
+                                                              minutes: floor["minutes"])
     end
   end
 
@@ -1594,7 +1595,11 @@ class WorldSeed::Loader
   # WHETHER IT RAISES A LEVEL (stage 5): `levels_up: true` raises a game's
   # level by one the first time that game stands on the floor, and heals the
   # player to full (`Floor#levels_up`). `true` or `false`, nothing else.
-  FLOOR_KEYS = %w[rooms danger hazard down monster_level guards levels_up].freeze
+  #
+  # WHETHER IT FALLS (stage 6): `minutes` is how many story minutes after a
+  # game first stands on the floor it gives way in that game (`Floor#minutes`).
+  # A positive whole number, nothing else.
+  FLOOR_KEYS = %w[rooms danger hazard down monster_level guards levels_up minutes].freeze
 
   def validate_floors!
     floors = location_documents.select { |attributes| attributes.key?("floor") }
@@ -1634,6 +1639,12 @@ class WorldSeed::Loader
       unless [ nil, true, false ].include?(floor["levels_up"])
         raise InvalidWorld, "#{where}: location #{name} has `floor: levels_up: #{floor["levels_up"].inspect}`; it is " \
                             "true or false"
+      end
+
+      minutes = floor["minutes"]
+      unless minutes.nil? || (minutes.is_a?(Integer) && minutes.positive?)
+        raise InvalidWorld, "#{where}: location #{name} has `floor: minutes: #{minutes.inspect}`; a floor falls a " \
+                            "positive whole number of story minutes after a game first stands on it"
       end
 
       drawn = (Location::Box::COLUMNS & attributes.keys).reject { |column| attributes[column].nil? }

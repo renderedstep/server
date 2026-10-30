@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_31_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_31_120000) do
   create_table "characters", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "fullname"
@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_090000) do
     t.datetime "updated_at", null: false
     t.integer "monster_level"
     t.boolean "levels_up", default: false, null: false
+    t.integer "minutes"
     t.index ["down_location_id"], name: "index_floors_on_down_location_id"
     t.index ["location_id"], name: "index_floors_on_location_id", unique: true
   end
@@ -434,6 +435,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_31_090000) do
     t.integer "scene_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "fell_at"
     t.index ["location_id"], name: "index_playthrough_floors_on_location_id"
     t.index ["playthrough_id", "location_id"], name: "index_playthrough_floors_on_playthrough_and_location", unique: true
     t.index ["playthrough_id"], name: "index_playthrough_floors_on_playthrough_id"

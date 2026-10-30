@@ -46,6 +46,11 @@ class Floor < ApplicationRecord
   # healed to full on the same turn (the engine's `turn.rs` `reach_floor`). The
   # level is the game's (`Playthrough::FloorReached`), never the world's.
   validates :levels_up, inclusion: { in: [ true, false ] }
+  # HOW MANY STORY MINUTES AFTER A GAME FIRST STANDS ON THIS FLOOR IT GIVES WAY
+  # in that game, and the player on it with it (the engine's `turn.rs`
+  # `floors_fall`). The collapse is the game's (`Playthrough::FloorReached#fell_at`),
+  # never the world's. Nil is a floor that never falls.
+  validates :minutes, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :a_way_down_is_another_floor_of_this_story
 
   # HOW MANY ROOMS A FLOOR OF `rooms` IS DRAWN WITH: at least one, at least two

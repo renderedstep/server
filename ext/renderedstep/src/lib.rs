@@ -1373,6 +1373,11 @@ fn glance_json(glance: &Glance) -> Value {
         "sheet": glance.sheet,
         "next_beat": glance.next_beat,
         "story_time": glance.story_time,
+        "floor": glance.floor.as_ref().map(|floor| json!({
+            "name": floor.name, "falls_at": floor.falls_at,
+            "minutes_left": floor.minutes_left, "countdown": floor.countdown,
+        })),
+        "collapse": glance.collapse,
         "ending_due": glance.ending_due,
         "ending_offer": glance.ending_offer.as_ref().map(|offer| json!({
             "heading": offer.heading, "goals": offer.goals, "question": offer.question,

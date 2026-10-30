@@ -278,13 +278,9 @@ class Playthrough::Classifier
 
   # The ways out of where the player is standing. Stubs are included and that
   # is the point: an exit nobody has walked through is a real Location record
-  # with a name, and walking into it is what realizes it.
-  def exits_here
-    location = playthrough.current_location
-    return [] if location.nil?
-
-    location.exits.order(:id).to_a
-  end
+  # with a name, and walking into it is what realizes it. A way onto a floor
+  # that has fallen in this game is not one (`Playthrough#exits`).
+  def exits_here = playthrough.exits.to_a
 
   # Who the player can speak to, which is whoever `Scene::Generator` says is
   # standing here, minus the player themselves. Asked of the generator rather

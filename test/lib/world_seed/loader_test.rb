@@ -439,8 +439,10 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
       ->(floor, _) { floor["rooms"] = 1 } => /has a way down and `floor: rooms: 1`/,
       ->(floor, _) { floor["danger"] = "deadly" } => /`floor: danger: "deadly"`; there is: safe, uneasy, dangerous/,
       ->(floor, _) { floor["hazard"] = "lava" } => /`floor: hazard: "lava"`; there is: none, flooded/,
-      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards, levels_up/,
+      ->(floor, _) { floor["wardens"] = 2 } => /`floor:` has wardens; there is: rooms, danger, hazard, down, monster_level, guards, levels_up, minutes/,
       ->(floor, _) { floor["levels_up"] = "yes" } => /`floor: levels_up: "yes"`; it is true or false/,
+      ->(floor, _) { floor["minutes"] = 0 } => /`floor: minutes: 0`; a floor falls a positive whole number of story minutes/,
+      ->(floor, _) { floor["minutes"] = "soon" } => /`floor: minutes: "soon"`/,
       ->(floor, _) { floor["down"] = "The Old Cellar" } => /goes down to "The Old Cellar", which is not a `floor:` location/,
       ->(floor, _) { floor["down"] = "The Upper Floor" } => /"The Upper Floor" goes down to itself/,
       ->(_, row) { row["width"] = 12 } => /is a floor and carries width; a floor's footprint is derived/,
@@ -473,6 +475,20 @@ class WorldSeed::LoaderTest < ActiveSupport::TestCase
     assert_equal false, first.reload.floor.levels_up
     assert_equal false, floors_world.then { |file| WorldSeed::Loader.new(file).load! }
                                     .locations.find_by!(name: "The Upper Floor").floor.levels_up
+  end
+
+  # WHETHER A FLOOR FALLS (stage 6), in both directions on every load: taking
+  # the key out writes nil again.
+  test "seeds a floor's countdown, and an absent key writes none" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-floor-that-falls.yml").read)
+    story = WorldSeed::Loader.new(world).load!
+    first = story.locations.find_by!(name: "The First Floor")
+
+    assert_equal [ 30, nil ], story.locations.joins(:floor).order(:id).map { |place| place.floor.minutes }
+
+    world["locations"].find { |row| row["name"] == "The First Floor" }["floor"].delete("minutes")
+    WorldSeed::Loader.new(world).load!
+    assert_nil first.reload.floor.minutes
   end
 
   # WHO STANDS ON A FLOOR (stage 3): its monster level on the row, and its
