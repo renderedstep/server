@@ -36,6 +36,12 @@ class Floor < ApplicationRecord
                     if: :down_location_id?
   validates :danger, inclusion: { in: Location::Parameters::DANGER.keys }, allow_nil: true
   validates :hazard, inclusion: { in: Location::Parameters::HAZARDS }, allow_nil: true
+  # THE LEVEL EVERYBODY THE ENGINE BIRTHS ON THIS FLOOR IS BORN AT, in it or in
+  # a room of it (renderedstep/engine `realize.rs` `admit_new`, and
+  # `Character::Registry` here). Their hit die and abilities are rolled as
+  # anybody's are; only the level is the floor's. Nil is the ordinary
+  # `Character::StatBlock::STARTING_LEVEL`.
+  validates :monster_level, inclusion: { in: Character::LEVELS }, allow_nil: true
   validate :a_way_down_is_another_floor_of_this_story
 
   # HOW MANY ROOMS A FLOOR OF `rooms` IS DRAWN WITH: at least one, at least two

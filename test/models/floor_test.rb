@@ -73,6 +73,25 @@ class FloorTest < ActiveSupport::TestCase
     assert_predicate place.reload.tap { |floor| floor.kind = "warren" }, :valid?
   end
 
+  test "its monster level is a character's level, or none" do
+    assert_predicate build(:floor, :deep), :valid?
+    assert_predicate build(:floor, monster_level: nil), :valid?
+    assert_predicate build(:floor, monster_level: Character::LEVELS.last), :valid?
+    [ 0, Character::LEVELS.last + 1 ].each do |level|
+      assert_not build(:floor, monster_level: level).valid?, "#{level.inspect} is not a level"
+    end
+  end
+
+  test "a guard posted to a floor is let go with its place, and outlives it" do
+    guard = create(:character, :posted)
+    place = guard.posted_to
+
+    assert_equal [ guard ], place.posted_guards.to_a
+    place.destroy!
+
+    assert_nil guard.reload.posted_to_id
+  end
+
   test "a floor goes with its place" do
     floor = create(:floor)
 

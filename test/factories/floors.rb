@@ -6,5 +6,11 @@ FactoryBot.define do
   factory :floor do
     location { association :location, :stub, width: 12, depth: 12 }
     rooms { 4 }
+
+    # A FLOOR WHOSE PEOPLE ARE BORN STRONGER: everybody the engine births on
+    # it is level 4 (`Floor#monster_level`).
+    trait :deep do
+      monster_level { 4 }
+    end
   end
 end

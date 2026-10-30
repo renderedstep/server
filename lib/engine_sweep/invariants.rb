@@ -88,6 +88,9 @@
 #                        file catches everything "nobody is nowhere" would --
 #                        somebody who LOST their room during the walk fails it
 #                        -- and does not fail on a world that means it.
+#                        A guard the file posts to a floor and keeps nowhere
+#                        may stand in a room of it at the spot the world rolls
+#                        there: the layout stood them (`#stood_at_layout?`).
 #   stat_blocks_unmoved  every character's `level`, `hit_die` and three
 #                        abilities are what the world file says they are, and
 #                        somebody the file gives no `stats` still has none.
@@ -477,6 +480,7 @@ class EngineSweep::Invariants
     moved = story.characters.includes(:location).order(:id).filter_map do |character|
       room, seat = cast_in_file[character.fullname]
       next if character.location&.name == room && (character.position == seat || (seat.nil? && placed_alone?(character)))
+      next if room.nil? && seat.nil? && stood_at_layout?(character)
 
       "#{character.fullname} is #{character.whereabouts}#{" #{character.position}" if character.position} and the " \
         "file says #{room ? "in #{room}#{" #{seat}" if seat}" : "nowhere"}"
@@ -727,6 +731,19 @@ class EngineSweep::Invariants
   # given the spot the world rolls for it there and no other
   # (`Location::Placement.rolled_in_the_world?`).
   def placed_alone?(record) = Location::Placement.rolled_in_the_world?(record.location, record)
+
+  # A GUARD THE FILE POSTS TO A FLOOR AND KEEPS NOWHERE, stood by the engine
+  # in a room of that floor when it laid the floor out, at the spot the world
+  # rolls for them there (renderedstep/engine `realize.rs` `lay_out`). It is
+  # the one move a layout makes to the cast, as `#laid_out_alone?` is the one
+  # box a load or a realization sizes, so the engine is still the one writer.
+  def stood_at_layout?(character)
+    floor = character.posted_to_id or return false
+    room = character.location
+    return false unless room&.parent_location_id == floor && Floor.exists?(location_id: floor)
+
+    Location::Placement.in_the_world(room, character) == { x: character.x, y: character.y }
+  end
 
   # THE PARENT IS COMPARED THE WAY THE LOADER RESOLVED IT, on
   # `WorldSeed.natural_key`: `WorldSeed::Loader#load_containment!` matches a

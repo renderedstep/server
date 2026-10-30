@@ -2340,6 +2340,35 @@ class Story::DoctorTest < ActiveSupport::TestCase
     assert_empty floor_codes(story)
   end
 
+  def guard_codes(story) = codes(story).grep(/\Aguard_/)
+
+  test "a guard posted to a place that is no floor is reported and never repaired" do
+    story, = laid_out_floor
+    guard = create(:character, :absent, story: story, fullname: "Brask the Stairwarden",
+                                        posted_to: story.locations.find_by!(name: "The Old Cellar"))
+
+    found = finding(story, :guard_posted_to_no_floor)
+    assert_equal [ :warning, :manual, guard ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/Brask the Stairwarden is posted to The Old Cellar, which is not a floor/, found.message)
+  end
+
+  # A re-seed from before the loader kept a laid-out guard where they stood.
+  test "a guard still nowhere after their floor is laid out is reported, and one before it is not" do
+    story, upper, rooms = laid_out_floor
+    guard = create(:character, :absent, story: story, fullname: "Brask the Stairwarden", posted_to: upper)
+
+    found = finding(story, :guard_nowhere_on_a_laid_out_floor)
+    assert_equal [ :warning, :manual, guard ], [ found.severity, found.remedy, found.subject ]
+    assert_match(/posted to The Upper Floor, which is laid out, and stands nowhere/, found.message)
+
+    guard.update!(location: rooms.second, deliberately_absent: false)
+    assert_empty guard_codes(Story.find(story.id))
+
+    lower = story.locations.find_by!(name: "The Lower Floor")
+    create(:character, :absent, story: story, fullname: "Wenna the Lowerwarden", posted_to: lower)
+    assert_empty guard_codes(Story.find(story.id)), "a floor nobody has laid out stands its guards when it is"
+  end
+
   test "a floor whose way down is on its entry is reported" do
     story, _, rooms = laid_out_floor
     connect(rooms.first, story.locations.find_by!(name: "The Lower Floor"), travel_method: "taking stairs")

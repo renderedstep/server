@@ -344,6 +344,36 @@ class WorldSeed::ExporterTest < ActiveSupport::TestCase
     assert_equal [ 12, 12 ], reloaded.locations.find_by!(name: "The Upper Floor").slice(:width, :depth).values
   end
 
+  # WHO STANDS ON A FLOOR: its monster level, and its guards by full name, each
+  # written as the file posted them -- `absent: true`, nowhere, with `stats` --
+  # even once the layout has stood them in a room.
+  test "exports a floor's monster level and guards, and a guarded world round-trips" do
+    world = WorldSeed.parse(Rails.root.join("lib/engine_sweep/worlds/a-guarded-stair.yml").read)
+    world["locations"].find { |row| row["name"] == "The Upper Floor" }["floor"]["monster_level"] = 3
+    story = WorldSeed::Loader.new(world).load!
+    upper = story.locations.find_by!(name: "The Upper Floor")
+    Location::Interior.lay_out!(upper)
+    room = upper.child_locations.order(:id).second
+    story.characters.find_by!(fullname: "Brask the Stairwarden").update!(location: room, deliberately_absent: false, x: room.x, y: room.y)
+
+    document = WorldSeed::Exporter.new(story).document
+    floor = document["locations"].find { |row| row["name"] == "The Upper Floor" }["floor"]
+    assert_equal [ 3, [ "Brask the Stairwarden" ] ], floor.values_at("monster_level", "guards")
+    assert_not document["locations"].find { |row| row["name"] == "The Lower Floor" }["floor"].key?("guards")
+    brask = document["characters"].find { |row| row["fullname"] == "Brask the Stairwarden" }
+    assert_equal true, brask["absent"]
+    assert_not brask.key?("location")
+    assert_not brask.key?("x")
+    assert_equal({ "level" => 1, "hit_die" => 6, "strength" => 8, "dexterity" => 8, "will" => 8 }, brask["stats"])
+
+    document["story"]["title"] = "A Guarded Stair Again"
+    reloaded = WorldSeed::Loader.new(WorldSeed.parse(WorldSeed.dump(document))).load!
+    again = reloaded.locations.find_by!(name: "The Upper Floor")
+    assert_equal 3, again.floor.monster_level
+    assert_equal [ "Brask the Stairwarden" ], again.posted_guards.pluck(:fullname)
+    assert_predicate again.posted_guards.first, :deliberately_absent?
+  end
+
   # AND A LAID-OUT FLOOR'S ROOMS ARE THE ENGINE'S, so they are not written: a
   # doorway onto one is written onto the floor, which is where the file had it,
   # and the loader lays a fresh copy out anew.

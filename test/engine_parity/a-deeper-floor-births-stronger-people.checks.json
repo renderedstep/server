@@ -1,0 +1,37 @@
+{
+  "script": "a-deeper-floor-births-stronger-people",
+  "doctor": {
+    "headline": "playable, 4 warnings",
+    "findings": [
+      [
+        "one_room_place_left_split",
+        "warning",
+        "The Upper Floor room 1 is the only room inside The Upper Floor and still carries its placeholder name, but it is not the exact shape a fold may undo (The Upper Floor is a floor), so the player stands in the placeholder rather than in The Upper Floor",
+        "manual"
+      ],
+      [
+        "one_room_place_left_split",
+        "warning",
+        "The Bottom Floor room 1 is the only room inside The Bottom Floor and still carries its placeholder name, but it is not the exact shape a fold may undo (The Bottom Floor is a floor), so the player stands in the placeholder rather than in The Bottom Floor",
+        "manual"
+      ],
+      [
+        "no_arc",
+        "warning",
+        "this story has no arc, so no playthrough of it can ever reach an ending: there is no quest for a beat to belong to and no outcome to select. A world file's `quests:` block is where one is written",
+        "manual"
+      ],
+      [
+        "room_without_a_layout",
+        "warning",
+        "\"The Landing\" has no layout: nobody can be given a spot in it, so what is within reach there cannot be measured",
+        "manual"
+      ]
+    ]
+  },
+  "audit": {
+    "headline": "1 scenes, nothing to report",
+    "flags": [],
+    "unjudged": []
+  }
+}
