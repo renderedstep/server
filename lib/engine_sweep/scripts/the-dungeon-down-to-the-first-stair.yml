@@ -1,0 +1,330 @@
+# THE DUNGEON, FROM THE LANDING TO THE FIRST STAIR DOWN, the way a player
+# walks it. The First Floor is a stub until this walk steps onto it, and that
+# step lays it out: exactly the file's count of rooms on one storey, with one
+# of them, never the entry, rolled as the way down, and Brask the Stairwarden
+# stood in it. The walk then goes room by room along the shortest way from the
+# entry to that room -- each one written on first entry from a fixed reply --
+# and finds him there, hostile and whole, beside the stair down to The Second
+# Floor, which is locked with the key he carries.
+#
+# THE ROUTE IS THE LAYOUT'S, NOT THE FILE'S. Which room is the way down, and
+# which doors join the rooms between, are the floor's own dice (`Roll::INTERIOR`
+# of the place), and a walk pins every id (`EngineSweep::Walk::ID_BASE`), so
+# the floor lays out the same on every walk. A change to the file's floors, or
+# to the engine's floor layout, moves the route, and this script says so on its
+# first room that is no longer where it was.
+story: The Dungeon
+steps:
+- id: the-landing
+  why: >-
+    The game opens on the landing with the lamp-keeper, and the one way on is
+    the stair down onto the first floor, a stub nobody has laid out.
+  type: look
+  expect:
+    location: The Landing (realized)
+    exits:
+    - The First Floor (stub)
+    present:
+    - Old Hesk
+- id: onto-the-first-floor
+  why: >-
+    The floor is laid out on this turn. The stair lands on the entry, room 1,
+    and the guard stands on the way down, never on the entry.
+  type: "/move The First Floor"
+  browser:
+    token: onto-the-first-floor
+    realizes: The First Floor
+    replies:
+    - purpose: location
+      content:
+        description: A level of black stone passages lit by nothing you can see.
+        lore: The first floor was cut by people nobody remembers.
+        place_kind: warren
+    - purpose: location
+      content:
+        description: A low chamber of black stone at the foot of the stair from the landing.
+        lore: Delvers stop here to light their lanterns before going on.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The First Floor room 1 (realized)
+    exits:
+    - The First Floor room 2 (stub)
+    - The Landing (realized)
+    present: []
+- type: "/move The First Floor room 2"
+  browser:
+    token: room-2
+    realizes: The First Floor room 2
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 2 (realized)
+- type: "/move The First Floor room 3"
+  browser:
+    token: room-3
+    realizes: The First Floor room 3
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 3 (realized)
+- type: "/move The First Floor room 4"
+  browser:
+    token: room-4
+    realizes: The First Floor room 4
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 4 (realized)
+- type: "/move The First Floor room 5"
+  browser:
+    token: room-5
+    realizes: The First Floor room 5
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 5 (realized)
+- type: "/move The First Floor room 22"
+  browser:
+    token: room-22
+    realizes: The First Floor room 22
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 22 (realized)
+- type: "/move The First Floor room 23"
+  browser:
+    token: room-23
+    realizes: The First Floor room 23
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 23 (realized)
+- type: "/move The First Floor room 30"
+  browser:
+    token: room-30
+    realizes: The First Floor room 30
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 30 (realized)
+- type: "/move The First Floor room 49"
+  browser:
+    token: room-49
+    realizes: The First Floor room 49
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 49 (realized)
+- type: "/move The First Floor room 48"
+  browser:
+    token: room-48
+    realizes: The First Floor room 48
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 48 (realized)
+- type: "/move The First Floor room 47"
+  browser:
+    token: room-47
+    realizes: The First Floor room 47
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 47 (realized)
+- type: "/move The First Floor room 58"
+  browser:
+    token: room-58
+    realizes: The First Floor room 58
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 58 (realized)
+- type: "/move The First Floor room 73"
+  browser:
+    token: room-73
+    realizes: The First Floor room 73
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 73 (realized)
+- type: "/move The First Floor room 72"
+  browser:
+    token: room-72
+    realizes: The First Floor room 72
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 72 (realized)
+- type: "/move The First Floor room 71"
+  browser:
+    token: room-71
+    realizes: The First Floor room 71
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 71 (realized)
+- type: "/move The First Floor room 70"
+  browser:
+    token: room-70
+    realizes: The First Floor room 70
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 70 (realized)
+- type: "/move The First Floor room 87"
+  browser:
+    token: room-87
+    realizes: The First Floor room 87
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 87 (realized)
+- type: "/move The First Floor room 86"
+  browser:
+    token: room-86
+    realizes: The First Floor room 86
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 86 (realized)
+- type: "/move The First Floor room 85"
+  browser:
+    token: room-85
+    realizes: The First Floor room 85
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 85 (realized)
+- type: "/move The First Floor room 84"
+  browser:
+    token: room-84
+    realizes: The First Floor room 84
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 84 (realized)
+- type: "/move The First Floor room 99"
+  browser:
+    token: room-99
+    realizes: The First Floor room 99
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 99 (realized)
+- type: "/move The First Floor room 110"
+  browser:
+    token: room-110
+    realizes: The First Floor room 110
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 110 (realized)
+- type: "/move The First Floor room 125"
+  browser:
+    token: room-125
+    realizes: The First Floor room 125
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 125 (realized)
+- type: "/move The First Floor room 124"
+  browser:
+    token: room-124
+    realizes: The First Floor room 124
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 124 (realized)
+- type: "/move The First Floor room 123"
+  browser:
+    token: room-123
+    realizes: The First Floor room 123
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 123 (realized)
+- type: "/move The First Floor room 138"
+  browser:
+    token: room-138
+    realizes: The First Floor room 138
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 138 (realized)
+- type: "/move The First Floor room 137"
+  browser:
+    token: room-137
+    realizes: The First Floor room 137
+    replies:
+    - {purpose: location, content: {description: A bare chamber of black stone., lore: Cut long ago by nobody remembered., items: [], people: []}}
+    - {purpose: arrival, unavailable: true}
+  expect:
+    location: The First Floor room 137 (realized)
+    present: []
+- id: the-way-down
+  why: >-
+    Room 136 holds the stair down to The Second Floor, and Brask stands in it,
+    hostile and whole. The room writer wrote nobody: the layout stood him
+    there, once, for the world.
+  type: "/move The First Floor room 136"
+  browser:
+    token: room-136
+    realizes: The First Floor room 136
+    replies:
+    - purpose: location
+      content:
+        description: A wide chamber of black stone with a stair cut down into its floor.
+        lore: The stair down is older than the rest of the floor.
+        items: []
+        people: []
+    - purpose: arrival
+      unavailable: true
+  expect:
+    location: The First Floor room 136 (realized)
+    exits:
+    - The First Floor room 135 (stub)
+    - The First Floor room 137 (realized)
+    - The Second Floor (stub)
+    present:
+    - Brask the Stairwarden
+    foes:
+    - Brask the Stairwarden
+    hp_of:
+      Brask the Stairwarden: 22
+- id: the-stair-down-is-locked
+  why: >-
+    The stair kept its lock when the layout moved it onto room 136, and the
+    key to it hangs around Brask's neck.
+  type: "/move The Second Floor"
+  expect:
+    location: The First Floor room 136 (realized)
+    refused: true
+    offers: locked

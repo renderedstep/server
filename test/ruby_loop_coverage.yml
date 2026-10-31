@@ -82,6 +82,8 @@ test/lib/seeded_worlds_test.rb:
     stays: does not play the Ruby loop
   the premise character of the held-out world is at the post:
     stays: does not play the Ruby loop
+  the dungeon seeds as ten guarded floors, each smaller, down to its boss:
+    stays: does not play the Ruby loop
   every checked-in world has somebody to talk to on turn one:
     stays: does not play the Ruby loop
   seeding is idempotent:
