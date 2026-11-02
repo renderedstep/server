@@ -74,11 +74,17 @@ class EngineSweepTest < ActiveSupport::TestCase
   WAITING_ARCS = %w[a-bell-nobody-has-rung.yml a-yard-before-the-winter.yml].freeze
   WAITING_FINDINGS = %i[quest_step_unbound story_cannot_progress].freeze
 
+  # AND ONE WORLD IS UNFINISHABLE ON PURPOSE: every key in it lies behind a
+  # lock it is needed to open, which is what it exists for the doctor to say
+  # (`Story::DoctorLocksTest`). Those two findings are all it may carry.
+  LOCKED_IN = { "a-key-locked-in-with-its-door.yml" => %i[lock_whose_key_lies_behind_it quest_target_unreachable] }.freeze
+
   test "a world of the sweep's own loads and is healthy" do
     Dir.glob(EngineSweep::WORLDS.join("*.yml")).sort.each do |path|
       story = WorldSeed::Loader.new(WorldSeed.parse(File.read(path)), source: path).load!
       findings = Story::Doctor.new(story).findings.reject { |finding| %i[no_arc room_without_a_layout].include?(finding.code) }
       findings = findings.reject { |finding| WAITING_FINDINGS.include?(finding.code) } if WAITING_ARCS.include?(File.basename(path))
+      findings = findings.reject { |finding| LOCKED_IN.fetch(File.basename(path), []).include?(finding.code) }
 
       assert_empty findings, "#{File.basename(path)}: #{findings.map(&:message).join("; ")}"
     end

@@ -144,7 +144,7 @@ class SeededWorldsTest < ActiveSupport::TestCase
   PLAYABLE_ARC_FINDINGS = %i[
     no_arc story_without_a_conclusion quest_without_an_outcome quest_with_two_default_outcomes
     outcome_nothing_can_reach quest_step_unbound story_cannot_progress quest_target_missing
-    quest_target_unreachable frontier_turned_away_from_the_goal
+    quest_target_unreachable lock_whose_key_lies_behind_it frontier_turned_away_from_the_goal
   ].freeze
 
   test "every checked-in world has an arc it can be finished by" do

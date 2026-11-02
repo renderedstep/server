@@ -1,0 +1,127 @@
+# A world nobody can finish, on purpose: every key here lies behind a lock it
+# is needed to open, and there is no lockpick. It is what
+# `Story::Doctor#locks_whose_key_lies_behind_them` is about, in the two shapes
+# it reports --
+#
+#   THE VAULT KEY LIES IN THE VAULT, behind the one door it opens.
+#   THE ARCHIVE KEY LIES IN THE CHAPEL AND THE CHAPEL KEY IN THE ARCHIVE, so
+#   each is behind the other's door -- a cycle no walk can break into.
+#
+# The arc's one beat is to reach the vault, so `quest_target_unreachable` is
+# fatal about it too. Before the doctor's walk was lock-aware it crossed every
+# row, locked or not, and called this world completable.
+#
+# No script walks it: a script is played against goldens the engine vendors,
+# and this world exists to be diagnosed rather than played
+# (`test/models/story/doctor_locks_test.rb` loads it, and `EngineSweepTest`
+# lets it carry exactly those two findings).
+format: 2
+universe:
+  physics: Ordinary physics.
+  technology: Keys, locks and lanterns.
+  weapons: Wooden staves.
+  geographies: A gatehouse, a vault, an archive and a chapel.
+  civilizations: A small walled town.
+  history: The town keeps its records behind locked doors.
+  economics: Goods traded for coins.
+  politics: A town council keeps the peace.
+  religion: The town keeps its own festivals.
+  races:
+  - name: Townsfolk
+    description: Ordinary people of the town.
+story:
+  title: A Key Locked In With Its Door
+  genre: town adventure
+  start_time: '2026-11-02T12:00:00Z'
+  preface: Every door out of the gatehouse is locked.
+  summary: Ilse looks for a way into the vault and finds every key on the wrong side of a door.
+opening_scene:
+  location: Gatehouse
+  characters: [Ilse]
+  description: You stand in the gatehouse before three locked doors.
+  summary: Ilse enters the gatehouse.
+characters:
+- fullname: Ilse
+  nickname: Ilse
+  race: Townsfolk
+  age: 30
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: A clerk sent to fetch the town charter from the vault.
+  personality: Patient and practical.
+  appearance: A grey clerk's coat.
+  likes: Orderly shelves.
+  dislikes: Lost keys.
+  fears: Being shut out.
+  stats: {level: 3, hit_die: 8, strength: 10, dexterity: 12, will: 12}
+locations:
+- name: Gatehouse
+  detail_level: realized
+  population: nobody
+  opening: true
+  description: A stone gatehouse with three locked doors.
+  teaser: A gatehouse.
+  lore: The town's keys were once kept here.
+- name: Vault
+  detail_level: realized
+  population: nobody
+  description: A low vault where the town charter is kept.
+  teaser: A locked vault.
+  lore: Its key was left inside when the door last swung shut.
+  items:
+  - name: vault key
+    description: The heavy iron key to the vault.
+    properties: '{}'
+    use_kind: key
+- name: Archive
+  detail_level: realized
+  population: nobody
+  description: Shelves of ledgers under a dusty skylight.
+  teaser: A locked archive.
+  lore: The chapel key hangs here.
+  items:
+  - name: chapel key
+    description: The small brass key to the chapel.
+    properties: '{}'
+    use_kind: key
+- name: Chapel
+  detail_level: realized
+  population: nobody
+  description: A narrow chapel with one candle burning.
+  teaser: A locked chapel.
+  lore: The archive key was left on the altar.
+  items:
+  - name: archive key
+    description: The long steel key to the archive.
+    properties: '{}'
+    use_kind: key
+connections:
+- between: [Gatehouse, Vault]
+  distance: adjacent
+  travel_method: walking
+  barrier: keyed
+  key_template: vault key
+- between: [Gatehouse, Archive]
+  distance: adjacent
+  travel_method: walking
+  barrier: keyed
+  key_template: archive key
+- between: [Gatehouse, Chapel]
+  distance: adjacent
+  travel_method: walking
+  barrier: keyed
+  key_template: chapel key
+quests:
+- title: The Town Charter
+  premise: Fetch the town charter from the vault.
+  status: open
+  contributes: true
+  steps:
+  - summary: Reach the vault.
+    trigger: reach_location
+    target: Vault
+  outcomes:
+  - name: fetched
+    summary: Ilse brings the charter out of the vault.
+    default: true
