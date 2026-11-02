@@ -1866,7 +1866,9 @@ class Story::Doctor
   #   P2  THE FRONTIER KEEPS POINTING AT THE GOAL -- not every unexplored exit
   #       leads away from it. `#frontier_turned_away_from_the_goal`.
   #   P3  THE ARC CAN COMPLETE -- every bound step is reachable from the opening
-  #       room. `#unreachable_quest_targets`, and it is FATAL.
+  #       room, by a walk that opens a locked door only once its key (or a
+  #       lockpick) has been reached. `#unreachable_quest_targets`, and it is
+  #       FATAL; `#locks_whose_key_lies_behind_them` names the door.
   #   P4  THE ENDING IS WRITTEN -- there is an outcome row to reach.
   #       `#quests_without_an_outcome`.
   #
@@ -1885,7 +1887,8 @@ class Story::Doctor
 
     [ *stories_without_a_conclusion, *quests_without_an_outcome, *quests_with_two_defaults,
       *outcomes_nothing_can_reach, *unbound_quest_steps, *companions_from_elsewhere, *stories_that_cannot_progress,
-      *missing_quest_targets, *unreachable_quest_targets, *frontier_turned_away_from_the_goal,
+      *missing_quest_targets, *unreachable_quest_targets, *locks_whose_key_lies_behind_them,
+      *frontier_turned_away_from_the_goal,
       *due_endings_out_of_place ]
   end
 
@@ -2294,46 +2297,157 @@ class Story::Doctor
     "This file declares no such row, so the arc names something the world file does not contain"
   end
 
-  # EVERY LOCATION THE PLAYER CAN WALK TO FROM WHERE THE GAME OPENS, breadth
-  # first over the connection rows -- both directions, because a door is two
-  # rows and a walk crosses one the table only half recorded. Stairs are
-  # ordinary rows, so a storey is walked like anything else.
+  # P3's OTHER HALF: A LOCK WHOSE KEY CANNOT BE HAD WITHOUT GOING THROUGH IT.
+  # Until this check the walk below crossed every connection row, locked or
+  # not, so a world whose key lay behind its own door read as completable. Now
+  # the walk opens a keyed door only once something that opens it has been
+  # reached (`#reachable_from_the_opening`), and this names each door that
+  # walk leaves shut with its far side still out of reach -- the reason
+  # `#unreachable_quest_targets` fires, when it does, said about the door
+  # rather than about the target.
   #
-  # Computed once for the whole run: three checks ask it and a second walk would
-  # be a second answer waiting to disagree.
-  def reachable_from_the_opening
-    @reachable_from_the_opening ||= begin
-      root = play_location
-      root.nil? ? [] : walk_from(root.id).keys
+  # A WARNING AND NOT FATAL, deliberately. Rooms nobody can enter are content
+  # nobody plays, which is worth knowing; whether the world can still be
+  # FINISHED is P3's own question, and when an arc target is behind the door
+  # `quest_target_unreachable` is already fatal about it.
+  #
+  # A DOOR WHOSE NEAR SIDE IS ITSELF OUT OF REACH IS NOT REPORTED: it is behind
+  # some other lock, and that lock is the one somebody has to fix first.
+  #
+  # The graph idea (a key must be reachable without passing the lock it opens,
+  # iterated to a fixed point) comes from Scouten2/LevelDesignSkill's
+  # `graph_check.py` (MIT); this is a reimplementation over this world's own
+  # rows, not a port of that code.
+  def locks_whose_key_lies_behind_them
+    return [] if play_location.nil?
+
+    reached = reachable_from_the_opening.to_set
+    shut = lock_walk.fetch(:edges).flat_map do |from, exits|
+      next [] unless reached.include?(from)
+
+      exits.filter_map { |to, row| row if !reached.include?(to) && row.barrier == "keyed" }
+    end
+    shut.uniq { |row| [ [ row.location_id, row.connected_location_id ].sort, row.key_template_id ] }
+        .sort_by(&:id).map do |row|
+      key = row.key_template
+      finding(:lock_whose_key_lies_behind_it, :warning,
+              "The way from #{row.location.name.inspect} to #{row.connected_location.name.inspect} is locked, " \
+              "#{where_the_key_is(key, row)}, and nothing reachable from #{play_location.name.inspect} picks a lock -- " \
+              "so nobody can ever open it",
+              :manual, subject: row)
     end
   end
 
-  # `{ location id => hops }`, out from one room. Undirected, and neighbours are
-  # taken in id order so the walk is repeatable.
-  def walk_from(root_id)
-    seen = { root_id => 0 }
-    queue = [ root_id ]
+  # WHY THE KEY IS OUT OF REACH, in the three shapes it takes: behind this very
+  # door, behind some other lock nobody can open either (keys behind each
+  # other's doors), or nowhere a walk could find it at all.
+  def where_the_key_is(key, row)
+    room = room_of_item(key)
+    return "and its key #{key&.name.inspect} lies nowhere anybody can reach" if room.nil? || room == :in_hand
+    return "and its key #{key.name.inspect} lies in #{room.name.inspect}, on the far side of that same door" if
+      lock_walk_from(play_location.id, keys: lock_walk.fetch(:keys), opened: row).include?(room.id)
 
+    "and its key #{key.name.inspect} lies in #{room.name.inspect}, behind another lock whose own key is out of reach too"
+  end
+
+  # EVERY LOCATION THE PLAYER CAN WALK TO FROM WHERE THE GAME OPENS, breadth
+  # first over the connection rows, and NOW LOCK-AWARE: an open or a jammed
+  # door is crossed (a jammed one can always be forced -- the `force` choice in
+  # `Playthrough::PhysicalAction` needs no tool), a keyed one only once its
+  # key, or any lockpick, lies somewhere already reached. Picking up a key can
+  # open a door that leads to the next key, so the walk is repeated until the
+  # keys in hand stop growing -- a fixed point, and the reason a key behind its
+  # own lock, or two keys behind each other's, never opens anything.
+  #
+  # BOTH DIRECTIONS, because a door is two rows and a walk crosses one the table
+  # only half recorded: a direction with its own row obeys that row, and a
+  # direction with none obeys the row the other way. Stairs are ordinary rows,
+  # so a storey is walked like anything else.
+  #
+  # Computed once for the whole run: two checks ask it and a second walk would
+  # be a second answer waiting to disagree.
+  def reachable_from_the_opening
+    lock_walk.fetch(:reached)
+  end
+
+  def lock_walk
+    @lock_walk ||= begin
+      edges = lock_edges
+      root = play_location
+      reached = []
+      keys = Set.new
+      unless root.nil?
+        loop do
+          keys = openers_in(reached)
+          walked = lock_walk_from(root.id, keys: keys, edges: edges)
+          break if walked.sort == reached.sort
+
+          reached = walked
+        end
+      end
+      { reached: reached, keys: keys, edges: edges }
+    end
+  end
+
+  # The location ids one walk reaches holding `keys` (key template ids, plus
+  # `:lockpick` when one is in reach), optionally with one more door `opened`.
+  # Neighbours in id order, so the walk is repeatable.
+  def lock_walk_from(root_id, keys:, edges: lock_walk.fetch(:edges), opened: nil)
+    seen = Set[root_id]
+    queue = [ root_id ]
     until queue.empty?
       id = queue.shift
-      adjacency.fetch(id, []).each do |neighbour|
-        next if seen.key?(neighbour)
+      edges.fetch(id, []).each do |neighbour, row|
+        next if seen.include?(neighbour)
+        next unless row == opened || passable?(row, keys)
 
-        seen[neighbour] = seen[id] + 1
+        seen << neighbour
         queue << neighbour
       end
     end
-
-    seen
+    seen.to_a
   end
 
-  def adjacency
-    @adjacency ||= LocationConnection.joins(:location).where(locations: { story_id: story.id })
-                                     .pluck(:location_id, :connected_location_id)
-                                     .each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(from, to), index|
-      index[from] << to
-      index[to] << from
-    end.transform_values { |ids| ids.uniq.sort }
+  def passable?(row, keys)
+    row.barrier != "keyed" || keys.include?(:lockpick) || keys.include?(row.key_template_id)
+  end
+
+  # `{ from id => [[to id, the row that governs that direction]] }`.
+  def lock_edges
+    rows = LocationConnection.joins(:location).where(locations: { story_id: story.id })
+                             .includes(:location, :connected_location, :key_template).order(:id).to_a
+    recorded = rows.to_set { |row| [ row.location_id, row.connected_location_id ] }
+    index = Hash.new { |hash, key| hash[key] = [] }
+    rows.each do |row|
+      index[row.location_id] << [ row.connected_location_id, row ]
+      index[row.connected_location_id] << [ row.location_id, row ] unless recorded.include?([ row.connected_location_id, row.location_id ])
+    end
+    index.transform_values { |pairs| pairs.sort_by { |to, row| [ to, row.id ] }.uniq(&:first) }
+  end
+
+  # WHAT OPENS A LOCK, from the world's own templates: the key ids that lie in
+  # a reached room (or in somebody's hands who stands in one, or in the
+  # protagonist's from the start), and `:lockpick` once any lockpick does.
+  def openers_in(reached)
+    reached = reached.to_set
+    tools = Item.in_story(story).templates.where(use_kind: %w[key lockpick]).includes(:location, :character, :within)
+    tools.each_with_object(Set.new) do |item, held|
+      room = room_of_item(item)
+      next unless room == :in_hand || (room && reached.include?(room.id))
+
+      held << (item.use_kind == "lockpick" ? :lockpick : item.id)
+    end
+  end
+
+  # Where a template can be picked up: its room, its holder's room, the room of
+  # whatever it rests in, `:in_hand` for the protagonist's own (whose position
+  # is the playthrough's, not the story's), or nil for nowhere at all.
+  def room_of_item(item, depth = 0)
+    return nil if item.nil? || depth > 8
+    return item.location if item.location
+    return (item.character.is_protagonist? ? :in_hand : item.character.location) if item.character
+
+    room_of_item(item.within, depth + 1)
   end
 
   def geometry
