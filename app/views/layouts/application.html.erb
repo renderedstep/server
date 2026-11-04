@@ -38,6 +38,9 @@
     <%# Where the page posts its own uncaught errors; absent unless
         `ERRORS_COMMAND` is set (config/initializers/pocket_kit.rb). %>
     <%= pocket_kit_errors_tag %>
+    <%# Turns on the session replay a report carries; absent unless one of the
+        two commands above could send it (config/initializers/pocket_kit.rb). %>
+    <%= pocket_kit_replay_tag %>
     <%= javascript_importmap_tags %>
   </head>
   <body>

@@ -110,12 +110,24 @@ class PocketKitErrorsTest < ActionDispatch::IntegrationTest
     assert_select "head meta[name=pocket-kit-screen][content=?]", "playthroughs#show"
   end
 
+  # A report carries a replay, and the replay keeps typed text masked: the
+  # recorder masks every field, and a line echoed back is marked rr-mask.
+  test "every page records a replay with typed text masked" do
+    turn = create(:scene, story: @story, location: @here, previous_scene: @scene, typed: "say the password")
+    @playthrough.update!(current_scene: turn)
+    Playthrough::Debug.stub(:enabled?, false) { get playthrough_path(@playthrough) }
+
+    assert_select "head meta[name=pocket-kit-replay][data-show-typed-text=false]", count: 1
+    assert_select ".command.rr-mask", text: /say the password/
+  end
+
   test "with no command set nothing is reported and nothing else changes" do
     ENV.delete("ERRORS_COMMAND")
 
     get playthrough_path(@playthrough)
     assert_response :success
     assert_select "meta[name=pocket-kit-errors]", count: 0
+    assert_select "meta[name=pocket-kit-replay]", count: 0
 
     break_the_index
     assert_response :internal_server_error

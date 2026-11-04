@@ -16,7 +16,7 @@
         arrival nobody typed for, and a turn written before the column existed,
         have none and print nothing. %>
     <% if turn.typed.present? %>
-      <p class="command">&gt; <%= turn.typed %></p>
+      <p class="command rr-mask">&gt; <%= turn.typed %></p>
     <% end %>
     <%# A talk turn keeps an Interaction alongside the Scene, so the log can say
         who the player was speaking to. Narrated and arrival turns have none. %>

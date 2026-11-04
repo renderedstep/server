@@ -49,4 +49,15 @@ PocketKit.configure do |config|
   config.errors.heading = "Text adventure"
   config.errors.request_id_prefix = "ta-errors"
   config.errors.sent_exit_codes = [ 0, 3 ]
+
+  # A SESSION REPLAY -- about the last 30 seconds of the page, held in memory
+  # by pocket-kit's rrweb recorder -- rides with a feedback note or a page
+  # error report, and with nothing else. The layout's pocket_kit_replay_tag is
+  # absent wherever neither of the two above could send, so with no command
+  # set nothing is recorded. Typed text stays masked (`show_typed_text` is
+  # left false): rrweb masks every input, textarea and select, and the views
+  # that echo a typed line back (`.command`, the saved-turn notice) carry
+  # `rr-mask` so the line is not recorded in clear there either. Narration
+  # that restates what the player did is game prose and is recorded.
+  config.replay.enabled = true
 end
