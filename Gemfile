@@ -90,5 +90,6 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # The owner-only feedback button and local error reports;
 # config/initializers/pocket_kit.rb sets both up. Pinned to pocket-kit's
-# v0.3.0 release, which adds the opt-in session replay.
-gem "pocket_kit", github: "calebl/pocket-kit", tag: "v0.3.0"
+# v0.4.0 release: stored session replays expire after 7 days and the replay
+# viewer answers only this machine.
+gem "pocket_kit", github: "calebl/pocket-kit", tag: "v0.4.0"

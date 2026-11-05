@@ -59,5 +59,9 @@ PocketKit.configure do |config|
   # that echo a typed line back (`.command`, the saved-turn notice) carry
   # `rr-mask` so the line is not recorded in clear there either. Narration
   # that restates what the player did is game prose and is recorded.
+  #
+  # NOT KEPT AND NOT SHARED: a stored replay expires after pocket-kit's
+  # default 7 days (`replay.max_age`, left unset) and the viewer answers only
+  # this machine, which `replay.viewer` could narrow but never widen.
   config.replay.enabled = true
 end
