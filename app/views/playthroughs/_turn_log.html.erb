@@ -30,7 +30,7 @@
 <div id="turn_log">
   <% if command.nil? && (unfinished = Playthrough::Command.resume_target(playthrough)) %>
     <div class="notice" data-saved-turn>
-      <p>Your command is saved but has not finished: <q><%= unfinished.command %></q>.</p>
+      <p>Your command is saved but has not finished: <q class="rr-mask"><%= unfinished.command %></q>.</p>
       <% if unfinished.status == "running" && !unfinished.recoverable? %>
         <p>This older turn cannot be resumed safely. You can keep its saved effects and continue; the unfinished action will not be replayed.</p>
         <% if unfinished.journal.blank? %>
@@ -127,7 +127,7 @@
       `Playthrough::Refusal#game_over?` is the one question that tells the
       shapes apart. %>
   <% if refusal %>
-    <p class="command">&gt; <%= refusal.typed %></p>
+    <p class="command rr-mask">&gt; <%= refusal.typed %></p>
     <% unless refusal.game_over? %>
       <div class="notice">
         <p><%= refusal.text %></p>
@@ -209,7 +209,7 @@
       <% end %>
     </div>
   <% elsif command %>
-    <p class="command">&gt; <%= command %></p>
+    <p class="command rr-mask">&gt; <%= command %></p>
     <%# NarrationJob appends batched chunks of prose here, and replaces this
         whole element when the turn lands. The cursor is what the player watches
         during the four to six seconds of prompt processing before the first
@@ -311,7 +311,7 @@
 
         `.command` is the same echo the log and a refusal use. It says the line
         was accepted and claims nothing about what happens next. %>
-    <p class="command" data-play-target="receipt" hidden></p>
+    <p class="command rr-mask" data-play-target="receipt" hidden></p>
 
     <%# IN A GAME THE PLAYER NARRATES THE GAME PICKS THE ACT, so there is no box
         to type one in: one button, which is a turn like a typed one

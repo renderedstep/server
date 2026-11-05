@@ -89,6 +89,6 @@ gem "importmap-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
 # The owner-only feedback button and local error reports;
-# config/initializers/pocket_kit.rb sets both up. Pinned to calebl/pocket-kit#2's
-# merge, which has no tag of its own.
-gem "pocket_kit", github: "calebl/pocket-kit", ref: "d7c0fd7d2f230a0636d6b1b7ab8ae4c0b5ded148"
+# config/initializers/pocket_kit.rb sets both up. Pinned to pocket-kit's
+# v0.3.0 release, which adds the opt-in session replay.
+gem "pocket_kit", github: "calebl/pocket-kit", tag: "v0.3.0"
