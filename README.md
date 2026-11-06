@@ -223,8 +223,9 @@ A feedback note or a page error report also carries a session replay:
 pocket-kit keeps about the last 30 seconds of the page in memory and sends it
 only with a report. Typed text stays masked, both in the fields and where the
 page echoes a typed line back; narration is recorded as shown. Accepted
-replays are saved under `tmp/pocket_kit/replays` and the report names a viewer
-path, which for now opens only from the machine running the app. A page error
+replays are saved under `tmp/pocket_kit/replays`, are deleted after 7 days,
+and the report names a viewer path that opens only from the machine running
+the app. A page error
 reported as the page closes may be too large to arrive. With neither command
 set, nothing is recorded.
 
