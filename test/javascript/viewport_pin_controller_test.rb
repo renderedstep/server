@@ -14,6 +14,13 @@ require "tmpdir"
 # window spends some of its own on browser chrome. There is no system-test stack here, so the page is a static harness
 # loaded from a temporary directory and the result comes out of `--dump-dom`.
 #
+# The harness imports the controller STATICALLY, and must keep doing so. A
+# static import is part of the module graph, which loads before the script
+# runs, and the document's load waits for that script, so the result is
+# written before Chrome dumps the DOM. An `await import(...)` is not waited
+# for: on a busy machine Chrome sometimes dumped the DOM first, and the test
+# failed with "harness reported nothing".
+#
 # What headless Chrome cannot do is the iOS rubber band itself: it has no
 # elastic overscroll and no on-screen keyboard, so the numbers iOS reports are
 # supplied by hand. The test pins the arithmetic, not Safari.
@@ -68,6 +75,7 @@ class ViewportPinControllerTest < ActiveSupport::TestCase
       <script type="importmap">{"imports":{"@hotwired/stimulus":"./stimulus.js"}}</script>
       <header id="h" style="position:sticky;top:0">header</header>
       <script type="module">
+        import Pin from "./controller.js"
         try {
           const listeners = {}
           const viewport = {
@@ -77,7 +85,6 @@ class ViewportPinControllerTest < ActiveSupport::TestCase
           }
           Object.defineProperty(window, "visualViewport", { value: viewport, configurable: true })
           Object.defineProperty(window, "innerHeight", { value: #{LAYOUT_HEIGHT}, configurable: true })
-          const { default: Pin } = await import("./controller.js")
           const header = document.getElementById("h")
           new Pin(header).connect()
           listeners.scroll()
