@@ -256,21 +256,50 @@ class Story::AuditPrecisionTest < ActiveSupport::TestCase
     assert_empty flagged, flagged.map { |row| row["narration"].truncate(160) }.join("\n")
   end
 
+  # WHAT THE SWEEP COSTS IS COUNTED IN CPU TIME, NOT ON THE WALL CLOCK. The
+  # wall clock counts every millisecond this process spent waiting for a core,
+  # so on a loaded machine -- a full parallel suite is one -- it measured the
+  # machine and not the sweep: this test failed at 101 and at 125 ms a scene on
+  # runs where the sweep itself spent about 45. CPU time counts only the work
+  # this process did, so the bar still fails a sweep that starts doing badly
+  # more of it per scene, and stops failing a sweep that is merely queued.
+  #
+  # THE BEST OF THREE, because what is left of the noise is one-sided: a
+  # collection pause or a contended cache can only make a run look dearer. A
+  # sweep that really is slow is slow on every run, so the cheapest of three
+  # still fails it.
+  #
+  # AND OFFLINE IS ASSERTED, NOT TIMED. A model call is mostly time spent
+  # waiting on the network, which CPU time does not see -- so the sweep is
+  # refused both providers outright, and asking either fails the test whatever
+  # the clock says.
   test "the sweep stays offline and fast enough to run over everything ever written" do
     plant_lures
     replay
 
-    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-    audits = Story::Audit.all
-    audits.each(&:flags)
-    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    per_scene = BaseAgent.stub(:new, ->(*) { flunk "the sweep asked a model something" }) do
+      SystemOneAgent.stub(:new, ->(*) { flunk "the sweep asked System One something" }) do
+        Array.new(3) { cpu_ms_per_scene }
+      end
+    end
 
-    per_scene = elapsed * 1000 / audits.sum(&:scanned)
-
-    assert_operator per_scene, :<, 100, "the sweep is meant to be cheap enough to run over every scene ever written"
+    assert_operator per_scene.min, :<, 100,
+                    "the sweep is meant to be cheap enough to run over every scene ever written " \
+                    "(CPU ms a scene, three runs: #{per_scene.map { |ms| ms.round(1) }.join(", ")})"
   end
 
   private
+
+  # One whole sweep over every story, in milliseconds of this process's CPU
+  # time per scene scanned. See the offline-and-fast test for why CPU time.
+  def cpu_ms_per_scene
+    started = Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID)
+    audits = Story::Audit.all
+    audits.each(&:flags)
+    spent = Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID) - started
+
+    spent * 1000 / audits.sum(&:scanned)
+  end
 
   # Each narration as the Scene it would have been: in the room it was written
   # about, following that world's opening arrival. Returns `{ scene_id => row }`.
