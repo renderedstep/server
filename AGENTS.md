@@ -234,6 +234,8 @@ Read the header of the file named, not a summary of it.
 
 ## Before you finish
 
+Run every check below before finishing; a subset is not complete:
+
 ```bash
 bin/rails test          # includes rake game:sweep
 bundle exec rubocop
