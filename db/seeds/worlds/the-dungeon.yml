@@ -1,0 +1,633 @@
+# The Dungeon -- a seeded, playable world, version 1.
+#
+# The dungeon crawler's world: a hand-written landing above ten FLOORS, each a
+# stub the engine lays out the first time anybody walks into it (`floor:`,
+# `Floor`), as one storey of exactly `rooms` rooms with one of them, never the
+# entry, rolled as the way down. Once laid out a floor is world rows, and no
+# later game lays it out again.
+#
+# Three things about it are deliberate:
+#
+#   1. THE FLOORS SHRINK TO A BOSS. Each floor is smaller than the one above it
+#      and the last is one room with no way down (the owner's call C1). Every
+#      floor but the last has a stair guard posted to it (`guards:`), stood in
+#      its way-down room at layout and carrying the key the stair down is
+#      locked with; the last has the boss, stood in its only room.
+#   2. THE LIMITS ARE ABOVE WHAT IT CAN USE (call C3): `limits:` lets the dice
+#      decide how many people and things a room is born with, so the deep
+#      floors are not left empty because the first one used the story up.
+#   3. IT IS THE FIRST PLAYABLE SLICE, not the whole game. The floor keys a
+#      later stage adds -- the countdown, levelling, placed healing, safe
+#      rooms and rest -- are not here, because the loader does not read them
+#      yet; a world supplies parameters, and these have no behaviour behind
+#      them until those stages land.
+#
+# The opening scene puts the player and the landing's lamp-keeper together, so
+# turn one has somebody to talk to before the first stair.
+#
+# Loaded offline by db/seeds.rb. No model call, no API key, no network.
+---
+format: 2
+universe:
+  physics: |-
+    Ordinary physics. The dungeon is cold, still and dark, and sound carries a long way in it.
+  technology: |-
+    Lanterns, rope, iron keys and hand tools. Nothing in the dungeon runs on anything but muscle and fire.
+  weapons: |-
+    Short blades, cudgels, spears and hatchets. Delvers carry what they can swing in a narrow passage. The things below use teeth, claws and whatever they took from the last delver.
+  geographies: |-
+    A dungeon cut straight down into black stone, under a landing at the top of the first stair. Each floor is smaller than the one above it, and every floor but the last has a stair somewhere that goes further down.
+  civilizations: |-
+    Delvers, who go down for what they can carry back up, and the things that live below and do not want them there. Above the landing there is a town that buys what comes up and does not ask where it came from.
+  history: |-
+    Nobody knows who cut the dungeon or why. The oldest delvers' stories say the bottom was reached once, a long time ago, and that whoever reached it did not come back up.
+  economics: |-
+    Coin for what comes up from below. Delvers sell to the town, and the town sells back rope, lamp oil and food at prices that go up the closer you stand to the stair.
+  politics: |-
+    Nobody governs the dungeon. On the landing the lamp-keeper's word is the only rule, and below it there are no rules at all.
+  religion: |-
+    Delvers leave a coin on the landing before they go down, for luck, and take one back if they come up. Nobody prays below the first floor.
+  races:
+  - name: Deepfolk
+    description: |-
+      Thin, pale people born below, who have never seen daylight and see well in the dark. They take what delvers carry, and they eat what they cannot sell.
+    monstrous: true
+  - name: Delvers
+    description: |-
+      People from the town above who go down into the dungeon for a living. Most of them stop after the first floor. The ones who do not are mostly dead.
+  - name: Stairwardens
+    description: |-
+      Grey, heavy, patient things that keep the dungeon's stairs. Each one stands at the head of one stair down and does not leave it. Nobody has ever seen a young one.
+    monstrous: true
+story:
+  title: The Dungeon
+  genre: dungeon crawl
+  start_time: '2026-11-01T08:00:00Z'
+  limits:
+    people: 400
+    things: 2000
+  preface: |-
+    The dungeon goes down ten floors, and each one is smaller and worse than the one above it. Every stair down has something standing at the top of it, and at the bottom there is something worse. You have come to the landing with a blade, a lantern and no plan to come back up empty-handed.
+  summary: |-
+    The player is Ida Marsh, a delver going down into the dungeon from the landing at its top. Each floor has a stair guard who carries the key to the stair down, and the bottom floor has Gorrath, eldest of the deepfolk, who wears the iron crown. The tone is plain, dark and dangerous, and the way on is always down.
+opening_scene:
+  location: The Landing
+  characters: [Ida Marsh, Old Hesk]
+  description: |-
+    You stand on the landing at the top of the dungeon, a square of black stone under one hanging lamp. The stair down to the first floor opens in the middle of it, and cold air comes up out of the dark. Old Hesk sits on his stool beside the lamp with his hands on his knees, watching you the way he watches every delver who comes this far.
+  summary: |-
+    The story opens on the landing at the top of the dungeon, with the stair down to the first floor in front of the player and the lamp-keeper watching.
+characters:
+- fullname: Ida Marsh
+  race: Delvers
+  stats:
+    level: 3
+    hit_die: 8
+    strength: 12
+    dexterity: 14
+    will: 12
+  nickname: Ida
+  age: 26
+  sex: female
+  is_protagonist: true
+  is_companion: false
+  backstory: |-
+    Ida has been down to the first floor four times and come back up every time, with less than she wanted. This time she means to keep going.
+  personality: |-
+    Quick, watchful and stubborn. She does not like to turn back.
+  appearance: |-
+    A wiry woman in a patched leather coat, with a short blade on her belt and a lantern in her hand.
+  likes: A clear way back, and anything worth carrying up.
+  dislikes: Doors she cannot open.
+  fears: Dying in the dark where nobody will find her.
+- fullname: Old Hesk
+  race: Delvers
+  stats:
+    level: 2
+    hit_die: 8
+    strength: 9
+    dexterity: 8
+    will: 14
+  nickname: Hesk
+  age: 67
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  location: The Landing
+  backstory: |-
+    Hesk went down for thirty years and came back up every time. Now he keeps the lamp on the landing, and he tells delvers what he knows if they ask.
+  personality: |-
+    Slow, dry and blunt. He has seen too many delvers go down to be kind about it.
+  appearance: |-
+    A bent old man in a delver's coat gone grey with dust, sitting on a stool beside the lamp.
+  likes: The lamp lit, and delvers who come back up.
+  dislikes: Delvers who think they know the dungeon.
+  fears: The day the lamp goes out.
+- fullname: Brask the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 3
+    hit_die: 10
+    strength: 14
+    dexterity: 9
+    will: 10
+  nickname: Brask
+  age: 200
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Brask was set at the head of the stair down by whoever built this place, and has never been told why. It does not let anyone pass while it stands.
+  personality: |-
+    Patient, territorial, and proud of the one door it keeps.
+  appearance: |-
+    A broad grey-skinned figure in riveted plates, an iron key hung on a chain around its neck.
+  likes: Silence, and visitors who turn back.
+  dislikes: Being hurried.
+  fears: The floor falling with it still on it.
+  items:
+  - name: first stair key
+    description: |-
+      An iron key on a chain, its bow stamped with one notch. It opens the stair down from the first floor.
+    use_kind: key
+    properties:
+- fullname: Orrin the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 3
+    hit_die: 10
+    strength: 15
+    dexterity: 9
+    will: 10
+  nickname: Orrin
+  age: 200
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Orrin keeps the stair down from the second floor. It was standing there before the first delver came down, and it has not moved since.
+  personality: |-
+    Slow, watchful, and not interested in talk.
+  appearance: |-
+    A heavy grey figure with a cracked stone face, an iron key hung on a chain around its neck.
+  likes: Stillness.
+  dislikes: Footsteps on its stair.
+  fears: Being moved from its post.
+  items:
+  - name: second stair key
+    description: |-
+      An iron key on a chain, its bow stamped with two notches. It opens the stair down from the second floor.
+    use_kind: key
+    properties:
+- fullname: Sull the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 3
+    hit_die: 10
+    strength: 15
+    dexterity: 10
+    will: 11
+  nickname: Sull
+  age: 200
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Sull keeps the stair down from the third floor. Delvers who come back up from the third floor say it hums to itself while it waits.
+  personality: |-
+    Calm, cruel, and very patient.
+  appearance: |-
+    A tall grey figure wrapped in rusted chain, an iron key hung on a chain around its neck.
+  likes: The sound of its own humming.
+  dislikes: Light in its eyes.
+  fears: The dark below its stair.
+  items:
+  - name: third stair key
+    description: |-
+      An iron key on a chain, its bow stamped with three notches. It opens the stair down from the third floor.
+    use_kind: key
+    properties:
+- fullname: Garve the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 4
+    hit_die: 10
+    strength: 16
+    dexterity: 10
+    will: 11
+  nickname: Garve
+  age: 200
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Garve keeps the stair down from the fourth floor. Few delvers have seen it and come back up to say so.
+  personality: |-
+    Silent, heavy, and quick to anger once it moves.
+  appearance: |-
+    A hulking grey figure with plates of iron nailed into its shoulders, an iron key hung on a chain around its neck.
+  likes: Being left alone.
+  dislikes: Anyone who comes close.
+  fears: Nothing it will show.
+  items:
+  - name: fourth stair key
+    description: |-
+      An iron key on a chain, its bow stamped with four notches. It opens the stair down from the fourth floor.
+    use_kind: key
+    properties:
+- fullname: Tolle the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 4
+    hit_die: 10
+    strength: 16
+    dexterity: 11
+    will: 12
+  nickname: Tolle
+  age: 200
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Tolle keeps the stair down from the fifth floor, halfway to the bottom. It has kept it so long that the stone under its feet is worn into two hollows.
+  personality: |-
+    Watchful and proud. It treats the stair as its own.
+  appearance: |-
+    A grey figure in a long coat of riveted plates, standing in two worn hollows, an iron key hung on a chain around its neck.
+  likes: Its stair, and the hollows its feet have worn.
+  dislikes: Being looked at.
+  fears: Leaving its post.
+  items:
+  - name: fifth stair key
+    description: |-
+      An iron key on a chain, its bow stamped with five notches. It opens the stair down from the fifth floor.
+    use_kind: key
+    properties:
+- fullname: Varn the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 4
+    hit_die: 10
+    strength: 17
+    dexterity: 11
+    will: 12
+  nickname: Varn
+  age: 200
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Varn keeps the stair down from the sixth floor. The deepfolk give it a wide berth, and leave it what they kill.
+  personality: |-
+    Hungry, patient, and slow to stop once it starts.
+  appearance: |-
+    A broad grey figure with a jaw like a shovel, an iron key hung on a chain around its neck.
+  likes: What the deepfolk leave it.
+  dislikes: Being made to wait for it.
+  fears: Going hungry at its post.
+  items:
+  - name: sixth stair key
+    description: |-
+      An iron key on a chain, its bow stamped with six notches. It opens the stair down from the sixth floor.
+    use_kind: key
+    properties:
+- fullname: Quell the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 5
+    hit_die: 10
+    strength: 17
+    dexterity: 12
+    will: 13
+  nickname: Quell
+  age: 200
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Quell keeps the stair down from the seventh floor. No delver's story says anything about it, because no delver who met it came back up.
+  personality: |-
+    Cold, quiet, and certain.
+  appearance: |-
+    A tall grey figure with no face to speak of, only a smooth plate of stone, an iron key hung on a chain around its neck.
+  likes: Quiet.
+  dislikes: Voices.
+  fears: Being spoken to by name.
+  items:
+  - name: seventh stair key
+    description: |-
+      An iron key on a chain, its bow stamped with seven notches. It opens the stair down from the seventh floor.
+    use_kind: key
+    properties:
+- fullname: Morrow the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 5
+    hit_die: 10
+    strength: 18
+    dexterity: 12
+    will: 13
+  nickname: Morrow
+  age: 200
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Morrow keeps the stair down from the eighth floor. It is the oldest of the stairwardens, and the others are said to fear it.
+  personality: |-
+    Old, slow, and impossible to hurry or to frighten.
+  appearance: |-
+    A huge grey figure bent under its own weight, its plates green with age, an iron key hung on a chain around its neck.
+  likes: Its own slowness.
+  dislikes: Anything that moves quickly.
+  fears: Gorrath, below it.
+  items:
+  - name: eighth stair key
+    description: |-
+      An iron key on a chain, its bow stamped with eight notches. It opens the stair down from the eighth floor.
+    use_kind: key
+    properties:
+- fullname: Ashe the Stairwarden
+  race: Stairwardens
+  stats:
+    level: 5
+    hit_die: 10
+    strength: 18
+    dexterity: 13
+    will: 14
+  nickname: Ashe
+  age: 200
+  sex: female
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Ashe keeps the last stair, the one down from the ninth floor to the bottom. It was set there to keep delvers away from Gorrath, or to keep Gorrath in.
+  personality: |-
+    Wary, restless, and more afraid of what is below it than of anyone who comes from above.
+  appearance: |-
+    A lean grey figure that never stops shifting its feet, an iron key hung on a chain around its neck.
+  likes: The stair shut.
+  dislikes: The sound of anything below.
+  fears: Gorrath coming up.
+  items:
+  - name: ninth stair key
+    description: |-
+      An iron key on a chain, its bow stamped with nine notches. It opens the stair down from the ninth floor to the bottom.
+    use_kind: key
+    properties:
+- fullname: Gorrath the Undermost
+  race: Deepfolk
+  stats:
+    level: 10
+    hit_die: 10
+    strength: 18
+    dexterity: 14
+    will: 16
+  nickname: Gorrath
+  age: 300
+  sex: male
+  is_protagonist: false
+  is_companion: false
+  hostile: true
+  absent: true
+  backstory: |-
+    Gorrath is the eldest of the deepfolk, and the bottom of the dungeon is his. The deepfolk on every floor above him say he has never lost a fight, and that he wears the crown of whoever cut the dungeon.
+  personality: |-
+    Proud, cunning, and in no hurry. He has waited a long time for someone to come all the way down.
+  appearance: |-
+    A tall, thin, bone-white figure with long arms and black eyes, a heavy ring of black iron on his head.
+  likes: Being feared, and the crown on his head.
+  dislikes: Light, and delvers who come this far.
+  fears: Losing the crown.
+  items:
+  - name: the iron crown
+    description: |-
+      A heavy, plain ring of black iron, too wide for a human head. It is old, and it is the only crown in the dungeon.
+    properties:
+locations:
+- name: The Landing
+  detail_level: realized
+  opening: true
+  population: nobody
+  description: |-
+    A square landing of black stone at the top of the dungeon, lit by one lamp hanging from an iron hook. A stool stands beside the lamp, and coins lie scattered on the stone where delvers have left them for luck. In the middle of the landing a stair cuts down into the dark, and cold air comes up it.
+  teaser: |-
+    The lamp-lit landing at the top of the dungeon.
+  lore: |-
+    Every delver who goes down starts here. The coins on the stone are left for luck, and nobody takes one who has not come back up.
+- name: The First Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 160
+    danger: uneasy
+    hazard: none
+    monster_level: 1
+    down: The Second Floor
+    guards: [Brask the Stairwarden]
+- name: The Second Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 80
+    danger: uneasy
+    hazard: none
+    monster_level: 1
+    down: The Third Floor
+    guards: [Orrin the Stairwarden]
+- name: The Third Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 40
+    danger: dangerous
+    hazard: none
+    monster_level: 1
+    down: The Fourth Floor
+    guards: [Sull the Stairwarden]
+- name: The Fourth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 20
+    danger: dangerous
+    hazard: none
+    monster_level: 2
+    down: The Fifth Floor
+    guards: [Garve the Stairwarden]
+- name: The Fifth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 10
+    danger: dangerous
+    hazard: none
+    monster_level: 2
+    down: The Sixth Floor
+    guards: [Tolle the Stairwarden]
+- name: The Sixth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 6
+    danger: dangerous
+    hazard: none
+    monster_level: 2
+    down: The Seventh Floor
+    guards: [Varn the Stairwarden]
+- name: The Seventh Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 4
+    danger: dangerous
+    hazard: none
+    monster_level: 3
+    down: The Eighth Floor
+    guards: [Quell the Stairwarden]
+- name: The Eighth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 3
+    danger: dangerous
+    hazard: none
+    monster_level: 3
+    down: The Ninth Floor
+    guards: [Morrow the Stairwarden]
+- name: The Ninth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    A level of the dungeon, cut from black stone and lit by nothing you can find, with a stair somewhere that goes further down.
+  floor:
+    rooms: 2
+    danger: dangerous
+    hazard: none
+    monster_level: 3
+    down: The Tenth Floor
+    guards: [Ashe the Stairwarden]
+- name: The Tenth Floor
+  detail_level: stub
+  kind: warren
+  teaser: |-
+    The bottom of the dungeon: one chamber cut from black stone, and no stair that goes any further down.
+  floor:
+    rooms: 1
+    danger: dangerous
+    hazard: none
+    monster_level: 4
+    guards: [Gorrath the Undermost]
+connections:
+- between: [The Landing, The First Floor]
+  distance: adjacent
+  travel_method: taking stairs
+- between: [The First Floor, The Second Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: first stair key
+- between: [The Second Floor, The Third Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: second stair key
+- between: [The Third Floor, The Fourth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: third stair key
+- between: [The Fourth Floor, The Fifth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: fourth stair key
+- between: [The Fifth Floor, The Sixth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: fifth stair key
+- between: [The Sixth Floor, The Seventh Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: sixth stair key
+- between: [The Seventh Floor, The Eighth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: seventh stair key
+- between: [The Eighth Floor, The Ninth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: eighth stair key
+- between: [The Ninth Floor, The Tenth Floor]
+  distance: adjacent
+  travel_method: taking stairs
+  barrier: keyed
+  key_template: ninth stair key
+quests:
+- title: The Bottom of the Dungeon
+  premise: |-
+    Go down through all ten floors of the dungeon, past the things that keep its stairs, and take the iron crown from Gorrath at the bottom.
+  status: open
+  contributes: true
+  steps:
+  - summary: |-
+      Take the first stair key from the stairwarden that keeps the stair down from the first floor.
+    trigger: hold_item
+    target: first stair key
+  - summary: |-
+      Take the fifth stair key, halfway to the bottom.
+    trigger: hold_item
+    target: fifth stair key
+  - summary: |-
+      Take the iron crown from Gorrath at the bottom of the dungeon.
+    trigger: hold_item
+    target: the iron crown
+  outcomes:
+  - name: the-bottom-reached
+    summary: |-
+      The iron crown is in your hands and Gorrath is dead at your feet. You are the first delver in living memory to reach the bottom of the dungeon, and now there is only the long climb back up.
+    default: true
+  - name: the-bottom-reached-late
+    summary: |-
+      The iron crown is in your hands at last, but the way down took you more than three days, and the dungeon took its share of you on every floor. You reached the bottom. Nobody on the landing will believe how long it took.
+    default: false
+    when: slower_than
+    minutes: 4320

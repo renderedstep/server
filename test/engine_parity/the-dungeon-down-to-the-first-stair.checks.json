@@ -1,0 +1,12 @@
+{
+  "script": "the-dungeon-down-to-the-first-stair",
+  "doctor": {
+    "headline": "healthy",
+    "findings": []
+  },
+  "audit": {
+    "headline": "1 scenes, nothing to report",
+    "flags": [],
+    "unjudged": []
+  }
+}

@@ -14,9 +14,14 @@ class Eval::Classifier::PointerTest < ActiveSupport::TestCase
   # shared room.
   GENERIC = %w[titles place_adjectives item_adjectives].freeze
 
+  # THE WORLDS THE CORPUS IS MEASURED IN, and not every checked-in one: a seeded
+  # world no corpus line stands in is a world the bench never measures, so its
+  # names cannot leak into a score.
   test "the training vocabulary names nothing the corpus's seeded worlds name" do
     words = Eval::Classifier::Pointer::Worlds.vocabulary.except(*GENERIC).values.flatten.map(&:downcase)
-    seeded = WorldSeed.files.flat_map do |file|
+    measured = Eval::Classifier::Corpus.load.seeded.positions.map { |row| WorldSeed::DIRECTORY.join("#{WorldSeed.slug(row.story)}.yml") }.uniq
+    assert_operator measured.size, :>=, 1, "the corpus stands in no seeded world, so this checks nothing"
+    seeded = measured.flat_map do |file|
       document = YAML.safe_load_file(file)
       document["locations"].flat_map { |row| [ row["name"], *Array(row["items"]).map { |item| item["name"] } ] } +
         document["characters"].flat_map do |row|
