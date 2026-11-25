@@ -65,14 +65,14 @@ end
 
 
 
-gem "ruby_llm", "~> 2.1"
+gem "ruby_llm", "~> 2.2"
 # RubyLLM 2 uses Schematist itself, but this application still loads the legacy
 # schema extension whose DSL and provider envelope its existing schema classes
 # were written against. Keep that compatibility layer on 0.x until those
 # classes are deliberately migrated; `test/models/ruby_llm_schema_envelope_test.rb`
 # guards the provider-visible request shape. See `.github/dependabot.yml` for
 # why the major-version update is not hidden from Dependabot.
-gem "ruby_llm-schema", "~> 0.2"
+gem "ruby_llm-schema", "~> 1.0"
 
 gem "open_router", "~> 0.3.3"
 
